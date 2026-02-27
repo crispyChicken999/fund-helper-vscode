@@ -1,0 +1,275 @@
+{
+  "name": "fund-helper",
+  "displayName": "基金助手",
+  "description": "在 VSCode 侧边栏查看自选基金实时估值、涨跌幅与收益",
+  "version": "0.1.0",
+  "author": "CrispyChicken",
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "icon": "resources/icon.png",
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "fund",
+    "finance",
+    "investment",
+    "基金",
+    "理财",
+    "股票",
+    "估值",
+    "收益"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fund-helper",
+          "title": "基金助手",
+          "icon": "resources/fund-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "fund-helper": [
+        {
+          "id": "fundList",
+          "name": "基金列表"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "fundList",
+        "contents": "欢迎使用基金助手！📈\n\n添加基金后即可查看实时估值与收益。\n\n[$(add) 添加基金](command:fund-helper.addFund)\n[$(cloud-download) 导入基金列表](command:fund-helper.importFund)\n\n在设置中搜索 【fund-helper】 可配置刷新间隔等选项。"
+      }
+    ],
+    "commands": [
+      {
+        "command": "fund-helper.addFund",
+        "title": "添加基金",
+        "icon": "$(add)"
+      },
+      {
+        "command": "fund-helper.deleteFund",
+        "title": "删除基金",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fund-helper.refreshFund",
+        "title": "刷新",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fund-helper.exportFund",
+        "title": "导出基金列表"
+      },
+      {
+        "command": "fund-helper.importFund",
+        "title": "导入基金列表"
+      },
+      {
+        "command": "fund-helper.sortFund",
+        "title": "排序",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "fund-helper.addPosition",
+        "title": "加仓",
+        "icon": "$(plus)"
+      },
+      {
+        "command": "fund-helper.reducePosition",
+        "title": "减仓",
+        "icon": "$(dash)"
+      },
+      {
+        "command": "fund-helper.editPosition",
+        "title": "修改持仓",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "fund-helper.sortByDefault",
+        "title": "默认排序",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "fund-helper.sortByChangePercent",
+        "title": "涨跌幅",
+        "icon": "$(graph-line)"
+      },
+      {
+        "command": "fund-helper.sortByDailyGain",
+        "title": "估算收益",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "fund-helper.sortByHoldingAmount",
+        "title": "持有额",
+        "icon": "$(credit-card)"
+      },
+      {
+        "command": "fund-helper.sortByHoldingGain",
+        "title": "持有收益",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "fund-helper.sortByHoldingGainRate",
+        "title": "收益率",
+        "icon": "$(symbol-numeric)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "fund-helper.refreshFund",
+          "when": "view == fundList",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fund-helper.addFund",
+          "when": "view == fundList",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fund-helper.importFund",
+          "when": "view == fundList"
+        },
+        {
+          "command": "fund-helper.exportFund",
+          "when": "view == fundList"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fund-helper.addPosition",
+          "when": "view == fundList && viewItem == fundItem",
+          "group": "inline@1"
+        },
+        {
+          "command": "fund-helper.reducePosition",
+          "when": "view == fundList && viewItem == fundItem",
+          "group": "inline@2"
+        },
+        {
+          "command": "fund-helper.editPosition",
+          "when": "view == fundList && viewItem == fundItem",
+          "group": "inline@3"
+        },
+        {
+          "command": "fund-helper.deleteFund",
+          "when": "view == fundList && viewItem == fundItem",
+          "group": "inline@4"
+        },
+        {
+          "command": "fund-helper.sortByDefault",
+          "when": "view == fundList && viewItem == sortItem",
+          "group": "inline@1"
+        },
+        {
+          "command": "fund-helper.sortByChangePercent",
+          "when": "view == fundList && viewItem == sortItem",
+          "group": "inline@2"
+        },
+        {
+          "command": "fund-helper.sortByDailyGain",
+          "when": "view == fundList && viewItem == sortItem",
+          "group": "inline@3"
+        },
+        {
+          "command": "fund-helper.sortByHoldingAmount",
+          "when": "view == fundList && viewItem == sortItem",
+          "group": "inline@4"
+        },
+        {
+          "command": "fund-helper.sortByHoldingGain",
+          "when": "view == fundList && viewItem == sortItem",
+          "group": "inline@5"
+        },
+        {
+          "command": "fund-helper.sortByHoldingGainRate",
+          "when": "view == fundList && viewItem == sortItem",
+          "group": "inline@6"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "基金助手",
+      "properties": {
+        "fund-helper.funds": {
+          "type": "array",
+          "default": [],
+          "description": "自选基金列表（格式：{code, cost, num}），数据保存在用户全局配置中",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "num": {
+                "type": "string",
+                "default": "0"
+              },
+              "cost": {
+                "type": "string",
+                "default": "0"
+              }
+            }
+          }
+        },
+        "fund-helper.refreshInterval": {
+          "type": "number",
+          "default": 30,
+          "description": "数据刷新间隔（秒），仅交易时间内生效",
+          "minimum": 5
+        },
+        "fund-helper.sortMethod": {
+          "type": "string",
+          "default": "default",
+          "description": "基金列表排序方式",
+          "enum": [
+            "default",
+            "changePercent_desc",
+            "changePercent_asc",
+            "dailyGain_desc",
+            "dailyGain_asc",
+            "holdingAmount_desc",
+            "holdingAmount_asc",
+            "holdingGain_desc",
+            "holdingGain_asc",
+            "holdingGainRate_desc",
+            "holdingGainRate_asc"
+          ],
+          "enumDescriptions": [
+            "默认排序（添加顺序）",
+            "涨跌幅 ↓（从高到低）",
+            "涨跌幅 ↑（从低到高）",
+            "估算收益 ↓（从高到低）",
+            "估算收益 ↑（从低到高）",
+            "持有额 ↓（从高到低）",
+            "持有额 ↑（从低到高）",
+            "持有收益 ↓（从高到低）",
+            "持有收益 ↑（从低到高）",
+            "持有收益率 ↓（从高到低）",
+            "持有收益率 ↑（从低到高）"
+          ]
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
