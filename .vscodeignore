@@ -2,7 +2,9 @@
 .git/**
 .gitignore
 src/**
+out/**
 node_modules/**
 tsconfig.json
+esbuild.js
 *.vsix
 .DS_Store
