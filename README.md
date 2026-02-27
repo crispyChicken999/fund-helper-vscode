@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="resources/icon.png" alt="fund-helper" width="200" height="200" />
+  <img src="https://img2024.cnblogs.com/blog/3085939/202602/3085939-20260227162146255-1419431948.png" alt="fund-helper" width="200" height="200" />
 </p>
 
 <div align="center">
@@ -17,7 +17,7 @@
 
 ## 📑 目录 (Table of Contents)
 
-- [� 目录 (Table of Contents)](#-目录-table-of-contents)
+- [📑 目录 (Table of Contents)](#-目录-table-of-contents)
 - [🔮 项目背景 (Project Background)](#-项目背景-project-background)
 - [✨ 主要功能 (Key Features)](#-主要功能-key-features)
 - [💻 系统要求 (System Requirements)](#-系统要求-system-requirements)
