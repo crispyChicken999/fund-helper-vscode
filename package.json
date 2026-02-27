@@ -2,7 +2,7 @@
   "name": "fund-helper",
   "displayName": "基金助手",
   "description": "在 VSCode 侧边栏查看自选基金实时估值、涨跌幅与收益",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "CrispyChicken",
   "publisher": "CrispyChicken",
   "license": "MIT",
