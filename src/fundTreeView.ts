@@ -92,7 +92,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       return;
     }
     try {
-      this._fundDataList = await getFundData(configs);
+      this._fundDataList = await getFundData(configs, this._fundDataList);
     } catch (e: any) {
       vscode.window.showErrorMessage(`获取基金数据失败: ${e.message}`);
     }

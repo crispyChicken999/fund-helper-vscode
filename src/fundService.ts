@@ -33,7 +33,10 @@ async function fetchSingleFund(code: string): Promise<any> {
 /**
  * 批量获取基金实时估值数据
  */
-export async function getFundData(configs: FundConfig[]): Promise<FundInfo[]> {
+export async function getFundData(
+  configs: FundConfig[],
+  previousData: FundInfo[] = [],
+): Promise<FundInfo[]> {
   if (configs.length === 0) {
     return [];
   }
@@ -49,6 +52,22 @@ export async function getFundData(configs: FundConfig[]): Promise<FundInfo[]> {
     const result = results[i];
 
     if (result.status === "rejected" || !result.value) {
+      const oldData = previousData.find((f) => f.code === cfg.code);
+      if (oldData) {
+        fundList.push(oldData);
+      } else {
+        fundList.push({
+          code: cfg.code,
+          name: cfg.code,
+          netValue: 0,
+          estimatedValue: null,
+          changePercent: 0,
+          updateTime: "获取失败",
+          isRealValue: false,
+          shares: parseFloat(cfg.num) || 0,
+          cost: parseFloat(cfg.cost) || 0,
+        });
+      }
       continue;
     }
 
