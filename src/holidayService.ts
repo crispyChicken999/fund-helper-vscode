@@ -1,4 +1,3 @@
-import axios from "axios";
 import * as vscode from "vscode";
 
 const HOLIDAY_CACHE_KEY = "fund-helper.holidayData";
@@ -29,9 +28,16 @@ export async function initHolidayData(context: vscode.ExtensionContext) {
   // 尝试联网更新
   try {
     const url = "https://funds.rabt.top/funds/holiday.json";
-    const res = await axios.get(url, { timeout: 10000 });
-    if (res.data && res.data.data) {
-      holidayMap = res.data.data;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    const data: any = await res.json();
+    if (data && data.data) {
+      holidayMap = data.data;
       await context.globalState.update(HOLIDAY_CACHE_KEY, holidayMap);
     }
   } catch (error) {

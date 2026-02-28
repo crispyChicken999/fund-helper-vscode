@@ -3,7 +3,6 @@
  * 使用 fundgz.1234567.com.cn JSONP 接口获取基金实时估值
  */
 
-import axios from "axios";
 import { FundInfo, FundConfig, NetValueRecord } from "./fundModel";
 
 import { isMarketClosed } from "./holidayService";
@@ -28,9 +27,15 @@ export async function getFundData(
 
   let datas: any[] = [];
   try {
-    const res = await axios.get(url, { timeout: 10000 });
-    if (res.data && Array.isArray(res.data.Datas)) {
-      datas = res.data.Datas;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (res.ok) {
+      const data: any = await res.json();
+      if (data && Array.isArray(data.Datas)) {
+        datas = data.Datas;
+      }
     }
   } catch (error) {
     console.error("fetch fund list failed", error);
@@ -112,8 +117,16 @@ export async function searchFund(
     `https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx` +
     `?m=9&key=${encodeURIComponent(keyword)}&_=${Date.now()}`;
 
-  const res = await axios.get(url, { timeout: 10000 });
-  const datas: any[] = res.data?.Datas ?? [];
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const res = await fetch(url, { signal: controller.signal }).catch(() => null);
+  clearTimeout(timeoutId);
+
+  let datas: any[] = [];
+  if (res && res.ok) {
+    const data: any = await res.json().catch(() => ({}));
+    datas = data.Datas ?? [];
+  }
 
   return datas.map((val: any) => ({
     code: val.CODE as string,
@@ -133,12 +146,19 @@ export async function getNetValueHistory(
     `?fundCode=${fundCode}&pageIndex=1&pageSize=${pageSize}` +
     `&startDate=&endDate=&_=${Date.now()}`;
 
-  const res = await axios.get(url, {
-    timeout: 10000,
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const res = await fetch(url, {
+    signal: controller.signal,
     headers: { Referer: "https://fundf10.eastmoney.com/" },
-  });
+  }).catch(() => null);
+  clearTimeout(timeoutId);
 
-  const list: any[] = res.data?.Data?.LSJZList ?? [];
+  let list: any[] = [];
+  if (res && res.ok) {
+    const data: any = await res.json().catch(() => ({}));
+    list = data.Data?.LSJZList ?? [];
+  }
 
   return list.map((item: any) => ({
     date: item.FSRQ as string,

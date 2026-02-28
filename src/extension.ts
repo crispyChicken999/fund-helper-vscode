@@ -21,6 +21,7 @@ import {
 
 let refreshTimer: NodeJS.Timeout | undefined;
 let treeDataProvider: FundTreeDataProvider;
+let treeView: vscode.TreeView<FundTreeItem>;
 
 export async function activate(context: vscode.ExtensionContext) {
   // 0️⃣ 初始化节假日数据
@@ -29,7 +30,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // 1️⃣ 注册 TreeView
   treeDataProvider = new FundTreeDataProvider(context.extensionPath);
   const dragAndDropController = new FundDragAndDropController(treeDataProvider);
-  const treeView = vscode.window.createTreeView("fundList", {
+  treeView = vscode.window.createTreeView("fundList", {
     treeDataProvider,
     showCollapseAll: true,
     dragAndDropController,
@@ -135,7 +136,11 @@ export function deactivate() {
 
 async function refreshData() {
   await treeDataProvider.refresh();
-  updateStatusBar(treeDataProvider.fundDataList);
+  const list = treeDataProvider.fundDataList;
+  updateStatusBar(list);
+  if (treeView) {
+    treeView.title = `基金列表(${list.length})`;
+  }
 }
 
 function getFundConfigs(): FundConfig[] {
