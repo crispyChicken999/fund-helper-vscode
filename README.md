@@ -11,6 +11,10 @@
 ![Version](https://img.shields.io/badge/Version-0.1.2-green.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20MacOS%20%7C%20Linux-purple.svg)
 
+![Downloads](https://img.shields.io/visual-studio-marketplace/d/CrispyChicken.fund-helper)
+![Rating](https://img.shields.io/visual-studio-marketplace/r/CrispyChicken.fund-helper)
+![Stars](https://img.shields.io/github/stars/crispyChicken999/fund-helper-vscode?style=social)
+
 </div>
 
 在 VSCode 侧边栏实时查看自选基金估值、涨跌幅与收益，支持加减仓操作、多维度排序、拖拽排序、导入导出等功能。摸鱼理财两不误！
