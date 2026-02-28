@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import { FundConfig } from "./fundModel";
 import { searchFund, getNetValueHistory } from "./fundService";
+import { initHolidayData, isMarketClosed } from "./holidayService";
 import {
   FundTreeDataProvider,
   FundTreeItem,
@@ -21,7 +22,10 @@ import {
 let refreshTimer: NodeJS.Timeout | undefined;
 let treeDataProvider: FundTreeDataProvider;
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+  // 0️⃣ 初始化节假日数据
+  await initHolidayData(context);
+
   // 1️⃣ 注册 TreeView
   treeDataProvider = new FundTreeDataProvider(context.extensionPath);
   const dragAndDropController = new FundDragAndDropController(treeDataProvider);
@@ -527,14 +531,14 @@ function setupAutoRefresh() {
 }
 
 function isDuringTradeTime(): boolean {
+  // 如果是休市日（包括周末和节假日），直接返回 false
+  if (isMarketClosed()) {
+    return false;
+  }
+
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
   const cn = new Date(utc + 8 * 3600000);
-
-  const day = cn.getDay();
-  if (day === 0 || day === 6) {
-    return false;
-  }
 
   const h = cn.getHours();
   const m = cn.getMinutes();
