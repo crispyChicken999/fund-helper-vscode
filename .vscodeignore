@@ -8,3 +8,4 @@ tsconfig.json
 esbuild.js
 *.vsix
 .DS_Store
+demo
