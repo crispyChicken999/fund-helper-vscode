@@ -8,7 +8,41 @@ import { FundInfo, FundConfig, NetValueRecord } from "./fundModel";
 import { isMarketClosed } from "./holidayService";
 
 /**
- * 批量获取基金实时和估值数据 (新接口替换旧接口)
+ * 解析 JSONP 响应
+ */
+function parseJsonp(text: string): any {
+  const match = text.match(/jsonpgz\((.*)\)/s);
+  if (match && match[1]) {
+    try {
+      return JSON.parse(match[1]);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * 获取单个基金实时估值
+ */
+async function fetchSingleFund(code: string): Promise<any> {
+  const url = `https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const text = await res.text();
+    return parseJsonp(text);
+  } catch (error) {
+    console.error(`fetch fund ${code} failed`, error);
+    return null;
+  }
+}
+
+/**
+ * 批量获取基金实时估值数据
  */
 export async function getFundData(
   configs: FundConfig[],
@@ -18,34 +52,17 @@ export async function getFundData(
     return [];
   }
 
-  const codesMap = new Map<string, FundConfig>();
-  configs.forEach((c) => codesMap.set(c.code, c));
-
-  const fundCodes = configs.map((c) => c.code).join(",");
-  // Fake deviceid as in the demo
-  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=12345678-1234-1234-1234-123456789012&Fcodes=${fundCodes}`;
-
-  let datas: any[] = [];
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (res.ok) {
-      const data: any = await res.json();
-      if (data && Array.isArray(data.Datas)) {
-        datas = data.Datas;
-      }
-    }
-  } catch (error) {
-    console.error("fetch fund list failed", error);
-  }
+  const results = await Promise.allSettled(
+    configs.map((cfg) => fetchSingleFund(cfg.code)),
+  );
 
   const fundList: FundInfo[] = [];
 
-  // Initialize with previous data if fetch failed for some funds
-  for (const cfg of configs) {
-    const val = datas.find((d) => d.FCODE === cfg.code);
+  for (let i = 0; i < configs.length; i++) {
+    const cfg = configs[i];
+    const result = results[i];
+    const val = result.status === "fulfilled" ? result.value : null;
+
     const shares = parseFloat(cfg.num) || 0;
     const cost = parseFloat(cfg.cost) || 0;
 
@@ -70,29 +87,27 @@ export async function getFundData(
       continue;
     }
 
-    // Determine if we have real update for today
-    const pDate = val.PDATE; // e.g. "2024-05-31" or "--"
-    const gzTime = val.GZTIME; // e.g. "2024-05-31 15:00"
+    const jzrq = val.jzrq;
+    const gztime = val.gztime;
 
     let isRealValue = false;
-    let netValue = isNaN(parseFloat(val.NAV)) ? 0 : parseFloat(val.NAV);
-    let estimatedValue: number | null = isNaN(parseFloat(val.GSZ)) ? null : parseFloat(val.GSZ);
-    let changePercent = isNaN(parseFloat(val.GSZZL)) ? 0 : parseFloat(val.GSZZL);
-    let navChgRt = isNaN(parseFloat(val.NAVCHGRT)) ? 0 : parseFloat(val.NAVCHGRT); // 实际涨跌幅
+    let netValue = isNaN(parseFloat(val.dwjz)) ? 0 : parseFloat(val.dwjz);
+    let estimatedValue: number | null = isNaN(parseFloat(val.gsz)) ? null : parseFloat(val.gsz);
+    let changePercent = isNaN(parseFloat(val.gszzl)) ? 0 : parseFloat(val.gszzl);
+    let navChgRt = changePercent; // 使用估值涨跌幅作为实际涨跌幅
 
-    if (pDate !== "--" && gzTime && typeof gzTime === "string" && pDate === gzTime.substring(0, 10)) {
+    if (jzrq && gztime && typeof gztime === "string" && jzrq === gztime.substring(0, 10)) {
       isRealValue = true;
       estimatedValue = netValue;
-      changePercent = navChgRt; // Use real change percent when the day settles
     }
 
     fundList.push({
-      code: val.FCODE,
-      name: val.SHORTNAME || cfg.code,
+      code: val.fundcode || cfg.code,
+      name: val.name || cfg.code,
       netValue,
       estimatedValue,
       changePercent,
-      updateTime: val.GZTIME || "",
+      updateTime: val.gztime || "",
       isRealValue,
       shares,
       cost,
