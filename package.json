@@ -2,7 +2,7 @@
   "name": "fund-helper",
   "displayName": "基金助手",
   "description": "在 VSCode 侧边栏查看自选基金实时估值、涨跌幅与收益",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "author": "CrispyChicken",
   "publisher": "CrispyChicken",
   "license": "MIT",
@@ -65,7 +65,7 @@
     "viewsWelcome": [
       {
         "view": "fundList",
-        "contents": "欢迎使用基金助手！📈\n\n添加基金后即可查看实时估值与收益。\n\n[$(add) 添加基金](command:fund-helper.addFund)\n[$(cloud-download) 导入基金列表](command:fund-helper.importFund)\n\n在设置中搜索 【fund-helper】 可配置刷新间隔等选项。"
+        "contents": "欢迎使用基金助手！📈\n\n添加基金后即可查看实时估值与收益。\n\n[$(add) 添加基金](command:fund-helper.addFund)\n[$(cloud-download) 导入基金列表](command:fund-helper.importFund)\n[$(settings-gear) AI配置](command:fund-helper.configureAI)\n[$(lightbulb) AI分析](command:fund-helper.analyzeFunds)\n\n在设置中搜索 【fund-helper】 可配置刷新间隔等选项。"
       }
     ],
     "commands": [
@@ -91,6 +91,16 @@
       {
         "command": "fund-helper.importFund",
         "title": "导入基金列表"
+      },
+      {
+        "command": "fund-helper.configureAI",
+        "title": "配置AI",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "fund-helper.analyzeFunds",
+        "title": "AI分析",
+        "icon": "$(lightbulb)"
       },
       {
         "command": "fund-helper.sortFund",
@@ -162,6 +172,16 @@
         {
           "command": "fund-helper.exportFund",
           "when": "view == fundList"
+        },
+        {
+          "command": "fund-helper.configureAI",
+          "when": "view == fundList",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fund-helper.analyzeFunds",
+          "when": "view == fundList",
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [
@@ -277,6 +297,97 @@
             "持有收益率 ↓（从高到低）",
             "持有收益率 ↑（从低到高）"
           ]
+        },
+        "fund-helper.aiProvider": {
+          "type": "string",
+          "default": "openai",
+          "description": "AI服务提供商",
+          "enum": [
+            "openai",
+            "aliyun",
+            "siliconflow",
+            "deepseek"
+          ],
+          "enumDescriptions": [
+            "OpenAI官方API",
+            "阿里云百炼",
+            "硅基流动",
+            "DeepSeek"
+          ]
+        },
+        "fund-helper.aiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "AI API密钥",
+          "markdownDescription": "AI服务的API密钥。**请注意保护您的密钥安全**"
+        },
+        "fund-helper.aiApiEndpoint": {
+          "type": "string",
+          "default": "https://api.openai.com/v1",
+          "description": "AI API端点地址",
+          "markdownDescription": "AI服务的API端点URL"
+        },
+        "fund-helper.aiModel": {
+          "type": "string",
+          "default": "gpt-3.5-turbo",
+          "description": "AI模型名称",
+          "markdownDescription": "使用的AI模型名称"
+        },
+        "fund-helper.enableAIAnalysis": {
+          "type": "boolean",
+          "default": false,
+          "description": "启用AI分析功能",
+          "markdownDescription": "是否启用AI基金分析功能"
+        },
+        "fund-helper.aiTemperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "AI分析温度参数",
+          "markdownDescription": "控制AI输出的随机性，0-2之间，数值越高越随机"
+        },
+        "fund-helper.aiMaxTokens": {
+          "type": "number",
+          "default": 2000,
+          "minimum": 100,
+          "maximum": 4000,
+          "description": "AI最大输出token数",
+          "markdownDescription": "限制AI分析结果的最大长度"
+        },
+        "fund-helper.savedAIConfigs": {
+          "type": "array",
+          "default": [],
+          "description": "保存的AI配置列表",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "model": {
+                "type": "string"
+              },
+              "endpoint": {
+                "type": "string"
+              },
+              "temperature": {
+                "type": "number"
+              },
+              "maxTokens": {
+                "type": "number"
+              },
+              "isDefault": {
+                "type": "boolean"
+              }
+            }
+          }
         }
       }
     }
@@ -294,5 +405,9 @@
     "@types/vscode": "^1.74.0",
     "esbuild": "^0.27.3",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "openai": "^6.25.0"
   }
 }
