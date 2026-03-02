@@ -64,9 +64,17 @@ export function updateStatusBar(fundList: FundInfo[]): void {
     rateStr = ` (${rate >= 0 ? "+" : ""}${rate.toFixed(2)}%)`;
   }
 
-  const icon = totalDailyGain >= 0 ? "$(triangle-up)" : "$(triangle-down)";
-  statusBarItem.text = `${icon} ${gainStr}${rateStr}`;
-  statusBarItem.color = totalDailyGain >= 0 ? "#f56c6c" : "#4eb61b";
+  const config = vscode.workspace.getConfiguration("fund-helper");
+  const hideStatusBar = config.get<boolean>("hideStatusBar", false);
+
+  if (hideStatusBar) {
+    statusBarItem.text = `$(eye-closed) 基金助手`;
+    statusBarItem.color = undefined;
+  } else {
+    const icon = totalDailyGain >= 0 ? "$(triangle-up)" : "$(triangle-down)";
+    statusBarItem.text = `${icon} ${gainStr}${rateStr}`;
+    statusBarItem.color = totalDailyGain >= 0 ? "#f56c6c" : "#4eb61b";
+  }
 
   // 构建 Tooltip 统计信息
   const md = new vscode.MarkdownString();

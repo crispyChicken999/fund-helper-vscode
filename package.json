@@ -151,6 +151,11 @@
         "command": "fund-helper.sortByHoldingGainRate",
         "title": "收益率",
         "icon": "$(symbol-numeric)"
+      },
+      {
+        "command": "fund-helper.toggleStatusBarHide",
+        "title": "切换状态栏隐藏/显示状态",
+        "icon": "$(eye)"
       }
     ],
     "menus": {
@@ -182,6 +187,11 @@
           "command": "fund-helper.analyzeFunds",
           "when": "view == fundList",
           "group": "navigation@4"
+        },
+        {
+          "command": "fund-helper.toggleStatusBarHide",
+          "when": "view == fundList",
+          "group": "navigation@5"
         }
       ],
       "view/item/context": [
@@ -297,6 +307,12 @@
             "持有收益率 ↓（从高到低）",
             "持有收益率 ↑（从低到高）"
           ]
+        },
+        "fund-helper.hideStatusBar": {
+          "type": "boolean",
+          "default": false,
+          "description": "是否隐藏状态栏金额（开启后状态栏只显示图标内容，鼠标悬停时可查看具体金额）",
+          "markdownDescription": "开启可暂时隐藏收益数字，鼠标悬停时可展示详情"
         },
         "fund-helper.aiProvider": {
           "type": "string",
