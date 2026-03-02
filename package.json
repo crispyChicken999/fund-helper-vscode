@@ -39,7 +39,9 @@
     "收益",
     "涨跌",
     "估算",
-    "持仓"
+    "持仓",
+    "helper",
+    "fund helper"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
