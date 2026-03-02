@@ -221,12 +221,12 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
 
     md.appendMarkdown(`#### 📊 持仓概览\n\n`);
     md.appendMarkdown(`\n ___ \n\n`);
-    md.appendMarkdown(`持有金额：**${fmtMoney(totalAmount)}**\n\n`);
+    md.appendMarkdown(`持有金额\u3000：**${fmtMoney(totalAmount)}**\n\n`);
     md.appendMarkdown(
-      `日收益：${hl(signFmt(totalDailyGain), pickColor(totalDailyGain))}\n\n`,
+      `日收益\u3000\u3000：${hl(signFmt(totalDailyGain), pickColor(totalDailyGain))}\n\n`,
     );
     md.appendMarkdown(
-      `持有收益：${hl(signFmt(totalHoldingGain), pickColor(totalHoldingGain))}\n\n`,
+      `持有收益\u3000：${hl(signFmt(totalHoldingGain), pickColor(totalHoldingGain))}\n\n`,
     );
     md.appendMarkdown(
       `持有收益率：${hl(`${signFmt(totalHoldingRate)}%`, pickColor(totalHoldingRate))}\n\n`,
@@ -386,30 +386,31 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 持仓信息
-    md.appendMarkdown(`持有额：${fmtMoney(holdingAmount)}\n\n`);
+    md.appendMarkdown(`持有额\u3000\u3000：${fmtMoney(holdingAmount)}\n\n`);
     md.appendMarkdown(
-      `持有收益：${hl(holdGainStr, pickColor(holdingGain))}\n\n`,
+      `持有收益\u3000：${hl(holdGainStr, pickColor(holdingGain))}\n\n`,
     );
     md.appendMarkdown(
       `持有收益率：${hl(holdRateStr, pickColor(holdingGainRate))}\n\n`,
     );
     md.appendMarkdown(
-      `成本价：${fund.cost > 0 ? fund.cost.toFixed(4) : "--"}\n\n`,
+      `成本价\u3000\u3000：${fund.cost > 0 ? fund.cost.toFixed(4) : "--"}\n\n`,
     );
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 估值信息
-    md.appendMarkdown(`估算净值：${estValueStr}\n\n`);
+    md.appendMarkdown(`单位净值\u3000：${fund.netValue > 0 ? fund.netValue.toFixed(4) : "--"}\n\n`);
+    md.appendMarkdown(`估算净值\u3000：${estValueStr}\n\n`);
     md.appendMarkdown(
-      `涨跌幅：${hl(changeStr, pickColor(fund.changePercent))}\n\n`,
+      `涨跌幅\u3000\u3000：${hl(changeStr, pickColor(fund.changePercent))}\n\n`,
     );
     md.appendMarkdown(
-      `估算收益：${hl(dailyGainStr, pickColor(dailyGain))}\n\n`,
+      `估算收益\u3000：${hl(dailyGainStr, pickColor(dailyGain))}\n\n`,
     );
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 时间
-    md.appendMarkdown(`⏰ 更新时间：${updateStr}\n`);
+    md.appendMarkdown(`更新时间\u3000：${updateStr}\n`);
 
     return md;
   }
@@ -425,10 +426,10 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     const signStr = (val: number) => `${val >= 0 ? "+" : ""}${val.toFixed(2)}`;
 
     const details: { label: string; value: string }[] = [
-      { label: "基金代码", value: fund.code },
-      { label: "持有额", value: fmtMoney(holdingAmount) },
+      { label: "基金代码\u3000", value: fund.code },
+      { label: "持有额\u3000\u3000", value: fmtMoney(holdingAmount) },
       {
-        label: `持有收益`,
+        label: `持有收益\u3000`,
         value: `${dot(holdingGain)} ${signStr(holdingGain)}`,
       },
       {
@@ -438,22 +439,26 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
             ? `${dot(holdingGainRate)} ${signStr(holdingGainRate)}%`
             : "--",
       },
-      { label: "成本价", value: fund.cost > 0 ? fund.cost.toFixed(4) : "--" },
+      { label: "成本价\u3000\u3000", value: fund.cost > 0 ? fund.cost.toFixed(4) : "--" },
       {
-        label: "估算净值",
+        label: "单位净值\u3000",
+        value: fund.netValue > 0 ? fund.netValue.toFixed(4) : "--",
+      },
+      {
+        label: "估算净值\u3000",
         value:
           fund.estimatedValue !== null ? fund.estimatedValue.toFixed(4) : "--",
       },
       {
-        label: `涨跌幅`,
+        label: `涨跌幅\u3000\u3000`,
         value: `${dot(fund.changePercent)} ${signStr(fund.changePercent)}%`,
       },
       {
-        label: `估算收益`,
+        label: `估算收益\u3000`,
         value: `${dot(dailyGain)} ${signStr(dailyGain)}`,
       },
       {
-        label: "更新时间",
+        label: "更新时间\u3000",
         value: fund.updateTime
           ? fund.updateTime.length > 10
             ? fund.updateTime.substring(11)

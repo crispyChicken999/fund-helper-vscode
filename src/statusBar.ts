@@ -85,10 +85,13 @@ export function updateStatusBar(fundList: FundInfo[]): void {
   md.appendMarkdown(`📈 上涨基金：**${upCount}** 只，共计：<span style="color:#f56c6c;">+${totalDailyUp.toFixed(2)}</span>\n\n`);
   md.appendMarkdown(`📉 下跌基金：**${downCount}** 只，共计：<span style="color:#4eb61b;">${totalDailyDown.toFixed(2)}</span>\n\n`);
   md.appendMarkdown(`\n ___ \n\n`);
-  md.appendMarkdown(`💰 日总收益：**${totalDailyGain >= 0 ? "+" : ""}${totalDailyGain.toFixed(2)}**\n\n`);
-  md.appendMarkdown(`🏦 累计收益：**${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}**\n\n`);
+  const dayColor = totalDailyGain > 0 ? "#f56c6c" : totalDailyGain < 0 ? "#4eb61b" : "#909399";
+  const holdingColor = totalHoldingGain > 0 ? "#f56c6c" : totalHoldingGain < 0 ? "#4eb61b" : "#909399";
+
+  md.appendMarkdown(`💰 日总收益：**<span style="color:${dayColor};">${totalDailyGain >= 0 ? "+" : ""}${totalDailyGain.toFixed(2)}</span>**\n\n`);
+  md.appendMarkdown(`🏦 累计收益：**<span style="color:${holdingColor};">${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}</span>**\n\n`);
   md.appendMarkdown(`📦 自选数量：**${fundList.length}** 只\n\n`);
-  md.appendMarkdown(`*(点击可刷新数据)*`);
+  md.appendMarkdown(`*点击状态栏刷新， [点击这里隐藏/显示金额](command:fund-helper.toggleStatusBarHide)*`);
 
   statusBarItem.tooltip = md;
 }
