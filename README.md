@@ -8,7 +8,7 @@
 
 ![License](https://img.shields.io/badge/License-MIT-orange.svg)
 ![VSCode](https://img.shields.io/badge/VSCode-1.82.0%2B-blue.svg)
-![Version](https://img.shields.io/badge/Version-0.1.4-green.svg)
+![Version](https://img.shields.io/badge/Version-0.1.5-green.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20MacOS%20%7C%20Linux-purple.svg)
 
 ![Downloads](https://img.shields.io/visual-studio-marketplace/d/CrispyChicken.fund-helper)
@@ -17,7 +17,7 @@
 
 </div>
 
-在 VSCode 侧边栏实时查看自选基金估值、涨跌幅与收益，支持加减仓操作、多维度排序、拖拽排序、导入导出等功能。摸鱼理财两不误！
+在 VSCode 侧边栏实时查看自选基金估值、涨跌幅与收益，支持加减仓操作、多维度排序、拖拽排序、行情中心大盘数据、AI 分析等功能。摸鱼理财两不误！
 
 ## 📑 目录 (Table of Contents)
 
@@ -53,16 +53,19 @@
 6. ➕ **加仓/减仓**：选择历史净值日期操作，自动计算加权平均成本
 7. ✏️ **修改持仓**：直接修改总份额和成本价
 8. 📤 **导入/导出**：JSON 格式导入导出基金列表，支持合并或覆盖
-9. 📌 **状态栏摘要**：底部状态栏显示总日收益和百分比
-10. ⏰ **自动刷新**：交易时间内自动刷新数据，间隔可配置（最小 5 秒）。智能识别周末和法定节假日，非交易日停止刷新，估算收益显示为0（避免休市期间数据乱跳）
-11. 🧠 **AI 智能分析 (🆕新增!)**：接入多种 AI 大模型（OpenAI, 阿里云百炼, 硅基流动, DeepSeek 等），基于您当前的基金持仓金额、成本、涨跌幅，自动生成包含宏观政策、行业地位、资金量价等维度的专业投资诊断报告！
-12. 💾 **数据持久化**：基金列表、排序方式保存到 VSCode 用户全局配置
+9. 📌 **状态栏摘要**：底部状态栏显示总日收益和百分比，仅亏损时显示绿色提醒
+10. ⏰ **自动刷新**：交易时间内自动刷新数据，间隔可配置。智能识别周末和法定节假日，非交易日停止刷新
+11. 🧠 **AI 智能分析**：接入多种 AI 大模型（OpenAI, 阿里云百炼, 硅基流动, DeepSeek 等），自动生成专业投资诊断报告
+12. 🔍 **搜索/筛选**：侧边栏内置搜索框，按名称或代码实时筛选基金列表，支持一键清除
+13. 📈 **行情中心（🆕）**：侧边栏可折叠节点，展示四大指数实时数据；行情 Webview 包含大盘资金统计、资金流向折线图（ECharts）、行业/风格/概念/地域板块排行（支持今日/5日/10日切换）
+14. 📅 **开市/休市提示（🆕）**：行情中心 item 前实时显示「开市」/「休市中」状态
+15. 💾 **数据持久化**：基金列表、排序方式保存到 VSCode 用户全局配置
 
 ## 💻 系统要求 (System Requirements)
 
 - **VSCode 版本**：1.82.0 及以上
 - **操作系统**：Windows / MacOS / Linux
-- **网络**：需要访问天天基金 API（`fundgz.1234567.com.cn`）
+- **网络**：需要访问天天基金 API（`fundgz.1234567.com.cn`）和东方财富行情 API
 
 ## 🚀 快速开始 (Quick Start)
 
@@ -96,20 +99,25 @@
 - 悬浮排序栏查看持仓概览
 - 展开基金查看详情信息
 - 使用 inline 按钮（`+` `-` `✏` `🗑`）快速操作
+- 点击「🔍 搜索 / 筛选基金...」快速找到指定基金
+- 点击「行情中心」节点展开查看四大指数，再点展开「查看行情详情」打开完整行情 Webview
 
 ## ⚙️ 配置说明 (Configuration)
 
 在 VSCode 设置中搜索 `fund-helper`，可配置以下选项：
 
-| 配置项                        | 说明                               | 默认值                      |
-| ----------------------------- | ---------------------------------- | --------------------------- |
-| `fund-helper.funds`           | 自选基金列表（{code, cost, num}）  | `[]`                        |
-| `fund-helper.refreshInterval` | 数据刷新间隔（秒），仅交易时间生效 | `30`                        |
-| `fund-helper.sortMethod`      | 排序方式                           | `default`                   |
-| `fund-helper.aiProvider`      | AI服务商(openai/aliyun/deepseek等) | `openai`                    |
-| `fund-helper.aiApiKey`        | AI服务的 API Key                   | `""`                        |
-| `fund-helper.aiModel`         | 使用的 AI 模型 (如 gpt-3.5-turbo)  | `gpt-3.5-turbo`             |
-| `fund-helper.aiApiEndpoint`   | AI API 自定义请求地址              | `https://api.openai.com/v1` |
+| 配置项                        | 说明                                    | 默认值                      |
+| ----------------------------- | --------------------------------------- | --------------------------- |
+| `fund-helper.funds`           | 自选基金列表（{code, cost, num}）       | `[]`                        |
+| `fund-helper.refreshInterval` | 数据刷新间隔（秒），设为 0 关闭自动刷新 | `30`                        |
+| `fund-helper.sortMethod`      | 排序方式                                | `default`                   |
+| `fund-helper.hideStatusBar`   | 隐藏状态栏金额（hover 时显示）          | `false`                     |
+| `fund-helper.aiProvider`      | AI服务商(openai/aliyun/deepseek等)      | `openai`                    |
+| `fund-helper.aiApiKey`        | AI服务的 API Key                        | `""`                        |
+| `fund-helper.aiModel`         | 使用的 AI 模型 (如 gpt-3.5-turbo)       | `gpt-3.5-turbo`             |
+| `fund-helper.aiApiEndpoint`   | AI API 自定义请求地址                   | `https://api.openai.com/v1` |
+
+也可通过侧边栏 `...` More Actions 快速**修改刷新间隔**或**一键开关自动刷新**。
 
 **⭐ 如何使用 AI 分析功能：**
 
@@ -124,11 +132,11 @@
 
 ## 🗺️ TODO (Roadmap)
 
-- [ ] 支持查看基金历史走势图
-- [ ] 支持 Webview 详情页展示更丰富的基金信息
+- [x] 支持查看基金历史走势图（Webview 详情页）
+- [x] 支持 Webview 详情页展示更丰富的基金信息
+- [x] 行情中心：大盘指数、资金流向、板块排行
 - [ ] 支持自定义涨跌颜色主题
 - [ ] 支持多组合切换（如：A股组合、港股组合）
-- [ ] 支持交易日/非交易日智能提醒
 - [ ] ...
 
 ## 🔧 技术实现 (Technical Implementation)
@@ -137,7 +145,10 @@
 - 使用 `fundgz.1234567.com.cn` JSONP 接口获取基金实时估值
 - 使用 `fundsuggest.eastmoney.com` 接口进行基金搜索
 - 使用 `api.fund.eastmoney.com` 接口获取历史净值
-- 技术栈：TypeScript、Axios、VSCode Extension API
+- 使用 `push2.eastmoney.com` 接口获取大盘指数与资金流向
+- 使用 `data.eastmoney.com` 接口获取板块排行（通过宿主进程代理解决 CORS）
+- 使用 [ECharts](https://echarts.apache.org/) 绘制资金流向折线图与板块柱状图
+- 技术栈：TypeScript、VSCode Extension API、ECharts
 
 ## ⚠️ 免责声明 (Disclaimer)
 

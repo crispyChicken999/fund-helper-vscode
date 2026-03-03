@@ -256,8 +256,6 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     md.supportHtml = true;
 
     md.appendMarkdown(`### \u3000行情中心\n\n`);
-    md.appendMarkdown(`\n ___ \n\n`);
-    md.appendMarkdown(`*(展开查看大盘指数，点击【查看行情】打开详情面板)*\n\n`);
     if (this._marketIndices.length > 0) {
       const pickColor = (val: number) =>
         val > 0 ? "#f56c6c" : val < 0 ? "#4eb61b" : "#909399";
@@ -272,6 +270,9 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
         md.appendMarkdown(`**${idx.name}**\u3000\u3000：${hl(valStr, color)}\n\n`);
       });
     }
+
+    md.appendMarkdown(`\n ___ \n\n`);
+    md.appendMarkdown(`*(展开查看大盘指数，点击【查看行情】打开详情面板)*\n\n`);
     item.tooltip = md;
     return item;
   }
