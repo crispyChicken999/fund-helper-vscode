@@ -99,6 +99,24 @@ export async function activate(context: vscode.ExtensionContext) {
       await config.update("hideStatusBar", !current, vscode.ConfigurationTarget.Global);
       vscode.window.showInformationMessage(current ? "已显示状态栏收益" : "已隐藏状态栏收益，鼠标悬停可查看详情");
     }),
+    vscode.commands.registerCommand(
+      "fund-helper.copyFundDetail",
+      async (item: FundTreeItem) => {
+        if (item && item.detailValue) {
+          await vscode.env.clipboard.writeText(item.detailValue);
+          vscode.window.showInformationMessage(`已复制: ${item.detailValue}`);
+        }
+      },
+    ),
+    vscode.commands.registerCommand(
+      "fund-helper.copyFundCode",
+      async (code: string) => {
+        if (code) {
+          await vscode.env.clipboard.writeText(code);
+          vscode.window.showInformationMessage(`已复制基金代码: ${code}`);
+        }
+      },
+    ),
 
     // 排序快捷命令（inline 按钮用）
     vscode.commands.registerCommand("fund-helper.sortByDefault", () => {

@@ -158,6 +158,15 @@
         "command": "fund-helper.toggleStatusBarHide",
         "title": "切换状态栏隐藏/显示状态",
         "icon": "$(eye)"
+      },
+      {
+        "command": "fund-helper.copyFundDetail",
+        "title": "复制",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "fund-helper.copyFundCode",
+        "title": "复制代码"
       }
     ],
     "menus": {
@@ -246,6 +255,11 @@
           "command": "fund-helper.sortByHoldingGainRate",
           "when": "view == fundList && viewItem == sortItem",
           "group": "inline@6"
+        },
+        {
+          "command": "fund-helper.copyFundDetail",
+          "when": "view == fundList && viewItem == detailItem",
+          "group": "inline"
         }
       ]
     },
