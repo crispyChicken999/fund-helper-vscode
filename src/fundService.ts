@@ -181,3 +181,90 @@ export async function getNetValueHistory(
     changePercent: parseFloat(item.JZZZL) || 0,
   }));
 }
+
+/** 单根大盘指数数据结构 */
+export interface MarketIndex {
+  code: string;
+  name: string;
+  price: number;
+  changePct: number;
+  changeAbs: number;
+}
+
+/** 两市统计（成交额 + 涨平跌家数） */
+export interface MarketStat {
+  totalAmount: number;
+  upCount: number;
+  flatCount: number;
+  downCount: number;
+}
+
+/**
+ * 获取四大指数实时数据（宿主进程调用，无 CORS 限制）
+ * secids: 上证001、沪深300、深证成指、创业板指
+ */
+export async function fetchMarketIndices(): Promise<MarketIndex[]> {
+  const secids = '1.000001,1.000300,0.399001,0.399006';
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f13,f14&secids=${secids}&_=${Date.now()}`;
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(tid);
+    if (!res.ok) { return []; }
+    const json: any = await res.json();
+    const diff: any[] = json?.data?.diff ?? [];
+    return diff.map((d: any) => ({
+      code: String(d.f12),
+      name: String(d.f14),
+      price: d.f2 ?? 0,
+      changePct: d.f3 ?? 0,
+      changeAbs: d.f4 ?? 0,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 获取两市成交额 + 涨平跌家数（宿主进程调用）
+ * f6=成交额, f104=上涨, f105=下跌, f106=平盘 (上证+深证成指汇总)
+ */
+export async function fetchMarketStat(): Promise<MarketStat> {
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&secids=1.000001,0.399001&fields=f1,f2,f3,f4,f6,f12,f13,f104,f105,f106&_=${Date.now()}`;
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(tid);
+    if (!res.ok) { return { totalAmount: 0, upCount: 0, flatCount: 0, downCount: 0 }; }
+    const json: any = await res.json();
+    const diff: any[] = json?.data?.diff ?? [];
+    let totalAmount = 0, upCount = 0, flatCount = 0, downCount = 0;
+    diff.forEach((d: any) => {
+      totalAmount += d.f6 ?? 0;
+      upCount += d.f104 ?? 0;
+      flatCount += d.f106 ?? 0;
+      downCount += d.f105 ?? 0;
+    });
+    return { totalAmount, upCount, flatCount, downCount };
+  } catch {
+    return { totalAmount: 0, upCount: 0, flatCount: 0, downCount: 0 };
+  }
+}
+
+/**
+ * 通用宿主侧 JSON 代理请求（供 Webview 消息中继使用，绕过 CORS）
+ */
+export async function fetchJsonProxy(url: string): Promise<any> {
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(tid);
+    if (!res.ok) { return null; }
+    return await res.json();
+  } catch {
+    return null;
+  }
+}

@@ -5,7 +5,7 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import { FundConfig } from "./fundModel";
-import { searchFund, getNetValueHistory } from "./fundService";
+import { searchFund, getNetValueHistory, fetchMarketIndices, fetchMarketStat, fetchJsonProxy } from "./fundService";
 import { initHolidayData, isMarketClosed } from "./holidayService";
 import {
   FundTreeDataProvider,
@@ -20,6 +20,7 @@ import {
 } from "./statusBar";
 import { analyzeFunds, configureAI } from "./aiService";
 import { FundDetailWebview } from "./fundWebview";
+import { MarketWebview } from "./marketWebview";
 
 let refreshTimer: NodeJS.Timeout | undefined;
 let treeDataProvider: FundTreeDataProvider;
@@ -133,6 +134,38 @@ export async function activate(context: vscode.ExtensionContext) {
       }
     ),
 
+    vscode.commands.registerCommand("fund-helper.openMarket", () => {
+      MarketWebview.createOrShow(context.extensionUri);
+      // 将宿主侧代理请求挂到 webview
+      const panel = MarketWebview.currentPanel;
+      if (panel) {
+        panel.setMessageHandler(async (message: any) => {
+          if (message.command === 'fetchProxy') {
+            const data = await fetchJsonProxy(message.url);
+            panel.postMessage({ command: 'proxyResponse', reqId: message.reqId, data });
+          } else if (message.command === 'fetchMarketStat') {
+            const stat = await fetchMarketStat();
+            panel.postMessage({ command: 'marketStatResponse', reqId: message.reqId, data: stat });
+          }
+        });
+      }
+    }),
+
+    vscode.commands.registerCommand("fund-helper.filterFunds", async () => {
+      const keyword = await vscode.window.showInputBox({
+        prompt: "输入基金名称或代码以进行筛选",
+        placeHolder: "例如：沪深300 或 000300 （清空则显示全部）",
+        value: treeDataProvider.filterKeyword
+      });
+      if (keyword !== undefined) {
+        treeDataProvider.setFilterKeyword(keyword);
+      }
+    }),
+
+    vscode.commands.registerCommand("fund-helper.clearFilter", () => {
+      treeDataProvider.setFilterKeyword("");
+    }),
+
     // 排序快捷命令（inline 按钮用）
     vscode.commands.registerCommand("fund-helper.sortByDefault", () => {
       treeDataProvider.sortMethod = "default";
@@ -179,7 +212,16 @@ export function deactivate() {
 // ======================== 核心 ========================
 
 async function refreshData() {
-  await treeDataProvider.refresh();
+  // 并行：刷新基金 + 刷新大盘指数
+  const [, indices] = await Promise.all([
+    treeDataProvider.refresh(),
+    fetchMarketIndices(),
+  ]);
+  if (indices.length > 0) {
+    treeDataProvider.setMarketIndices(indices);
+  } else {
+    // 如果指数拉取失败，不覆盖已有缓存
+  }
   const list = treeDataProvider.fundDataList;
   updateStatusBar(list);
   if (treeView) {

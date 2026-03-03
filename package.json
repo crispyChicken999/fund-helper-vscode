@@ -172,6 +172,21 @@
         "command": "fund-helper.viewFundDetail",
         "title": "查看详情",
         "icon": "$(graph-line)"
+      },
+      {
+        "command": "fund-helper.openMarket",
+        "title": "行情中心",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "fund-helper.filterFunds",
+        "title": "筛选基金",
+        "icon": "$(search)"
+      },
+      {
+        "command": "fund-helper.clearFilter",
+        "title": "清除筛选",
+        "icon": "$(clear-all)"
       }
     ],
     "menus": {
@@ -268,6 +283,21 @@
           "command": "fund-helper.copyFundDetail",
           "when": "view == fundList && viewItem == detailItem",
           "group": "inline"
+        },
+        {
+          "command": "fund-helper.openMarket",
+          "when": "view == fundList && viewItem == marketFolderItem",
+          "group": "inline@1"
+        },
+        {
+          "command": "fund-helper.filterFunds",
+          "when": "view == fundList && viewItem =~ /filterItem/",
+          "group": "inline@1"
+        },
+        {
+          "command": "fund-helper.clearFilter",
+          "when": "view == fundList && viewItem == filterItem_active",
+          "group": "inline@2"
         }
       ]
     },

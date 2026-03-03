@@ -17,7 +17,7 @@ import {
   calcHoldingGain,
   calcHoldingGainRate,
 } from "./fundModel";
-import { getFundData } from "./fundService";
+import { getFundData, MarketIndex } from "./fundService";
 
 export type SortMethod =
   | "default"
@@ -63,6 +63,8 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
   private _fundDataList: FundInfo[] = [];
   private _sortMethod: SortMethod = "default";
   private _extensionPath: string;
+  private _marketIndices: MarketIndex[] = [];
+  private _filterKeyword: string = "";
 
   constructor(extensionPath: string) {
     this._extensionPath = extensionPath;
@@ -70,6 +72,25 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     this._sortMethod = vscode.workspace
       .getConfiguration("fund-helper")
       .get<SortMethod>("sortMethod", "default");
+  }
+
+  /** 更新大盘指数缓存并刷新 tree */
+  setMarketIndices(indices: MarketIndex[]): void {
+    this._marketIndices = indices;
+    this._onDidChangeTreeData.fire();
+  }
+
+  get marketIndices(): MarketIndex[] {
+    return this._marketIndices;
+  }
+
+  setFilterKeyword(keyword: string): void {
+    this._filterKeyword = keyword.trim().toLowerCase();
+    this._onDidChangeTreeData.fire();
+  }
+
+  get filterKeyword(): string {
+    return this._filterKeyword;
   }
 
   get fundDataList(): FundInfo[] {
@@ -110,10 +131,20 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
   getChildren(element?: FundTreeItem): FundTreeItem[] {
     if (!element) {
       const fundItems = this._getSortedFundItems();
-      if (fundItems.length === 0) {
+      if (fundItems.length === 0 && !this._filterKeyword) {
         return []; // 返回空让 viewsWelcome 显示
       }
-      return [this._createSortHeader(), this._createSummaryFolder(), ...fundItems];
+      // 顺序：筛选 → 排序 → 行情中心 → 统计收益 → 基金列表
+      return [
+        this._createFilterItem(),
+        this._createSortHeader(),
+        this._createMarketItem(),
+        this._createSummaryFolder(),
+        ...fundItems
+      ];
+    }
+    if (element.contextValue === "marketFolderItem") {
+      return this._getMarketDetails();
     }
     if (element.contextValue === "summaryFolderItem") {
       return this._getSummaryDetails();
@@ -154,6 +185,13 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
 
   private _getSortedFundItems(): FundTreeItem[] {
     let list = [...this._fundDataList];
+    if (this._filterKeyword) {
+      list = list.filter(
+        (f) =>
+          f.name.toLowerCase().includes(this._filterKeyword) ||
+          f.code.toLowerCase().includes(this._filterKeyword),
+      );
+    }
     const [field, dir] = this._sortMethod.split("_");
     const asc = dir === "asc";
 
@@ -171,6 +209,115 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     }
 
     return list.map((fund) => this._createFundItem(fund));
+  }
+
+  private _createFilterItem(): FundTreeItem {
+    const label = this._filterKeyword ? `筛选中: ${this._filterKeyword}` : `搜索 / 筛选基金...`;
+    const item = new FundTreeItem(label, vscode.TreeItemCollapsibleState.None, undefined, false);
+    item.iconPath = new vscode.ThemeIcon("search");
+    item.id = "filterItem";
+    item.contextValue = this._filterKeyword ? "filterItem_active" : "filterItem";
+    item.command = {
+      command: "fund-helper.filterFunds",
+      title: "筛选基金",
+    };
+    return item;
+  }
+
+  private _createMarketItem(): FundTreeItem {
+    // 从缓存指数里汇总一个简短描述，如 "沪 -1.43%  深 -3.07%"
+    let desc = "大盘 · 板块";
+    if (this._marketIndices.length > 0) {
+      const fmt = (idx: MarketIndex) => {
+        const sign = idx.changePct >= 0 ? '+' : '';
+        return `${idx.name.slice(0, 2)} ${sign}${idx.changePct.toFixed(2)}%`;
+      };
+      desc = this._marketIndices.slice(0, 2).map(fmt).join('  ');
+    }
+
+    const item = new FundTreeItem(
+      "行情中心",
+      vscode.TreeItemCollapsibleState.Collapsed,
+      undefined,
+      false,
+    );
+    item.id = "marketFolder";
+    item.contextValue = "marketFolderItem";
+    item.iconPath = new vscode.ThemeIcon("graph");
+    item.description = desc;
+
+    const md = new vscode.MarkdownString();
+    md.isTrusted = true;
+    md.supportThemeIcons = true;
+    md.supportHtml = true;
+
+    md.appendMarkdown(`### \u3000行情中心\n\n`);
+    md.appendMarkdown(`\n ___ \n\n`);
+    md.appendMarkdown(`*(展开查看大盘指数，点击【查看行情】打开详情面板)*\n\n`);
+    if (this._marketIndices.length > 0) {
+      const pickColor = (val: number) =>
+        val > 0 ? "#f56c6c" : val < 0 ? "#4eb61b" : "#909399";
+      const hl = (text: string, color: string) =>
+        `**<span style="color:${color};background-color:${color}33;">&nbsp;${text}&nbsp;</span>**`;
+
+      md.appendMarkdown(`\n ___ \n\n`);
+      this._marketIndices.forEach(idx => {
+        const sign = idx.changePct >= 0 ? '+' : '';
+        const color = pickColor(idx.changePct);
+        const valStr = `${idx.price.toFixed(2)} \u3000 ${sign}${idx.changePct.toFixed(2)}%`;
+        md.appendMarkdown(`**${idx.name}**\u3000\u3000：${hl(valStr, color)}\n\n`);
+      });
+    }
+    item.tooltip = md;
+    return item;
+  }
+
+  private _getMarketDetails(): FundTreeItem[] {
+    const items: FundTreeItem[] = [];
+
+    if (this._marketIndices.length === 0) {
+      const loading = new FundTreeItem("加载中...", vscode.TreeItemCollapsibleState.None, undefined, true);
+      loading.iconPath = new vscode.ThemeIcon("loading~spin");
+      loading.contextValue = "marketDetailItem";
+      items.push(loading);
+    } else {
+      for (const idx of this._marketIndices) {
+        const sign = idx.changePct >= 0 ? '+' : '';
+        const label = `${idx.price.toFixed(2)}　${sign}${idx.changePct.toFixed(2)}%`;
+        const colorVal = idx.changePct > 0 ? 'errorForeground' : idx.changePct < 0 ? 'testing.iconPassed' : 'descriptionForeground';
+        const iconName = idx.changePct > 0 ? 'arrow-up' : idx.changePct < 0 ? 'arrow-down' : 'dash';
+
+        const fullLabel = `${idx.name}　${label}`;
+        // 对数值部分补高亮
+        const highlights: [number, number][] = [];
+        if (idx.changePct > 0) {
+          highlights.push([idx.name.length + 1, fullLabel.length]);
+        }
+
+        const sub = new FundTreeItem(
+          highlights.length > 0 ? { label: fullLabel, highlights } : fullLabel,
+          vscode.TreeItemCollapsibleState.None,
+          undefined,
+          true,
+          `${idx.price.toFixed(2)} ${sign}${idx.changePct.toFixed(2)}%`
+        );
+        sub.contextValue = "marketDetailItem";
+        sub.iconPath = new vscode.ThemeIcon(iconName, new vscode.ThemeColor(colorVal));
+        items.push(sub);
+      }
+    }
+
+    // 查看行情入口
+    const viewBtn = new FundTreeItem("查看行情详情", vscode.TreeItemCollapsibleState.None, undefined, true);
+    viewBtn.iconPath = new vscode.ThemeIcon("link-external");
+    viewBtn.contextValue = "marketViewItem";
+    viewBtn.command = {
+      command: "fund-helper.openMarket",
+      title: "查看行情详情",
+      arguments: []
+    };
+    items.push(viewBtn);
+    return items;
   }
 
   private _createSortHeader(): FundTreeItem {
@@ -542,8 +689,9 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     md.supportThemeIcons = true;
     md.supportHtml = true;
 
-    // 基金名称 + 代码
-    md.appendMarkdown(`#### **${fund.name}**&emsp;*${fund.code}*\n\n`);
+    // 基金名称 + 代码（与统计收益相同的一级标题）
+    md.appendMarkdown(`### \u3000${fund.name}\n\n`);
+    md.appendMarkdown(`*代码：${fund.code}*\n\n`);
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 持仓信息
