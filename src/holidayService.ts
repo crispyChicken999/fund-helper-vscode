@@ -73,3 +73,20 @@ export function isMarketClosed(date: Date = new Date()): boolean {
 
   return false;
 }
+
+/**
+ * 判断当前是否处于开市状态（节假日 + 交易时间段联合判定）
+ * 交易时间：09:30-11:30 / 13:00-15:00（北京时间）
+ */
+export function isMarketOpen(now: Date = new Date()): boolean {
+  if (isMarketClosed(now)) {
+    return false;
+  }
+
+  // 转成北京时间
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const cn = new Date(utc + 8 * 3600000);
+  const t = cn.getHours() * 100 + cn.getMinutes();
+
+  return (t >= 930 && t <= 1130) || (t >= 1300 && t < 1500);
+}

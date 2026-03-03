@@ -120,9 +120,9 @@ export class MarketWebview {
       '<body>',
 
       '<div class="page-header">',
-      '<h1>&#x1F4CA; 行情中心</h1>',
+      '<h1>行情中心</h1>',
       '<span class="update-time" id="updateTime">&#8212;</span>',
-      '<button class="refresh-btn" onclick="refreshAll()">&#x1F504; 刷新</button>',
+      '<button class="refresh-btn" onclick="refreshAll()">刷新</button>',
       '</div>',
 
       '<div class="tabs">',

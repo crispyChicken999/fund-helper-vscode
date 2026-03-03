@@ -166,6 +166,32 @@ export async function activate(context: vscode.ExtensionContext) {
       treeDataProvider.setFilterKeyword("");
     }),
 
+    vscode.commands.registerCommand("fund-helper.setRefreshInterval", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      const current = config.get<number>("refreshInterval", 60);
+      const input = await vscode.window.showInputBox({
+        prompt: "设置自动刷新间隔（秒），设置为 0 表示关闭自动刷新",
+        value: current.toString(),
+        validateInput: (v) => isNaN(Number(v)) || Number(v) < 0 ? "请输入一个非负整数" : undefined
+      });
+      if (input !== undefined) {
+        await config.update("refreshInterval", parseInt(input, 10), vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`自动刷新间隔已设置为 ${input} 秒`);
+      }
+    }),
+
+    vscode.commands.registerCommand("fund-helper.toggleAutoRefresh", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      const current = config.get<number>("refreshInterval", 60);
+      if (current === 0) {
+        await config.update("refreshInterval", 60, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`已开启自动刷新，刷新间隔: 60 秒`);
+      } else {
+        await config.update("refreshInterval", 0, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`已关闭自动刷新`);
+      }
+    }),
+
     // 排序快捷命令（inline 按钮用）
     vscode.commands.registerCommand("fund-helper.sortByDefault", () => {
       treeDataProvider.sortMethod = "default";
@@ -601,16 +627,24 @@ async function importFund() {
 function setupAutoRefresh() {
   if (refreshTimer) {
     clearInterval(refreshTimer);
+    refreshTimer = undefined;
   }
 
   const config = vscode.workspace.getConfiguration("fund-helper");
   const interval = config.get<number>("refreshInterval", 60);
 
+  // interval 等于 0 或者小于 5 认为不开启自动刷新，但为了安全最低生效时间是 5 秒
+  if (interval <= 0) {
+    return;
+  }
+
+  const effectiveInterval = Math.max(interval, 5);
+
   refreshTimer = setInterval(() => {
     if (isDuringTradeTime()) {
       refreshData();
     }
-  }, interval * 1000);
+  }, effectiveInterval * 1000);
 }
 
 function isDuringTradeTime(): boolean {

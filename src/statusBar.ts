@@ -89,7 +89,7 @@ export function updateStatusBar(fundList: FundInfo[]): void {
   } else {
     const icon = totalDailyGain >= 0 ? "$(triangle-up)" : "$(triangle-down)";
     statusBarItem.text = `${icon} ${gainStr}${rateStr}`;
-    statusBarItem.color = totalDailyGain >= 0 ? "#f56c6c" : "#4eb61b";
+    statusBarItem.color = totalDailyGain >= 0 ? undefined : "#4eb61b";
   }
 
   // 构建 Tooltip 统计信息

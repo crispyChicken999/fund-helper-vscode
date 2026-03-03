@@ -18,6 +18,7 @@ import {
   calcHoldingGainRate,
 } from "./fundModel";
 import { getFundData, MarketIndex } from "./fundService";
+import { isMarketClosed, isMarketOpen } from "./holidayService";
 
 export type SortMethod =
   | "default"
@@ -134,10 +135,10 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       if (fundItems.length === 0 && !this._filterKeyword) {
         return []; // 返回空让 viewsWelcome 显示
       }
-      // 顺序：筛选 → 排序 → 行情中心 → 统计收益 → 基金列表
+      // 顺序：排序 → 筛选 → 行情中心 → 统计收益 → 基金列表
       return [
-        this._createFilterItem(),
         this._createSortHeader(),
+        this._createFilterItem(),
         this._createMarketItem(),
         this._createSummaryFolder(),
         ...fundItems
@@ -235,8 +236,11 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       desc = this._marketIndices.slice(0, 2).map(fmt).join('  ');
     }
 
+    const open = isMarketOpen();
+    const statusText = open ? "「开市」" : "「休市中」";
+
     const item = new FundTreeItem(
-      "行情中心",
+      `${statusText} 行情中心`,
       vscode.TreeItemCollapsibleState.Collapsed,
       undefined,
       false,

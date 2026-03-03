@@ -187,6 +187,14 @@
         "command": "fund-helper.clearFilter",
         "title": "清除筛选",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "fund-helper.setRefreshInterval",
+        "title": "修改自动刷新间隔"
+      },
+      {
+        "command": "fund-helper.toggleAutoRefresh",
+        "title": "开启/关闭自动刷新"
       }
     ],
     "menus": {
@@ -220,6 +228,14 @@
         },
         {
           "command": "fund-helper.toggleStatusBarHide",
+          "when": "view == fundList"
+        },
+        {
+          "command": "fund-helper.setRefreshInterval",
+          "when": "view == fundList"
+        },
+        {
+          "command": "fund-helper.toggleAutoRefresh",
           "when": "view == fundList"
         }
       ],
