@@ -19,6 +19,7 @@ import {
   disposeStatusBar,
 } from "./statusBar";
 import { analyzeFunds, configureAI } from "./aiService";
+import { FundDetailWebview } from "./fundWebview";
 
 let refreshTimer: NodeJS.Timeout | undefined;
 let treeDataProvider: FundTreeDataProvider;
@@ -101,10 +102,16 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
     vscode.commands.registerCommand(
       "fund-helper.copyFundDetail",
-      async (item: FundTreeItem) => {
-        if (item && item.detailValue) {
-          await vscode.env.clipboard.writeText(item.detailValue);
-          vscode.window.showInformationMessage(`已复制: ${item.detailValue}`);
+      async (arg: FundTreeItem | string) => {
+        let text = "";
+        if (typeof arg === "string") {
+          text = arg;
+        } else if (arg && arg.detailValue) {
+          text = arg.detailValue;
+        }
+        if (text) {
+          await vscode.env.clipboard.writeText(text);
+          vscode.window.showInformationMessage(`已复制: \n${text}`);
         }
       },
     ),
@@ -116,6 +123,14 @@ export async function activate(context: vscode.ExtensionContext) {
           vscode.window.showInformationMessage(`已复制基金代码: ${code}`);
         }
       },
+    ),
+    vscode.commands.registerCommand(
+      "fund-helper.viewFundDetail",
+      (item: FundTreeItem) => {
+        if (item && item.fundInfo) {
+          FundDetailWebview.createOrShow(context.extensionUri, item.fundInfo);
+        }
+      }
     ),
 
     // 排序快捷命令（inline 按钮用）

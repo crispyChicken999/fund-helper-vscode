@@ -213,17 +213,56 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     let totalAmount = 0;
     let totalDailyGain = 0;
     let totalHoldingGain = 0;
+    let upCount = 0;
+    let downCount = 0;
+    let totalDailyUp = 0;
+    let totalDailyDown = 0;
+    let holdingUpCount = 0;
+    let holdingDownCount = 0;
+    let totalHoldingUp = 0;
+    let totalHoldingDown = 0;
+
     for (const f of this._fundDataList) {
-      totalAmount += calcHoldingAmount(f);
-      totalDailyGain += calcDailyGain(f);
-      totalHoldingGain += calcHoldingGain(f);
+      const amount = calcHoldingAmount(f);
+      const daily = calcDailyGain(f);
+      const holding = calcHoldingGain(f);
+
+      totalAmount += amount;
+      totalDailyGain += daily;
+      totalHoldingGain += holding;
+
+      if (daily > 0) {
+        upCount++;
+        totalDailyUp += daily;
+      } else if (daily < 0) {
+        downCount++;
+        totalDailyDown += daily;
+      }
+
+      if (holding > 0) {
+        holdingUpCount++;
+        totalHoldingUp += holding;
+      } else if (holding < 0) {
+        holdingDownCount++;
+        totalHoldingDown += holding;
+      }
     }
+
+    const totalHoldingRate =
+      totalAmount > 0
+        ? (totalHoldingGain / (totalAmount - totalHoldingGain)) * 100
+        : 0;
+
+    const totalDailyRate =
+      totalAmount - totalDailyGain > 0
+        ? (totalDailyGain / (totalAmount - totalDailyGain)) * 100
+        : 0;
 
     const signFmt = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
     const dailyStr = signFmt(totalDailyGain);
     const holdStr = signFmt(totalHoldingGain);
 
-    const labelText = `📊 日收益: ${dailyStr} | 累计收益: ${holdStr}`;
+    const labelText = `日收益: ${dailyStr} | 累计收益: ${holdStr}`;
 
     const item = new FundTreeItem(
       labelText,
@@ -233,7 +272,39 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     );
     item.id = "summaryFolder";
     item.contextValue = "summaryFolderItem";
-    item.tooltip = "点击展开查看持仓统计详情";
+    item.iconPath = new vscode.ThemeIcon("pie-chart");
+
+    // 富文本 tooltip
+    const pickColor = (val: number) =>
+      val > 0 ? "#f56c6c" : val < 0 ? "#4eb61b" : "#909399";
+    const hl = (text: string, color: string) =>
+      `**<span style="color:${color};background-color:${color}33;">&nbsp;${text}&nbsp;</span>**`;
+
+    const md = new vscode.MarkdownString();
+    md.isTrusted = true;
+    md.supportThemeIcons = true;
+    md.supportHtml = true;
+
+    md.appendMarkdown(`### \u3000持仓统计\n\n`);
+    md.appendMarkdown(`\n ___ \n\n`);
+
+    md.appendMarkdown(`持有金额：${fmtMoney(totalAmount)}\n\n`);
+    md.appendMarkdown(`日总收益：${hl(signFmt(totalDailyGain), pickColor(totalDailyGain))}\n\n`);
+    md.appendMarkdown(`日收益率：${hl(signFmt(totalDailyRate) + "%", pickColor(totalDailyRate))}\n\n`);
+    md.appendMarkdown(`今日上涨：${upCount} 只\u3000${hl("+" + totalDailyUp.toFixed(2), pickColor(1))}\n\n`);
+    md.appendMarkdown(`今日下跌：${downCount} 只\u3000${hl(totalDailyDown.toFixed(2), pickColor(-1))}\n\n`);
+    md.appendMarkdown(`\n ___ \n\n`);
+    md.appendMarkdown(`累计收益：${hl(signFmt(totalHoldingGain), pickColor(totalHoldingGain))}\n\n`);
+    md.appendMarkdown(`累计收益率：${hl(signFmt(totalHoldingRate) + "%", pickColor(totalHoldingRate))}\n\n`);
+    md.appendMarkdown(`累计盈利：${holdingUpCount} 只\u3000${hl("+" + totalHoldingUp.toFixed(2), pickColor(1))}\n\n`);
+    md.appendMarkdown(`累计亏损：${holdingDownCount} 只\u3000${hl(totalHoldingDown.toFixed(2), pickColor(-1))}\n\n`);
+    md.appendMarkdown(`\n ___ \n\n`);
+
+    const copyText = `【持仓统计】\n持有金额：${fmtMoney(totalAmount)}\n日总收益：${signFmt(totalDailyGain)}\n日收益率：${signFmt(totalDailyRate)}%\n今日上涨：${upCount} 只 (+${totalDailyUp.toFixed(2)})\n今日下跌：${downCount} 只 (${totalDailyDown.toFixed(2)})\n累计收益：${signFmt(totalHoldingGain)}\n累计收益率：${signFmt(totalHoldingRate)}%\n累计盈利：${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})\n累计亏损：${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})`;
+    const uriEncoded = encodeURIComponent(JSON.stringify(copyText));
+    md.appendMarkdown(`[$(copy) 一键复制统计信息](command:fund-helper.copyFundDetail?${uriEncoded})\n`);
+
+    item.tooltip = md;
 
     return item;
   }
@@ -287,32 +358,46 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
         ? (totalDailyGain / (totalAmount - totalDailyGain)) * 100
         : 0;
 
-    const dot = (val: number) => (val > 0 ? "🔴" : val < 0 ? "🟢" : "⚪");
     const signStr = (val: number) => `${val >= 0 ? "+" : ""}${val.toFixed(2)}`;
+    const getIcon = (val: number) => (val > 0 ? "arrow-up" : val < 0 ? "arrow-down" : "dash");
+    const getColor = (val: number) =>
+      val > 0 ? "errorForeground" : val < 0 ? "testing.iconPassed" : "descriptionForeground";
 
-    const details: { label: string; value: string }[] = [
-      { label: "持有金额\u3000", value: fmtMoney(totalAmount) },
-      { label: "日总收益\u3000", value: `${dot(totalDailyGain)} ${signStr(totalDailyGain)}` },
-      { label: "日收益率\u3000", value: `${dot(totalDailyRate)} ${signStr(totalDailyRate)}%` },
-      { label: "今日上涨\u3000", value: `${upCount} 只 (+${totalDailyUp.toFixed(2)})` },
-      { label: "今日下跌\u3000", value: `${downCount} 只 (${totalDailyDown.toFixed(2)})` },
-      { label: "累计收益\u3000", value: `${dot(totalHoldingGain)} ${signStr(totalHoldingGain)}` },
-      { label: "累计收益率", value: `${dot(totalHoldingRate)} ${signStr(totalHoldingRate)}%` },
-      { label: "累计盈利\u3000", value: `${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})` },
-      { label: "累计亏损\u3000", value: `${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})` },
+    const details: { label: string; value: string; icon: string; color?: string; highlight?: boolean }[] = [
+      { label: "持有金额\u3000", value: fmtMoney(totalAmount), icon: "database" },
+      { label: "日总收益\u3000", value: signStr(totalDailyGain), icon: getIcon(totalDailyGain), color: getColor(totalDailyGain), highlight: totalDailyGain > 0 },
+      { label: "日收益率\u3000", value: `${signStr(totalDailyRate)}%`, icon: getIcon(totalDailyRate), color: getColor(totalDailyRate), highlight: totalDailyRate > 0 },
+      { label: "今日上涨\u3000", value: `${upCount} 只 (+${totalDailyUp.toFixed(2)})`, icon: "arrow-up", color: "errorForeground", highlight: true },
+      { label: "今日下跌\u3000", value: `${downCount} 只 (${totalDailyDown.toFixed(2)})`, icon: "arrow-down", color: "testing.iconPassed" },
+      { label: "累计收益\u3000", value: signStr(totalHoldingGain), icon: getIcon(totalHoldingGain), color: getColor(totalHoldingGain), highlight: totalHoldingGain > 0 },
+      { label: "累计收益率", value: `${signStr(totalHoldingRate)}%`, icon: getIcon(totalHoldingRate), color: getColor(totalHoldingRate), highlight: totalHoldingRate > 0 },
+      { label: "累计盈利\u3000", value: `${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})`, icon: "triangle-up", color: "errorForeground", highlight: true },
+      { label: "累计亏损\u3000", value: `${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})`, icon: "triangle-down", color: "testing.iconPassed" },
     ];
 
-    return details.map((d) => {
+    const itemNodes = details.map((d) => {
+      const fullLabel = `${d.label}：${d.value}`;
+      const highlights: [number, number][] = [];
+      if (d.highlight) {
+        const startIdx = fullLabel.indexOf(d.value);
+        if (startIdx !== -1) {
+          highlights.push([startIdx, startIdx + d.value.length]);
+        }
+      }
+
       const item = new FundTreeItem(
-        `${d.label}：${d.value}`,
+        highlights.length > 0 ? { label: fullLabel, highlights } : fullLabel,
         vscode.TreeItemCollapsibleState.None,
         undefined,
         true,
         d.value,
       );
       item.contextValue = "summaryDetailItem";
+      item.iconPath = new vscode.ThemeIcon(d.icon, d.color ? new vscode.ThemeColor(d.color) : undefined);
       return item;
     });
+
+    return itemNodes;
   }
 
   private _createFundItem(fund: FundInfo): FundTreeItem {
@@ -490,7 +575,9 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 复制命令
-    md.appendMarkdown(`[$(copy) 复制基金代码](command:fund-helper.copyFundCode?%22${fund.code}%22)\n`);
+    const copyText = `【${fund.name} (${fund.code})】\n持有额：${fmtMoney(holdingAmount)}\n持有收益：${holdGainStr}\n持有收益率：${holdRateStr}\n成本价：${fund.cost > 0 ? fund.cost.toFixed(4) : "--"}\n单位净值：${fund.netValue > 0 ? fund.netValue.toFixed(4) : "--"}\n估算净值：${estValueStr}\n涨跌幅：${changeStr}\n估算收益：${dailyGainStr}\n更新时间：${updateStr}`;
+    const uriEncoded = encodeURIComponent(JSON.stringify(copyText));
+    md.appendMarkdown(`[$(copy) 复制基金信息](command:fund-helper.copyFundDetail?${uriEncoded})\n`);
 
     return md;
   }
@@ -501,42 +588,53 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     const holdingGainRate = calcHoldingGainRate(fund);
     const dailyGain = calcDailyGain(fund);
 
-    // emoji 指示器: 正=🔴 负=🟢 零=⚪
-    const dot = (val: number) => (val > 0 ? "🔴" : val < 0 ? "🟢" : "⚪");
+    const getIcon = (val: number) => (val > 0 ? "arrow-up" : val < 0 ? "arrow-down" : "dash");
+    const getColor = (val: number) =>
+      val > 0 ? "errorForeground" : val < 0 ? "testing.iconPassed" : "descriptionForeground";
     const signStr = (val: number) => `${val >= 0 ? "+" : ""}${val.toFixed(2)}`;
 
-    const details: { label: string; value: string; copyValue?: string }[] = [
-      { label: "基金名称\u3000", value: fund.name, copyValue: fund.name },
-      { label: "基金代码\u3000", value: fund.code, copyValue: fund.code },
-      { label: "持有额\u3000\u3000", value: fmtMoney(holdingAmount) },
+    const details: { label: string; value: string; icon: string; color?: string; copyValue?: string; highlight?: boolean }[] = [
+      { label: "基金名称\u3000", value: fund.name, icon: "tag", copyValue: fund.name },
+      { label: "基金代码\u3000", value: fund.code, icon: "symbol-number", copyValue: fund.code },
+      { label: "持有额\u3000\u3000", value: fmtMoney(holdingAmount), icon: "database" },
       {
         label: `持有收益\u3000`,
-        value: `${dot(holdingGain)} ${signStr(holdingGain)}`,
+        value: signStr(holdingGain),
+        icon: getIcon(holdingGain),
+        color: getColor(holdingGain),
+        highlight: holdingGain > 0,
       },
       {
         label: `持有收益率`,
-        value:
-          fund.cost > 0
-            ? `${dot(holdingGainRate)} ${signStr(holdingGainRate)}%`
-            : "--",
+        value: fund.cost > 0 ? `${signStr(holdingGainRate)}%` : "--",
+        icon: fund.cost > 0 ? getIcon(holdingGainRate) : "dash",
+        color: fund.cost > 0 ? getColor(holdingGainRate) : undefined,
+        highlight: holdingGainRate > 0,
       },
-      { label: "成本价\u3000\u3000", value: fund.cost > 0 ? fund.cost.toFixed(4) : "--" },
+      { label: "成本价\u3000\u3000", value: fund.cost > 0 ? fund.cost.toFixed(4) : "--", icon: "credit-card" },
       {
         label: "单位净值\u3000",
         value: fund.netValue > 0 ? fund.netValue.toFixed(4) : "--",
+        icon: "pulse",
       },
       {
         label: "估算净值\u3000",
-        value:
-          fund.estimatedValue !== null ? fund.estimatedValue.toFixed(4) : "--",
+        value: fund.estimatedValue !== null ? fund.estimatedValue.toFixed(4) : "--",
+        icon: "graph",
       },
       {
         label: `涨跌幅\u3000\u3000`,
-        value: `${dot(fund.changePercent)} ${signStr(fund.changePercent)}%`,
+        value: `${signStr(fund.changePercent)}%`,
+        icon: getIcon(fund.changePercent),
+        color: getColor(fund.changePercent),
+        highlight: fund.changePercent > 0,
       },
       {
         label: `估算收益\u3000`,
-        value: `${dot(dailyGain)} ${signStr(dailyGain)}`,
+        value: signStr(dailyGain),
+        icon: getIcon(dailyGain),
+        color: getColor(dailyGain),
+        highlight: dailyGain > 0,
       },
       {
         label: "更新时间\u3000",
@@ -545,21 +643,49 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
             ? fund.updateTime.substring(11)
             : fund.updateTime
           : "--",
-      },
+        icon: "clock",
+      }
     ];
 
-    return details.map((d) => {
+    const itemNodes = details.map((d) => {
       const copyVal = d.copyValue !== undefined ? d.copyValue : d.value;
+      const fullLabel = `${d.label}：${d.value}`;
+      const highlights: [number, number][] = [];
+      if (d.highlight) {
+        const startIdx = fullLabel.indexOf(d.value);
+        if (startIdx !== -1) {
+          highlights.push([startIdx, startIdx + d.value.length]);
+        }
+      }
+
       const item = new FundTreeItem(
-        `${d.label}：${d.value}`,
+        highlights.length > 0 ? { label: fullLabel, highlights } : fullLabel,
         vscode.TreeItemCollapsibleState.None,
         fund,
         true,
         copyVal,
       );
       item.contextValue = "detailItem";
+      item.iconPath = new vscode.ThemeIcon(d.icon, d.color ? new vscode.ThemeColor(d.color) : undefined);
       return item;
     });
+
+    const webviewItem = new FundTreeItem(
+      "查看详情",
+      vscode.TreeItemCollapsibleState.None,
+      fund,
+      true,
+    );
+    webviewItem.iconPath = new vscode.ThemeIcon("graph-line");
+    webviewItem.command = {
+      command: "fund-helper.viewFundDetail",
+      title: "查看详情",
+      arguments: [webviewItem]
+    };
+    webviewItem.contextValue = "actionItem";
+
+    itemNodes.push(webviewItem);
+    return itemNodes;
   }
 }
 

@@ -102,7 +102,7 @@
       {
         "command": "fund-helper.analyzeFunds",
         "title": "AI分析",
-        "icon": "$(lightbulb)"
+        "icon": "$(sparkle)"
       },
       {
         "command": "fund-helper.sortFund",
@@ -167,6 +167,11 @@
       {
         "command": "fund-helper.copyFundCode",
         "title": "复制代码"
+      },
+      {
+        "command": "fund-helper.viewFundDetail",
+        "title": "查看详情",
+        "icon": "$(graph-line)"
       }
     ],
     "menus": {
@@ -191,18 +196,16 @@
         },
         {
           "command": "fund-helper.configureAI",
-          "when": "view == fundList",
-          "group": "navigation@3"
+          "when": "view == fundList"
         },
         {
           "command": "fund-helper.analyzeFunds",
           "when": "view == fundList",
-          "group": "navigation@4"
+          "group": "navigation@3"
         },
         {
           "command": "fund-helper.toggleStatusBarHide",
-          "when": "view == fundList",
-          "group": "navigation@5"
+          "when": "view == fundList"
         }
       ],
       "view/item/context": [
@@ -225,6 +228,11 @@
           "command": "fund-helper.deleteFund",
           "when": "view == fundList && viewItem == fundItem",
           "group": "inline@4"
+        },
+        {
+          "command": "fund-helper.viewFundDetail",
+          "when": "view == fundList && viewItem == fundItem",
+          "group": "inline@5"
         },
         {
           "command": "fund-helper.sortByDefault",
