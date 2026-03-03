@@ -12,5 +12,5 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true
   },
-  "exclude": ["node_modules", "out", "demo-funds"]
+  "exclude": ["node_modules", "out", "demo"]
 }
