@@ -2,7 +2,7 @@
   "name": "fund-helper",
   "displayName": "基金助手",
   "description": "在 VSCode 侧边栏查看自选基金实时估值、涨跌幅与收益",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "author": "CrispyChicken",
   "publisher": "CrispyChicken",
   "license": "MIT",
@@ -43,7 +43,9 @@
     "helper",
     "fund helper"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -103,11 +105,6 @@
         "command": "fund-helper.analyzeFunds",
         "title": "AI分析",
         "icon": "$(sparkle)"
-      },
-      {
-        "command": "fund-helper.sortFund",
-        "title": "排序",
-        "icon": "$(list-ordered)"
       },
       {
         "command": "fund-helper.addPosition",

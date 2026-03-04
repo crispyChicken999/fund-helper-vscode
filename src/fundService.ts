@@ -2,10 +2,7 @@
  * 基金 API 服务层
  * 使用 fundgz.1234567.com.cn JSONP 接口获取基金实时估值
  */
-
 import { FundInfo, FundConfig, NetValueRecord } from "./fundModel";
-
-import { isMarketClosed } from "./holidayService";
 
 /**
  * 解析 JSONP 响应

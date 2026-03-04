@@ -2,6 +2,17 @@
 
 本文档记录了"基金助手"(Fund Helper) VS Code 扩展的所有重要更改。
 
+## [0.1.7] - 2026-03-04
+
+### Features
+
+- ✨ **自动激活**：将插件激活事件修改为 `onStartupFinished`，无需手动点击侧滑栏即可在 VSCode 启动后自动激活插件，更新后台数据，使用更省心
+- ♻️ **代码重构**：移除废弃的冗余命令和 `sortFund` 下拉选项，清理核心代码，减少插件体积，提高运行效率
+
+### Bug Fixes
+
+- 🐛 修复 `activationEvents` 使用 `*` 导致 VSCode 启动时出现性能警告的问题，改为 `onStartupFinished` 延迟在后台加载
+
 ## [0.1.6] - 2026-03-04
 
 ### Features
