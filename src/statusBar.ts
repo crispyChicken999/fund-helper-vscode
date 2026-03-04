@@ -95,23 +95,37 @@ export function updateStatusBar(fundList: FundInfo[]): void {
   // 构建 Tooltip 统计信息
   const md = new vscode.MarkdownString();
   md.isTrusted = true;
+  md.supportThemeIcons = true;
   md.supportHtml = true;
-  md.appendMarkdown(`#### 📊 今日基金统计\n\n`);
+  md.appendMarkdown(`#### $(graph-line) 今日基金统计\n\n`);
   md.appendMarkdown(`\n ___ \n\n`);
-  md.appendMarkdown(`📈 上涨基金：**${upCount}** 只，共计：<span style="color:#f56c6c;">+${totalDailyUp.toFixed(2)}</span>\n\n`);
-  md.appendMarkdown(`📉 下跌基金：**${downCount}** 只，共计：<span style="color:#4eb61b;">${totalDailyDown.toFixed(2)}</span>\n\n`);
+  const hl = (text: string, color: string) =>
+    `**<span style="color:${color};background-color:${color}33;">&nbsp;${text}&nbsp;</span>**`;
+
+  md.appendMarkdown(`$(arrow-up) 上涨基金：**${upCount}** 只，共计：${hl("+" + totalDailyUp.toFixed(2), "#f56c6c")}\n\n`);
+  md.appendMarkdown(`$(arrow-down) 下跌基金：**${downCount}** 只，共计：${hl(totalDailyDown.toFixed(2), "#4eb61b")}\n\n`);
   const dayColor = totalDailyGain > 0 ? "#f56c6c" : totalDailyGain < 0 ? "#4eb61b" : "#909399";
-  md.appendMarkdown(`💰 日总收益：**<span style="color:${dayColor};">${totalDailyGain >= 0 ? "+" : ""}${totalDailyGain.toFixed(2)}</span>**\n\n`);
+  md.appendMarkdown(`$(pulse) 日总收益：${hl(`${totalDailyGain >= 0 ? "+" : ""}${totalDailyGain.toFixed(2)}`, dayColor)}\n\n`);
 
   md.appendMarkdown(`\n ___ \n\n`);
   const holdingColor = totalHoldingGain > 0 ? "#f56c6c" : totalHoldingGain < 0 ? "#4eb61b" : "#909399";
 
-  md.appendMarkdown(`🏦 **累计收益：<span style="color:${holdingColor};">${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}</span>**\n\n`);
-  md.appendMarkdown(`📈 累计盈利：**${holdingUpCount}** 只，共计：<span style="color:#f56c6c;">+${totalHoldingUp.toFixed(2)}</span>\n\n`);
-  md.appendMarkdown(`📉 累计亏损：**${holdingDownCount}** 只，共计：<span style="color:#4eb61b;">${totalHoldingDown.toFixed(2)}</span>\n\n`);
+  md.appendMarkdown(`$(triangle-up) 累计盈利：**${holdingUpCount}** 只，共计：${hl("+" + totalHoldingUp.toFixed(2), "#f56c6c")}\n\n`);
+  md.appendMarkdown(`$(triangle-down) 累计亏损：**${holdingDownCount}** 只，共计：${hl(totalHoldingDown.toFixed(2), "#4eb61b")}\n\n`);
+  md.appendMarkdown(`$(diff) 累计收益：${hl(`${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}`, holdingColor)}\n\n`);
   md.appendMarkdown(`\n ___ \n\n`);
 
-  md.appendMarkdown(`📦 自选数量：**${fundList.length}** 只\n\n`);
+  md.appendMarkdown(`$(database) 自选数量：**${fundList.length}** 只\n\n`);
+
+  const now = new Date();
+  const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  md.appendMarkdown(`$(clock) 更新时间：**${timeStr}**\n\n`);
+  md.appendMarkdown(`\n ___ \n\n`);
+
+  const copyText = `【今日基金统计】\n上涨基金：${upCount} 只 (+${totalDailyUp.toFixed(2)})\n下跌基金：${downCount} 只 (${totalDailyDown.toFixed(2)})\n日总收益：${totalDailyGain >= 0 ? "+" : ""}${totalDailyGain.toFixed(2)}\n累计盈利：${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})\n累计亏损：${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})\n累计收益：${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}\n自选数量：${fundList.length} 只\n更新时间：${timeStr}`;
+  const uriEncoded = encodeURIComponent(JSON.stringify(copyText));
+  md.appendMarkdown(`[$(copy) 复制今日统计](command:fund-helper.copyFundDetail?${uriEncoded})\n\n`);
+
   md.appendMarkdown(`*点击状态栏刷新， [点击这里隐藏/显示金额](command:fund-helper.toggleStatusBarHide)*`);
 
   statusBarItem.tooltip = md;

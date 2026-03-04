@@ -437,22 +437,27 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     md.supportThemeIcons = true;
     md.supportHtml = true;
 
-    md.appendMarkdown(`### \u3000持仓统计\n\n`);
+    md.appendMarkdown(`### \u3000$(pie-chart) 持仓统计\n\n`);
     md.appendMarkdown(`\n ___ \n\n`);
 
-    md.appendMarkdown(`持有金额：${fmtMoney(totalAmount)}\n\n`);
-    md.appendMarkdown(`日总收益：${hl(signFmt(totalDailyGain), pickColor(totalDailyGain))}\n\n`);
-    md.appendMarkdown(`日收益率：${hl(signFmt(totalDailyRate) + "%", pickColor(totalDailyRate))}\n\n`);
-    md.appendMarkdown(`今日上涨：${upCount} 只\u3000${hl("+" + totalDailyUp.toFixed(2), pickColor(1))}\n\n`);
-    md.appendMarkdown(`今日下跌：${downCount} 只\u3000${hl(totalDailyDown.toFixed(2), pickColor(-1))}\n\n`);
+    md.appendMarkdown(`$(database) 持有金额：${fmtMoney(totalAmount)}\n\n`);
+    md.appendMarkdown(`$(pulse) 日总收益：${hl(signFmt(totalDailyGain), pickColor(totalDailyGain))}\n\n`);
+    md.appendMarkdown(`$(symbol-numeric) 日收益率：${hl(signFmt(totalDailyRate) + "%", pickColor(totalDailyRate))}\n\n`);
+    md.appendMarkdown(`$(arrow-up) 今日上涨：${upCount} 只\u3000${hl("+" + totalDailyUp.toFixed(2), pickColor(1))}\n\n`);
+    md.appendMarkdown(`$(arrow-down) 今日下跌：${downCount} 只\u3000${hl(totalDailyDown.toFixed(2), pickColor(-1))}\n\n`);
     md.appendMarkdown(`\n ___ \n\n`);
-    md.appendMarkdown(`累计收益：${hl(signFmt(totalHoldingGain), pickColor(totalHoldingGain))}\n\n`);
-    md.appendMarkdown(`累计收益率：${hl(signFmt(totalHoldingRate) + "%", pickColor(totalHoldingRate))}\n\n`);
-    md.appendMarkdown(`累计盈利：${holdingUpCount} 只\u3000${hl("+" + totalHoldingUp.toFixed(2), pickColor(1))}\n\n`);
-    md.appendMarkdown(`累计亏损：${holdingDownCount} 只\u3000${hl(totalHoldingDown.toFixed(2), pickColor(-1))}\n\n`);
+    md.appendMarkdown(`$(diff) 累计收益：${hl(signFmt(totalHoldingGain), pickColor(totalHoldingGain))}\n\n`);
+    md.appendMarkdown(`$(symbol-numeric) 累计收益率：${hl(signFmt(totalHoldingRate) + "%", pickColor(totalHoldingRate))}\n\n`);
+    md.appendMarkdown(`$(triangle-up) 累计盈利：${holdingUpCount} 只\u3000${hl("+" + totalHoldingUp.toFixed(2), pickColor(1))}\n\n`);
+    md.appendMarkdown(`$(triangle-down) 累计亏损：${holdingDownCount} 只\u3000${hl(totalHoldingDown.toFixed(2), pickColor(-1))}\n\n`);
     md.appendMarkdown(`\n ___ \n\n`);
 
-    const copyText = `【持仓统计】\n持有金额：${fmtMoney(totalAmount)}\n日总收益：${signFmt(totalDailyGain)}\n日收益率：${signFmt(totalDailyRate)}%\n今日上涨：${upCount} 只 (+${totalDailyUp.toFixed(2)})\n今日下跌：${downCount} 只 (${totalDailyDown.toFixed(2)})\n累计收益：${signFmt(totalHoldingGain)}\n累计收益率：${signFmt(totalHoldingRate)}%\n累计盈利：${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})\n累计亏损：${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})`;
+    const now = new Date();
+    const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    md.appendMarkdown(`$(clock) 更新时间：${timeStr}\n\n`);
+    md.appendMarkdown(`\n ___ \n\n`);
+
+    const copyText = `【持仓统计】\n持有金额：${fmtMoney(totalAmount)}\n日总收益：${signFmt(totalDailyGain)}\n日收益率：${signFmt(totalDailyRate)}%\n今日上涨：${upCount} 只 (+${totalDailyUp.toFixed(2)})\n今日下跌：${downCount} 只 (${totalDailyDown.toFixed(2)})\n累计收益：${signFmt(totalHoldingGain)}\n累计收益率：${signFmt(totalHoldingRate)}%\n累计盈利：${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})\n累计亏损：${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})\n更新时间：${timeStr}`;
     const uriEncoded = encodeURIComponent(JSON.stringify(copyText));
     md.appendMarkdown(`[$(copy) 复制统计信息](command:fund-helper.copyFundDetail?${uriEncoded})\n`);
 
@@ -683,11 +688,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
         : "--";
     const estValueStr =
       fund.estimatedValue !== null ? fund.estimatedValue.toFixed(4) : "--";
-    const updateStr = fund.updateTime
-      ? fund.updateTime.length > 10
-        ? fund.updateTime.substring(11)
-        : fund.updateTime
-      : "--";
+    const updateStr = fund.updateTime ? fund.updateTime : "--";
 
     const md = new vscode.MarkdownString();
     md.isTrusted = true;
@@ -700,32 +701,32 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 持仓信息
-    md.appendMarkdown(`持有额\u3000\u3000：${fmtMoney(holdingAmount)}\n\n`);
-    md.appendMarkdown(`持有份额\u3000：${fund.shares > 0 ? fund.shares.toFixed(2) : "--"}\n\n`);
+    md.appendMarkdown(`$(database) 持有额\u3000\u3000：${fmtMoney(holdingAmount)}\n\n`);
+    md.appendMarkdown(`$(pie-chart) 持有份额\u3000：${fund.shares > 0 ? fund.shares.toFixed(2) : "--"}\n\n`);
     md.appendMarkdown(
-      `持有收益\u3000：${hl(holdGainStr, pickColor(holdingGain))}\n\n`,
+      `$(diff) 持有收益\u3000：${hl(holdGainStr, pickColor(holdingGain))}\n\n`,
     );
     md.appendMarkdown(
-      `持有收益率：${hl(holdRateStr, pickColor(holdingGainRate))}\n\n`,
+      `$(symbol-numeric) 持有收益率：${hl(holdRateStr, pickColor(holdingGainRate))}\n\n`,
     );
     md.appendMarkdown(
-      `成本价\u3000\u3000：${fund.cost > 0 ? fund.cost.toFixed(4) : "--"}\n\n`,
+      `$(credit-card) 成本价\u3000\u3000：${fund.cost > 0 ? fund.cost.toFixed(4) : "--"}\n\n`,
     );
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 估值信息
-    md.appendMarkdown(`单位净值\u3000：${fund.netValue > 0 ? fund.netValue.toFixed(4) : "--"}\n\n`);
-    md.appendMarkdown(`估算净值\u3000：${estValueStr}\n\n`);
+    md.appendMarkdown(`$(pulse) 单位净值\u3000：${fund.netValue > 0 ? fund.netValue.toFixed(4) : "--"}\n\n`);
+    md.appendMarkdown(`$(graph) 估算净值\u3000：${estValueStr}\n\n`);
     md.appendMarkdown(
-      `涨跌幅\u3000\u3000：${hl(changeStr, pickColor(fund.changePercent))}\n\n`,
+      `$(graph-line) 涨跌幅\u3000\u3000：${hl(changeStr, pickColor(fund.changePercent))}\n\n`,
     );
     md.appendMarkdown(
-      `估算收益\u3000：${hl(dailyGainStr, pickColor(dailyGain))}\n\n`,
+      `$(pulse) 估算收益\u3000：${hl(dailyGainStr, pickColor(dailyGain))}\n\n`,
     );
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 时间
-    md.appendMarkdown(`更新时间\u3000：${updateStr}\n`);
+    md.appendMarkdown(`$(clock) 更新时间\u3000：${updateStr}\n`);
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 复制命令
@@ -794,11 +795,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       },
       {
         label: "更新时间\u3000",
-        value: fund.updateTime
-          ? fund.updateTime.length > 10
-            ? fund.updateTime.substring(11)
-            : fund.updateTime
-          : "--",
+        value: fund.updateTime ? fund.updateTime : "--",
         icon: "clock",
       }
     ];
