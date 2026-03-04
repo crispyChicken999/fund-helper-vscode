@@ -454,7 +454,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
 
     const copyText = `【持仓统计】\n持有金额：${fmtMoney(totalAmount)}\n日总收益：${signFmt(totalDailyGain)}\n日收益率：${signFmt(totalDailyRate)}%\n今日上涨：${upCount} 只 (+${totalDailyUp.toFixed(2)})\n今日下跌：${downCount} 只 (${totalDailyDown.toFixed(2)})\n累计收益：${signFmt(totalHoldingGain)}\n累计收益率：${signFmt(totalHoldingRate)}%\n累计盈利：${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})\n累计亏损：${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})`;
     const uriEncoded = encodeURIComponent(JSON.stringify(copyText));
-    md.appendMarkdown(`[$(copy) 一键复制统计信息](command:fund-helper.copyFundDetail?${uriEncoded})\n`);
+    md.appendMarkdown(`[$(copy) 复制统计信息](command:fund-helper.copyFundDetail?${uriEncoded})\n`);
 
     item.tooltip = md;
 

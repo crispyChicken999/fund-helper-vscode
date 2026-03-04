@@ -8,7 +8,7 @@
 
 ![License](https://img.shields.io/badge/License-MIT-orange.svg)
 ![VSCode](https://img.shields.io/badge/VSCode-1.82.0%2B-blue.svg)
-![Version](https://img.shields.io/badge/Version-0.1.5-green.svg)
+![Version](https://img.shields.io/badge/Version-0.1.6-green.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20MacOS%20%7C%20Linux-purple.svg)
 
 ![Downloads](https://img.shields.io/visual-studio-marketplace/d/CrispyChicken.fund-helper)
@@ -50,8 +50,8 @@
 3. 🎨 **涨红跌绿**：图标、Tooltip、详情项均直观标识涨跌状态
 4. 🔄 **多维排序**：支持按涨跌幅、估算收益、持有额、持有收益、持有收益率进行升降序排序
 5. 🖱️ **拖拽排序**：默认排序下可拖拽调整基金顺序
-6. ➕ **加仓/减仓**：选择历史净值日期操作，自动计算加权平均成本
-7. ✏️ **修改持仓**：直接修改总份额和成本价
+6. ➕ **加仓/减仓**：选择历史净值日期买入，直接输入买入金额自动为你精算持有份额，也支持按照卖出金额快速减仓。
+7. ✏️ **修改持仓**：自由修改总份额和成本价；如份额清仓记为 0 时则不再弹窗询问成本，丝滑一气呵成。
 8. 📤 **导入/导出**：JSON 格式导入导出基金列表，支持合并或覆盖
 9. 📌 **状态栏摘要**：底部状态栏显示总日收益和百分比，仅亏损时显示绿色提醒
 10. ⏰ **自动刷新**：交易时间内自动刷新数据，间隔可配置。智能识别周末和法定节假日，非交易日停止刷新
