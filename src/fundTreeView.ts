@@ -701,6 +701,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
 
     // 持仓信息
     md.appendMarkdown(`持有额\u3000\u3000：${fmtMoney(holdingAmount)}\n\n`);
+    md.appendMarkdown(`持有份额\u3000：${fund.shares > 0 ? fund.shares.toFixed(2) : "--"}\n\n`);
     md.appendMarkdown(
       `持有收益\u3000：${hl(holdGainStr, pickColor(holdingGain))}\n\n`,
     );
@@ -728,7 +729,8 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 复制命令
-    const copyText = `【${fund.name} (${fund.code})】\n持有额：${fmtMoney(holdingAmount)}\n持有收益：${holdGainStr}\n持有收益率：${holdRateStr}\n成本价：${fund.cost > 0 ? fund.cost.toFixed(4) : "--"}\n单位净值：${fund.netValue > 0 ? fund.netValue.toFixed(4) : "--"}\n估算净值：${estValueStr}\n涨跌幅：${changeStr}\n估算收益：${dailyGainStr}\n更新时间：${updateStr}`;
+    const sharesStr = fund.shares > 0 ? fund.shares.toFixed(2) : "--";
+    const copyText = `【${fund.name} (${fund.code})】\n持有额：${fmtMoney(holdingAmount)}\n持有份额：${sharesStr}\n持有收益：${holdGainStr}\n持有收益率：${holdRateStr}\n成本价：${fund.cost > 0 ? fund.cost.toFixed(4) : "--"}\n单位净值：${fund.netValue > 0 ? fund.netValue.toFixed(4) : "--"}\n估算净值：${estValueStr}\n涨跌幅：${changeStr}\n估算收益：${dailyGainStr}\n更新时间：${updateStr}`;
     const uriEncoded = encodeURIComponent(JSON.stringify(copyText));
     md.appendMarkdown(`[$(copy) 复制基金信息](command:fund-helper.copyFundDetail?${uriEncoded})\n`);
 
@@ -750,6 +752,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       { label: "基金名称\u3000", value: fund.name, icon: "tag", copyValue: fund.name },
       { label: "基金代码\u3000", value: fund.code, icon: "symbol-number", copyValue: fund.code },
       { label: "持有额\u3000\u3000", value: fmtMoney(holdingAmount), icon: "database" },
+      { label: "持有份额\u3000", value: fund.shares > 0 ? fund.shares.toFixed(2) : "--", icon: "pie-chart" },
       {
         label: `持有收益\u3000`,
         value: signStr(holdingGain),

@@ -362,19 +362,20 @@ async function addPosition(code: string, name: string) {
     return;
   }
 
-  // 3. 输入加仓份额
-  const numStr = await vscode.window.showInputBox({
-    prompt: `加仓 ${name} — 买入净值 ${selected.netValue.toFixed(4)}，请输入加仓份额`,
+  // 3. 输入买入金额
+  const amountStr = await vscode.window.showInputBox({
+    prompt: `加仓 ${name} — 买入净值 ${selected.netValue.toFixed(4)}，请输入买入金额`,
     placeHolder: "例如：1000",
     validateInput: (v) =>
       isNaN(Number(v)) || Number(v) <= 0 ? "请输入正数" : undefined,
   });
-  if (!numStr) {
+  if (!amountStr) {
     return;
   }
 
-  const addNum = parseFloat(numStr);
+  const buyAmount = parseFloat(amountStr);
   const buyPrice = selected.netValue;
+  const addNum = buyAmount / buyPrice;
 
   // 4. 计算加权平均成本并保存
   const funds = getFundConfigs();
@@ -435,7 +436,7 @@ async function reducePosition(code: string, name: string) {
   // 3. 输入减仓份额
   const numStr = await vscode.window.showInputBox({
     prompt: `减仓 ${name} — 当前份额 ${currentNum}，请输入减仓份额`,
-    placeHolder: "例如：500",
+    placeHolder: "例如：500" + `，最多不能超过${currentNum}`,
     validateInput: (v) => {
       const n = Number(v);
       if (isNaN(n) || n <= 0) {
@@ -481,17 +482,25 @@ async function editPosition(code: string, name: string) {
     return;
   }
 
-  const costStr = await vscode.window.showInputBox({
-    prompt: `修改 ${title} — 请输入成本价`,
-    value: fund.cost,
-    validateInput: (v) =>
-      isNaN(Number(v)) || Number(v) < 0 ? "请输入非负数" : undefined,
-  });
-  if (costStr === undefined) {
-    return;
+  const numVal = parseFloat(numStr);
+  let costStr = fund.cost;
+
+  if (numVal > 0) {
+    const inputCost = await vscode.window.showInputBox({
+      prompt: `修改 ${title} — 请输入成本价`,
+      value: fund.cost,
+      validateInput: (v) =>
+        isNaN(Number(v)) || Number(v) < 0 ? "请输入非负数" : undefined,
+    });
+    if (inputCost === undefined) {
+      return;
+    }
+    costStr = inputCost;
+  } else {
+    costStr = "0";
   }
 
-  fund.num = parseFloat(numStr).toFixed(2);
+  fund.num = numVal.toFixed(2);
   fund.cost = parseFloat(costStr).toFixed(4);
   await saveFundConfigs(funds);
   await refreshData();

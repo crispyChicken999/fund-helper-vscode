@@ -67,7 +67,7 @@
     "viewsWelcome": [
       {
         "view": "fundList",
-        "contents": "欢迎使用基金助手！📈\n\n添加基金后即可查看实时估值与收益。\n\n[$(add) 添加基金](command:fund-helper.addFund)\n[$(cloud-download) 导入基金列表](command:fund-helper.importFund)\n[$(settings-gear) AI配置](command:fund-helper.configureAI)\n[$(lightbulb) AI分析](command:fund-helper.analyzeFunds)\n\n在设置中搜索 【fund-helper】 可配置刷新间隔等选项。"
+        "contents": "欢迎使用基金助手！📈\n\n添加基金后即可查看实时估值与收益。\n\n[$(add) 添加基金](command:fund-helper.addFund)\n[$(cloud-download) 导入基金列表](command:fund-helper.importFund)\n[$(settings-gear) AI配置](command:fund-helper.configureAI)\n[$(lightbulb) AI分析](command:fund-helper.analyzeFunds)\n\n在设置（Ctrl+,）中搜索 「基金助手」 修改更多配置。"
       }
     ],
     "commands": [
