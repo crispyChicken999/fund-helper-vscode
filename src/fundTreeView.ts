@@ -135,13 +135,14 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       if (fundItems.length === 0 && !this._filterKeyword) {
         return []; // 返回空让 viewsWelcome 显示
       }
-      // 顺序：排序 → 筛选 → 行情中心 → 统计收益 → 基金列表
+      // 顺序：排序 → 筛选 → 行情中心 → 统计收益 → 基金列表 → 赞助支持
       return [
         this._createSortHeader(),
         this._createFilterItem(),
         this._createMarketItem(),
         this._createSummaryFolder(),
-        ...fundItems
+        ...fundItems,
+        this._createSponsorItem()
       ];
     }
     if (element.contextValue === "marketFolderItem") {
@@ -154,6 +155,49 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       return this._getDetailItems(element.fundInfo);
     }
     return [];
+  }
+
+  private _createSponsorItem(): FundTreeItem {
+    const item = new FundTreeItem(
+      "喜欢此插件？GitHub 帮我点个星吧~",
+      vscode.TreeItemCollapsibleState.None,
+      undefined,
+      false
+    );
+    item.contextValue = "sponsorItem";
+    item.iconPath = new vscode.ThemeIcon("star");
+    item.command = {
+      command: "fund-helper.openDonate",
+      title: "打赏支持"
+    };
+
+    const tooltip = new vscode.MarkdownString(
+      "🐟 **基金助手插件 - 开源支持** 🐟\n\n" +
+        "---\n\n" +
+        "💡 这是一个**完全免费**的开源 VSCode 插件\n\n" +
+        "🚀 如果这个插件对您有所帮助\n\n" +
+        "☕ 可以考虑给项目点个星星~\n\n" +
+        "✨ **您的支持将用于：**\n\n" +
+        "  - 持续维护和更新功能\n\n" +
+        "  - 修复bug和优化体验\n\n" +
+        "  - 开发更多实用功能\n\n" +
+        "🥰 用爱发电不易，期待您的支持~\n\n" +
+        "---\n\n" +
+        "⚠️ **点击后将打开 GitHub 仓库页面**\n\n" +
+        "💼 建议在没人盯着/注意时，或者在休息时间打开哦~\n\n" +
+        "🤝 **感谢您的理解和支持！**\n\n" +
+        "---\n\n" +
+        "🌟 **觉得不错？欢迎给项目仓库点个星星~**\n\n" +
+        "⭐ [**给项目点个星吧！**](https://github.com/crispyChicken999/fund-helper-vscode) ⭐\n\n" +
+        "📢 *您的每个 ⭐ 都是对开发者最大的鼓励！*"
+    );
+
+    tooltip.isTrusted = true;
+    tooltip.supportHtml = true;
+    tooltip.supportThemeIcons = true;
+    item.tooltip = tooltip;
+
+    return item;
   }
 
   /** 切换排序：desc → asc → default 循环 */

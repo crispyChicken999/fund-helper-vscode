@@ -17,6 +17,7 @@ import {
 import { analyzeFunds, configureAI } from "./aiService";
 import { FundDetailWebview } from "./fundWebview";
 import { MarketWebview } from "./marketWebview";
+import { DonateWebview } from "./donate";
 import {
   initCore,
   deactivateCore,
@@ -122,6 +123,10 @@ export async function activate(context: vscode.ExtensionContext) {
           }
         });
       }
+    }),
+
+    vscode.commands.registerCommand("fund-helper.openDonate", () => {
+      DonateWebview.createOrShow();
     }),
 
     vscode.commands.registerCommand("fund-helper.filterFunds", async () => {
