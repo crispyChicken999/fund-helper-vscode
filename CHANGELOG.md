@@ -2,6 +2,12 @@
 
 本文档记录了"基金助手"(Fund Helper) VS Code 扩展的所有重要更改。
 
+## [0.1.9] - 2026-04-15
+
+### Fixes & Improvements
+
+- 🐛 **修复**：更新 README 徽章（原徽章服务显示 retired，遂替换为全新的 badgen 图标）
+
 ## [0.1.8] - 2026-03-20
 
 ### Features

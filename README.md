@@ -6,14 +6,15 @@
 
 <h1>📈 基金助手 (Fund Helper)</h1>
 
-![License](https://img.shields.io/badge/License-MIT-orange.svg)
-![VSCode](https://img.shields.io/badge/VSCode-1.82.0%2B-blue.svg)
-![Version](https://img.shields.io/badge/Version-0.1.8-green.svg)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20MacOS%20%7C%20Linux-purple.svg)
+![License](https://badgen.net/badge/License/MIT/red)
+![VSCode](https://badgen.net/badge/VSCode/1.82.0+/blue?icon=visualstudio)
+![Version](https://badgen.net/badge/Version/0.1.9/orange?icon=git)
+![Platform](https://badgen.net/badge/Platform/Windows|MacOS|Linux/purple?icon=windows)
 
-![Downloads](https://img.shields.io/visual-studio-marketplace/d/CrispyChicken.fund-helper)
-![Rating](https://img.shields.io/visual-studio-marketplace/r/CrispyChicken.fund-helper)
-![Stars](https://img.shields.io/github/stars/crispyChicken999/fund-helper-vscode?style=social)
+![Downloads](https://badgen.net/vs-marketplace/d/CrispyChicken.fund-helper?label=Downloads&color=blue)
+![Installs](https://badgen.net/vs-marketplace/i/CrispyChicken.fund-helper?label=Installs&color=green)
+![Rating](https://badgen.net/vs-marketplace/rating/CrispyChicken.fund-helper?label=Rating&color=yellow)
+![Stars](https://badgen.net/github/stars/crispyChicken999/fund-helper-vscode?icon=github&label=Stars&color=gray)
 
 </div>
 
