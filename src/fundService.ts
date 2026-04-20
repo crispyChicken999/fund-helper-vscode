@@ -265,3 +265,102 @@ export async function fetchJsonProxy(url: string): Promise<any> {
     return null;
   }
 }
+
+/**
+ * 获取基金关联板块数据（天天基金接口）
+ * @param fundCodes 基金代码数组（最多10个）
+ */
+export async function fetchFundRelateTheme(fundCodes: string[]): Promise<any> {
+  if (fundCodes.length === 0 || fundCodes.length > 10) {
+    return null;
+  }
+
+  const fcode = fundCodes.join(',');
+  const url = 'https://dgs.tiantianfunds.com/merge/m/api/jjxqy1_2';
+  
+  const params = new URLSearchParams({
+    deviceid: '1d747ff7-7201-443e-95bd-2d13e30b9ffe',
+    version: '9.9.9',
+    appVersion: '6.5.5',
+    product: 'EFund',
+    plat: 'Web',
+    uid: '',
+    fcode: fcode,
+    ISRG: '0',
+    indexfields: '_id,INDEXCODE,BKID,INDEXNAME',
+    fields: 'INDEXNAME,INDEXCODE,FCODE,TTYPENAME',
+    fundUniqueInfo_fIELDS: 'FCODE',
+    fundUniqueInfo_fLFIELDS: 'FCODE',
+    cfhFundFInfo_fields: 'INVESTMENTIDEAR,INVESTMENTIDEARIMG',
+    relateThemeFields: 'FCODE,SEC_CODE,SEC_NAME,CORR_1Y,OL2TOP'
+  });
+
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Origin': 'https://h5.1234567.com.cn',
+      },
+      body: params.toString(),
+      signal: controller.signal
+    });
+    clearTimeout(tid);
+    
+    if (!res.ok) { return null; }
+    return await res.json();
+  } catch (error) {
+    console.error('fetchFundRelateTheme error:', error);
+    return null;
+  }
+}
+
+/**
+ * 获取基金详细信息（天天基金详情接口）
+ * @param fundCode 基金代码
+ */
+export async function fetchFundDetailInfo(fundCode: string): Promise<any> {
+  const url = 'https://dgs.tiantianfunds.com/merge/m/api/jjxqy1_2';
+  
+  const params = new URLSearchParams({
+    deviceid: 'fd7dac76-c5e9-4723-8fe6-7b436b2b1443',
+    version: '9.9.9',
+    appVersion: '6.5.5',
+    product: 'EFund',
+    plat: 'Web',
+    uid: '',
+    fcode: fundCode,
+    ISRG: '0',
+    indexfields: '_id,INDEXCODE,BKID,INDEXNAME,INDEXVALUA,NEWINDEXTEXCH,PEP100',
+    fields: 'BENCH,ESTDIFF,INDEXNAME,LINKZSB,INDEXCODE,NEWTEXCH,FTYPE,FCODE,BAGTYPE,RISKLEVEL,TTYPENAME,PTDT_FY,PTDT_TRY,PTDT_TWY,PTDT_Y,DWDT_FY,DWDT_TRY,DWDT_TWY,DWDT_Y,MBDT_FY,MBDT_TRY,MBDT_TWY,MBDT_Y,YDDT_FY,YDDT_TRY,YDDT_TWY,YDDT_Y,BFUNDTYPE,YMATCHCODEA,RLEVEL_SZ,RLEVEL_CX,ESTABDATE,JJGS,JJGSID,ENDNAV,FEGMRQ,SHORTNAME,TTYPE,TJDIN,FUNDEXCHG,LISTTEXCHMARK,FSRQ,ISSBDATE,ISSEDATE,FEATURE,DWJZ,LJJZ,MINRG,RZDF,PERIODNAME,SYL_1N,SYL_LN,SYL_Z,SOURCERATE,RATE,TSRQ,BTYPE,BUY,BENCHCODE,BENCH_CORR,TRKERROR,BENCHRATIO,NEWINDEXTEXCH,BESTDT_STRATEGY,BESTDT_Y,BESTDT_TWY,BESTDT_TRY,BESTDT_FY',
+    fundUniqueInfo_fIELDS: 'FCODE,STDDEV1,STDDEV_1NRANK,STDDEV_1NFSC,STDDEV3,STDDEV_3NRANK,STDDEV_3NFSC,STDDEV5,STDDEV_5NRANK,STDDEV_5NFSC,SHARP1,SHARP_1NRANK,SHARP_1NFSC,SHARP3,SHARP_3NRANK,SHARP_3NFSC,SHARP5,SHARP_5NRANK,SHARP_5NFSC,MAXRETRA1,MAXRETRA_1NRANK,MAXRETRA_1NFSC,MAXRETRA3,MAXRETRA_3NRANK,MAXRETRA_3NFSC,MAXRETRA5,MAXRETRA_5NRANK,MAXRETRA_5NFSC,TRKERROR1,TRKERROR_1NRANK,TRKERROR_1NFSC,TRKERROR3,TRKERROR_3NRANK,TRKERROR_3NFSC,TRKERROR5,TRKERROR_5NRANK,TRKERROR_5NFSC',
+    fundUniqueInfo_fLFIELDS: 'FCODE,BUSINESSTYPE,BUSINESSTEXT,BUSINESSCODE,BUSINESSSUBTYPE,MARK',
+    cfhFundFInfo_fields: 'INVESTMENTIDEAR,INVESTMENTIDEARIMG',
+    relateThemeFields: 'FCODE,SEC_CODE,SEC_NAME,CORR_1Y,OL2TOP'
+  });
+
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Origin': 'https://h5.1234567.com.cn',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+        'Referer': 'https://servicewechat.com/',
+      },
+      body: params.toString(),
+      signal: controller.signal
+    });
+    clearTimeout(tid);
+    
+    if (!res.ok) { return null; }
+    return await res.json();
+  } catch (error) {
+    console.error('fetchFundDetailInfo error:', error);
+    return null;
+  }
+}

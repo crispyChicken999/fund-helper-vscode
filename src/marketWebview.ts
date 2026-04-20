@@ -106,7 +106,7 @@ export class MarketWebview {
       '.idx-abs { font-size: .78em; color: var(--vscode-descriptionForeground); }',
       '.flow-chart { width: 100%; height: 340px; }',
       '.unit-label { font-size: .78em; color: var(--vscode-descriptionForeground); margin-bottom: 4px; }',
-      '.sub-tabs { display: flex; gap: 6px; margin-bottom: 10px; }',
+      '.sub-tabs { display: flex; gap: 10px; margin-bottom: 10px; }',
       '.sub-tab-btn { padding: 4px 14px; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 1px solid var(--vscode-panel-border); border-radius: 4px; cursor: pointer; font-size: .82em; font-family: inherit; transition: background .2s; }',
       '.sub-tab-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }',
       '.sub-tab-btn.active { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border-color: var(--vscode-button-background); }',
@@ -115,6 +115,11 @@ export class MarketWebview {
       '.spinner { width: 18px; height: 18px; border: 2px solid var(--vscode-panel-border); border-top-color: var(--vscode-focusBorder); border-radius: 50%; animation: spin .8s linear infinite; }',
       '@keyframes spin { to { transform: rotate(360deg); } }',
       '.error-msg { color: var(--vscode-errorForeground); padding: 20px; text-align: center; font-size: .88em; }',
+      '.index-images-container { position: relative; }',
+      '.index-images { display: none; flex-wrap: wrap; gap: 10px; justify-content: flex-start; }',
+      '.index-images.active { display: flex; }',
+      '.index-img-item { width: 100px; height: 117.64px; object-fit: cover; border-radius: 8px; border: 1px solid var(--vscode-panel-border); background: var(--vscode-editor-background); cursor: pointer; }',
+      '.index-img-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,.2); transition: all 0.2s; }',
       '</style>',
       '</head>',
       '<body>',
@@ -137,6 +142,24 @@ export class MarketWebview {
       '<div class="tab-content active" id="tab-market">',
       '<div class="market-stat" id="marketStat"><div class="loading-wrap" style="padding:6px 0"><div class="spinner"></div>加载中...</div></div>',
       '<div class="card"><div class="card-title">大盘指数</div><div id="indexCards" class="index-grid"><div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div>加载中...</div></div></div>',
+      
+      // 扩展指数（使用子标签页）
+      '<div class="card">',
+      '<div class="card-title">全球指数</div>',
+      '<div class="sub-tabs">',
+      '<button class="sub-tab-btn active" data-index-tab="a-stock">A股指数</button>',
+      '<button class="sub-tab-btn" data-index-tab="hk-stock">港股指数</button>',
+      '<button class="sub-tab-btn" data-index-tab="us-stock">美股指数</button>',
+      '<button class="sub-tab-btn" data-index-tab="asia-pacific">亚太指数</button>',
+      '</div>',
+      '<div class="index-images-container">',
+      '<div class="index-images active" id="index-a-stock"></div>',
+      '<div class="index-images" id="index-hk-stock"></div>',
+      '<div class="index-images" id="index-us-stock"></div>',
+      '<div class="index-images" id="index-asia-pacific"></div>',
+      '</div>',
+      '</div>',
+      
       '<div class="card"><div class="card-title">沪深两市资金流向（分钟级）</div><div class="unit-label">单位：亿元</div><div id="flowLoading" class="loading-wrap"><div class="spinner"></div>加载中...</div><div id="flowChart" class="flow-chart" style="display:none"></div></div>',
       '</div>',
 
@@ -206,16 +229,29 @@ var plateCodes = {};
 document.querySelectorAll('.sub-tab-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var tabId = btn.dataset.tab;
-        document.querySelectorAll('.sub-tab-btn[data-tab="' + tabId + '"]').forEach(function(b){ b.classList.remove('active'); });
-        btn.classList.add('active');
-        fetchPlateData(tabId, plateCodes[tabId], btn.dataset.key);
+        var indexTab = btn.dataset.indexTab;
+        
+        // 处理板块子标签
+        if (tabId) {
+            document.querySelectorAll('.sub-tab-btn[data-tab="' + tabId + '"]').forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            fetchPlateData(tabId, plateCodes[tabId], btn.dataset.key);
+        }
+        
+        // 处理指数子标签
+        if (indexTab) {
+            document.querySelectorAll('.sub-tab-btn[data-index-tab]').forEach(function(b){ b.classList.remove('active'); });
+            document.querySelectorAll('.index-images').forEach(function(c){ c.classList.remove('active'); });
+            btn.classList.add('active');
+            document.getElementById('index-' + indexTab).classList.add('active');
+        }
     });
 });
 
 function loadTabOnce(tab) {
     if (loadedTabs.has(tab)) { return; }
     loadedTabs.add(tab);
-    if (tab === 'market')   { loadMarket(); }
+    if (tab === 'market')   { loadMarket(); loadIndexImages(); }
     if (tab === 'industry') { loadPlate('industry', 'm:90+s:4'); }
     if (tab === 'style')    { loadPlate('style',    'm:90+e:4'); }
     if (tab === 'concept')  { loadPlate('concept',  'm:90+t:3'); }
@@ -279,7 +315,16 @@ function loadIndexAndStat() {
     var secids = '1.000001,1.000300,0.399001,0.399006';
     var url = 'https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f13,f14&secids=' + secids + '&_=' + Date.now();
     return fetch(url).then(function(r){ return r.json(); }).then(function(json) {
-        renderIndexCards((json && json.data && json.data.diff) || []);
+        var data = (json && json.data && json.data.diff) || [];
+        var formatted = data.map(function(d) {
+            return {
+                name: d.f14,
+                price: d.f2,
+                changePct: d.f3,
+                changeAbs: d.f4
+            };
+        });
+        renderIndexCards(formatted, 'indexCards');
         loadMarketStat();
     }).catch(function() {
         document.getElementById('indexCards').innerHTML = '<div class="error-msg">大盘指数加载失败</div>';
@@ -297,22 +342,6 @@ function loadMarketStat() {
             '<div class="stat-item"><span class="stat-label">平盘：</span><span class="stat-val flat">' + (stat.flatCount || '--') + '</span></div>' +
             '<div class="stat-item"><span class="stat-label">下跌：</span><span class="stat-val down">' + (stat.downCount || '--') + '</span></div>';
     });
-}
-
-function renderIndexCards(data) {
-    if (!data || !data.length) { document.getElementById('indexCards').innerHTML = '<div class="error-msg">暂无数据</div>'; return; }
-    document.getElementById('indexCards').innerHTML = data.map(function(item) {
-        var chgPct = item.f3, chgAbs = item.f4;
-        var cls     = chgPct > 0 ? 'up' : chgPct < 0 ? 'down' : 'flat';
-        var cardCls = chgPct > 0 ? 'up-card' : chgPct < 0 ? 'down-card' : 'flat-card';
-        var sign    = chgPct >= 0 ? '+' : '';
-        return '<div class="index-card ' + cardCls + '">' +
-            '<div class="idx-name">' + item.f14 + '</div>' +
-            '<div class="idx-value ' + cls + '">' + (item.f2 != null ? item.f2.toFixed(2) : '--') + '</div>' +
-            '<div class="idx-change ' + cls + '">' + sign + (chgPct != null ? chgPct.toFixed(2) : '--') + '%</div>' +
-            '<div class="idx-abs ' + cls + '">' + sign + (chgAbs != null ? chgAbs.toFixed(2) : '--') + '</div>' +
-            '</div>';
-    }).join('');
 }
 
 function loadFlowKline() {
@@ -416,7 +445,113 @@ function renderPlateChart(tabId, list, key) {
     }, true);
 }
 
+/* ---- 加载指数图片 ---- */
+function loadIndexImages() {
+    var indexConfigs = {
+        'a-stock': [
+            { nid: '1.000001', name: '上证指数' },
+            { nid: '1.000300', name: '沪深300' },
+            { nid: '0.399001', name: '深证成指' },
+            { nid: '1.000688', name: '科创50' },
+            { nid: '0.399006', name: '创业板指' },
+            { nid: '0.399005', name: '中小100' },
+            { nid: '118.AU9999', name: '黄金9999' }
+        ],
+        'hk-stock': [
+            { nid: '100.HSI', name: '恒生指数' },
+            { nid: '124.HSTECH', name: '恒生科技' }
+        ],
+        'us-stock': [
+            { nid: '100.DJIA', name: '道琼斯' },
+            { nid: '100.NDX', name: '纳斯达克' },
+            { nid: '100.NDX100', name: '纳斯达克100' },
+            { nid: '100.SPX', name: '标普500' },
+            { nid: '101.GC00Y', name: 'COMEX黄金' }
+        ],
+        'asia-pacific': [
+            { nid: '100.N225', name: '日经225' },
+            { nid: '100.VNINDEX', name: '越南胡志明' },
+            { nid: '100.SENSEX', name: '印度孟买SENS' }
+        ]
+    };
+    
+    Object.keys(indexConfigs).forEach(function(category) {
+        var container = document.getElementById('index-' + category);
+        if (!container) { return; }
+        
+        var html = indexConfigs[category].map(function(idx) {
+            var url = 'https://webquotepic.eastmoney.com/GetPic.aspx?imageType=WAPINDEX2&nid=' + idx.nid + '&rnd=' + Date.now();
+            return '<img class="index-img-item" src="' + url + '" alt="' + idx.name + '" title="' + idx.name + '" loading="lazy" />';
+        }).join('');
+        
+        container.innerHTML = html;
+    });
+}
+
+function renderIndexCards(data, containerId) {
+    var container = document.getElementById(containerId || 'indexCards');
+    if (!container) { return; }
+    if (!data || !data.length) { 
+        container.innerHTML = '<div class="error-msg">暂无数据</div>'; 
+        return; 
+    }
+    container.innerHTML = data.map(function(item) {
+        var chgPct = item.changePct, chgAbs = item.changeAbs;
+        var cls     = chgPct > 0 ? 'up' : chgPct < 0 ? 'down' : 'flat';
+        var cardCls = chgPct > 0 ? 'up-card' : chgPct < 0 ? 'down-card' : 'flat-card';
+        var sign    = chgPct >= 0 ? '+' : '';
+        return '<div class="index-card ' + cardCls + '">' +
+            '<div class="idx-name">' + item.name + '</div>' +
+            '<div class="idx-value ' + cls + '">' + (item.price != null ? item.price.toFixed(2) : '--') + '</div>' +
+            '<div class="idx-change ' + cls + '">' + sign + (chgPct != null ? chgPct.toFixed(2) : '--') + '%</div>' +
+            '<div class="idx-abs ' + cls + '">' + sign + (chgAbs != null ? chgAbs.toFixed(2) : '--') + '</div>' +
+            '</div>';
+    }).join('');
+}
+
+/* ---- 自动刷新机制（每分钟整点） ---- */
+var autoRefreshTimer = null;
+var countdownTimer = null;
+
+function setupAutoRefresh() {
+    // 清除旧定时器
+    if (autoRefreshTimer) { clearInterval(autoRefreshTimer); }
+    if (countdownTimer) { clearInterval(countdownTimer); }
+    
+    // 每分钟整点刷新
+    function scheduleNextRefresh() {
+        var now = new Date();
+        var seconds = now.getSeconds();
+        var ms = now.getMilliseconds();
+        var delay = (60 - seconds) * 1000 - ms;
+        
+        setTimeout(function() {
+            // 检查是否在交易时间内（工作日 9:00-15:00）
+            var hour = new Date().getHours();
+            var day = new Date().getDay();
+            if (day >= 1 && day <= 5 && hour >= 9 && hour < 15) {
+                refreshAll();
+            }
+            scheduleNextRefresh();
+        }, delay);
+    }
+    
+    scheduleNextRefresh();
+    
+    // 倒计时显示
+    countdownTimer = setInterval(function() {
+        var now = new Date();
+        var seconds = 60 - now.getSeconds();
+        var timeEl = document.getElementById('updateTime');
+        if (timeEl && timeEl.textContent.indexOf('更新于') !== -1) {
+            var baseText = timeEl.textContent.split('（')[0];
+            timeEl.textContent = baseText + ' （' + seconds + '秒后刷新）';
+        }
+    }, 1000);
+}
+
 loadTabOnce('market');
+setupAutoRefresh();
 `;
     /* eslint-enable */
   }

@@ -17,8 +17,9 @@ import {
   calcHoldingGain,
   calcHoldingGainRate,
 } from "./fundModel";
-import { getFundData, MarketIndex } from "./fundService";
+import { MarketIndex } from "./fundService";
 import { isMarketClosed, isMarketOpen } from "./holidayService";
+import { FundDataManager, ExtendedFundInfo } from "./fundDataManager";
 
 export type SortMethod =
   | "default"
@@ -61,18 +62,25 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
   >();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  private _fundDataList: FundInfo[] = [];
+  private _fundDataList: ExtendedFundInfo[] = [];
   private _sortMethod: SortMethod = "default";
   private _extensionPath: string;
   private _marketIndices: MarketIndex[] = [];
   private _filterKeyword: string = "";
+  private _dataManager: FundDataManager | undefined;
 
-  constructor(extensionPath: string) {
+  constructor(extensionPath: string, dataManager?: FundDataManager) {
     this._extensionPath = extensionPath;
+    this._dataManager = dataManager;
     // 从用户配置读取排序方式
     this._sortMethod = vscode.workspace
       .getConfiguration("fund-helper")
       .get<SortMethod>("sortMethod", "default");
+  }
+
+  /** 设置数据管理器 */
+  setDataManager(dataManager: FundDataManager): void {
+    this._dataManager = dataManager;
   }
 
   /** 更新大盘指数缓存并刷新 tree */
@@ -94,7 +102,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     return this._filterKeyword;
   }
 
-  get fundDataList(): FundInfo[] {
+  get fundDataList(): ExtendedFundInfo[] {
     return this._fundDataList;
   }
 
@@ -114,8 +122,16 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       this._onDidChangeTreeData.fire();
       return;
     }
+    
     try {
-      this._fundDataList = await getFundData(configs, this._fundDataList);
+      // 如果有数据管理器，使用共享数据
+      if (this._dataManager) {
+        this._fundDataList = await this._dataManager.refreshFundData();
+      } else {
+        // 降级：使用本地获取（保持兼容性）
+        const { getFundData } = await import("./fundService");
+        this._fundDataList = await getFundData(configs, this._fundDataList);
+      }
     } catch (e: any) {
       vscode.window.showErrorMessage(`获取基金数据失败: ${e.message}`);
     }
@@ -135,13 +151,14 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       if (fundItems.length === 0 && !this._filterKeyword) {
         return []; // 返回空让 viewsWelcome 显示
       }
-      // 顺序：排序 → 筛选 → 行情中心 → 统计收益 → 基金列表 → 赞助支持
+      // 顺序：排序 → 筛选 → 行情中心 → 统计收益 → 基金列表 → 新视图提示 → 赞助支持
       return [
         this._createSortHeader(),
         this._createFilterItem(),
         this._createMarketItem(),
         this._createSummaryFolder(),
         ...fundItems,
+        this._createNewViewTipItem(),
         this._createSponsorItem()
       ];
     }
@@ -155,6 +172,45 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       return this._getDetailItems(element.fundInfo);
     }
     return [];
+  }
+
+  private _createNewViewTipItem(): FundTreeItem {
+    const item = new FundTreeItem(
+      "试试全新的表格视图模式！",
+      vscode.TreeItemCollapsibleState.None,
+      undefined,
+      false
+    );
+    item.contextValue = "newViewTipItem";
+    item.iconPath = new vscode.ThemeIcon("sparkle", new vscode.ThemeColor("charts.blue"));
+    item.command = {
+      command: "fund-helper.switchToWebview",
+      title: "切换到新视图"
+    };
+
+    const tooltip = new vscode.MarkdownString(
+      "✨ **全新表格视图模式** ✨\n\n" +
+        "---\n\n" +
+        "🎉 我们推出了全新的表格视图模式！\n\n" +
+        "📊 **新视图特点：**\n\n" +
+        "  - 📈 更直观的表格布局\n\n" +
+        "  - 💰 一目了然的收益展示\n\n" +
+        "  - 🔍 强大的搜索和排序功能\n\n" +
+        "  - 🎨 更美观的界面设计\n\n" +
+        "  - 📱 更好的数据可视化\n\n" +
+        "---\n\n" +
+        "💡 **点击即可切换到新视图**\n\n" +
+        "🔄 随时可以切换回旧视图\n\n" +
+        "---\n\n" +
+        "🚀 **快来体验吧！**"
+    );
+
+    tooltip.isTrusted = true;
+    tooltip.supportHtml = true;
+    tooltip.supportThemeIcons = true;
+    item.tooltip = tooltip;
+
+    return item;
   }
 
   private _createSponsorItem(): FundTreeItem {

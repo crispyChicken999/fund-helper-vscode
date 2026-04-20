@@ -62,7 +62,15 @@
         {
           "id": "fundList",
           "icon": "resources/fund-icon.svg",
-          "name": "基金列表"
+          "name": "普通视图",
+          "when": "fund-helper.viewMode == tree"
+        },
+        {
+          "type": "webview",
+          "icon": "resources/fund-icon.svg",
+          "id": "fundWebviewView",
+          "name": "表格视图",
+          "when": "fund-helper.viewMode == webview"
         }
       ]
     },
@@ -192,31 +200,49 @@
       {
         "command": "fund-helper.toggleAutoRefresh",
         "title": "开启/关闭自动刷新"
+      },
+      {
+        "command": "fund-helper.switchToWebview",
+        "title": "切换表格视图",
+        "icon": "$(table)"
+      },
+      {
+        "command": "fund-helper.switchToTreeView",
+        "title": "切换普通视图",
+        "icon": "$(list-tree)"
       }
     ],
     "menus": {
       "view/title": [
         {
+          "command": "fund-helper.switchToWebview",
+          "when": "view == fundList && fund-helper.viewMode == tree",
+          "group": "navigation@0"
+        },
+        {
+          "command": "fund-helper.switchToTreeView",
+          "when": "view == fundWebviewView && fund-helper.viewMode == webview",
+          "group": "navigation@0"
+        },
+        {
           "command": "fund-helper.refreshFund",
-          "when": "view == fundList",
+          "when": "view == fundList && fund-helper.viewMode == tree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fund-helper.refreshFund",
+          "when": "view == fundWebviewView && fund-helper.viewMode == webview",
           "group": "navigation@1"
         },
         {
           "command": "fund-helper.addFund",
-          "when": "view == fundList",
+          "when": "view == fundList && fund-helper.viewMode == tree",
           "group": "navigation@2"
         },
         {
-          "command": "fund-helper.importFund",
-          "when": "view == fundList"
-        },
-        {
-          "command": "fund-helper.exportFund",
-          "when": "view == fundList"
-        },
-        {
-          "command": "fund-helper.configureAI",
-          "when": "view == fundList"
+          "command": "fund-helper.addFund",
+          "when": "view == fundWebviewView && fund-helper.viewMode == webview",
+          "group": "navigation@2"
         },
         {
           "command": "fund-helper.analyzeFunds",
@@ -224,16 +250,57 @@
           "group": "navigation@3"
         },
         {
+          "command": "fund-helper.analyzeFunds",
+          "when": "view == fundWebviewView && fund-helper.viewMode == webview",
+          "group": "navigation@3"
+        },
+        {
+          "command": "fund-helper.importFund",
+          "when": "view == fundList"
+        },
+        {
+          "command": "fund-helper.importFund",
+          "when": "view == fundWebviewView"
+        },
+        {
+          "command": "fund-helper.exportFund",
+          "when": "view == fundList"
+        },
+        {
+          "command": "fund-helper.exportFund",
+          "when": "view == fundWebviewView"
+        },
+        {
+          "command": "fund-helper.configureAI",
+          "when": "view == fundList"
+        },
+        {
+          "command": "fund-helper.configureAI",
+          "when": "view == fundWebviewView"
+        },
+        {
           "command": "fund-helper.toggleStatusBarHide",
           "when": "view == fundList"
+        },
+        {
+          "command": "fund-helper.toggleStatusBarHide",
+          "when": "view == fundWebviewView"
         },
         {
           "command": "fund-helper.setRefreshInterval",
           "when": "view == fundList"
         },
         {
+          "command": "fund-helper.setRefreshInterval",
+          "when": "view == fundWebviewView"
+        },
+        {
           "command": "fund-helper.toggleAutoRefresh",
           "when": "view == fundList"
+        },
+        {
+          "command": "fund-helper.toggleAutoRefresh",
+          "when": "view == fundWebviewView"
         }
       ],
       "view/item/context": [
@@ -438,6 +505,57 @@
           "description": "AI最大输出token数",
           "markdownDescription": "限制AI分析结果的最大长度"
         },
+        "fund-helper.defaultViewMode": {
+          "type": "string",
+          "default": "tree",
+          "enum": [
+            "tree",
+            "webview"
+          ],
+          "enumDescriptions": [
+            "传统树形列表视图",
+            "新版表格视图"
+          ],
+          "description": "默认启动时使用的视图模式"
+        },
+        "fund-helper.webviewColumnOrder": {
+          "type": "array",
+          "default": [
+            "name",
+            "estimatedChange",
+            "estimatedGain",
+            "dailyChange",
+            "dailyGain",
+            "holdingGain",
+            "holdingGainRate",
+            "sector",
+            "amountShares",
+            "cost"
+          ],
+          "description": "表格视图列的显示顺序",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fund-helper.webviewVisibleColumns": {
+          "type": "array",
+          "default": [
+            "name",
+            "estimatedChange",
+            "estimatedGain",
+            "dailyChange",
+            "dailyGain",
+            "holdingGain",
+            "holdingGainRate",
+            "sector",
+            "amountShares",
+            "cost"
+          ],
+          "description": "表格视图中显示的列",
+          "items": {
+            "type": "string"
+          }
+        },
         "fund-helper.savedAIConfigs": {
           "type": "array",
           "default": [],
@@ -477,11 +595,12 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && node esbuild.js",
-    "watch": "node esbuild.js --watch",
-    "package": "npm run check-types && node esbuild.js --production",
+    "compile": "npm run check-types && npm run copy-webview && node esbuild.js",
+    "watch": "npm run copy-webview && node esbuild.js --watch",
+    "package": "npm run check-types && npm run copy-webview && node esbuild.js --production",
     "check-types": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "copy-webview": "node scripts/copy-webview.js"
   },
   "devDependencies": {
     "@types/node": "^18.0.0",

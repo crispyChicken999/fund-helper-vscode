@@ -18,6 +18,8 @@ import { analyzeFunds, configureAI } from "./aiService";
 import { FundDetailWebview } from "./fundWebview";
 import { MarketWebview } from "./marketWebview";
 import { DonateWebview } from "./donate";
+import { FundWebviewViewProvider } from "./fundWebviewView";
+import { FundDataManager } from "./fundDataManager";
 import {
   initCore,
   deactivateCore,
@@ -34,13 +36,18 @@ import {
 
 let treeDataProvider: FundTreeDataProvider;
 let treeView: vscode.TreeView<FundTreeItem>;
+let webviewViewProvider: FundWebviewViewProvider;
+let fundDataManager: FundDataManager;
 
 export async function activate(context: vscode.ExtensionContext) {
   // 0️⃣ 初始化节假日数据
   await initHolidayData(context);
 
-  // 1️⃣ 注册 TreeView
-  treeDataProvider = new FundTreeDataProvider(context.extensionPath);
+  // 0.5️⃣ 创建共享数据管理器
+  fundDataManager = new FundDataManager();
+
+  // 1️⃣ 注册 TreeView - 使用共享数据管理器
+  treeDataProvider = new FundTreeDataProvider(context.extensionPath, fundDataManager);
   const dragAndDropController = new FundDragAndDropController(treeDataProvider);
   treeView = vscode.window.createTreeView("fundList", {
     treeDataProvider,
@@ -49,7 +56,16 @@ export async function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(treeView);
 
-  initCore(treeDataProvider, treeView);
+  // 1.5️⃣ 注册 WebviewView（新视图）- 使用共享数据管理器
+  webviewViewProvider = new FundWebviewViewProvider(context.extensionUri, fundDataManager);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      FundWebviewViewProvider.viewType,
+      webviewViewProvider
+    )
+  );
+
+  initCore(treeDataProvider, treeView, fundDataManager, webviewViewProvider);
 
   // 2️⃣ 状态栏
   const statusBar = createStatusBar();
@@ -63,10 +79,33 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.commands.registerCommand("fund-helper.addFund", () => addFund()),
-    vscode.commands.registerCommand("fund-helper.deleteFund", (item: FundTreeItem) => item?.fundInfo && deleteFund(item.fundInfo.code)),
-    vscode.commands.registerCommand("fund-helper.addPosition", (item: FundTreeItem) => item?.fundInfo && addPosition(item.fundInfo.code, item.fundInfo.name)),
-    vscode.commands.registerCommand("fund-helper.reducePosition", (item: FundTreeItem) => item?.fundInfo && reducePosition(item.fundInfo.code, item.fundInfo.name)),
-    vscode.commands.registerCommand("fund-helper.editPosition", (item: FundTreeItem) => item?.fundInfo && editPosition(item.fundInfo.code, item.fundInfo.name)),
+    vscode.commands.registerCommand("fund-helper.deleteFund", (item: FundTreeItem | string) => {
+      const code = typeof item === 'string' ? item : item?.fundInfo?.code;
+      return code && deleteFund(code);
+    }),
+    vscode.commands.registerCommand("fund-helper.addPosition", (itemOrCode: FundTreeItem | string, name?: string) => {
+      if (typeof itemOrCode === 'string') {
+        // 从 webview 调用：第一个参数是 code，第二个参数是 name
+        return addPosition(itemOrCode, name || '');
+      } else {
+        // 从 TreeView 调用：第一个参数是 FundTreeItem
+        return itemOrCode?.fundInfo && addPosition(itemOrCode.fundInfo.code, itemOrCode.fundInfo.name);
+      }
+    }),
+    vscode.commands.registerCommand("fund-helper.reducePosition", (itemOrCode: FundTreeItem | string, name?: string) => {
+      if (typeof itemOrCode === 'string') {
+        return reducePosition(itemOrCode, name || '');
+      } else {
+        return itemOrCode?.fundInfo && reducePosition(itemOrCode.fundInfo.code, itemOrCode.fundInfo.name);
+      }
+    }),
+    vscode.commands.registerCommand("fund-helper.editPosition", (itemOrCode: FundTreeItem | string, name?: string) => {
+      if (typeof itemOrCode === 'string') {
+        return editPosition(itemOrCode, name || '');
+      } else {
+        return itemOrCode?.fundInfo && editPosition(itemOrCode.fundInfo.code, itemOrCode.fundInfo.name);
+      }
+    }),
     vscode.commands.registerCommand("fund-helper.exportFund", () => exportFund()),
     vscode.commands.registerCommand("fund-helper.importFund", () => importFund()),
     vscode.commands.registerCommand("fund-helper.configureAI", () => configureAI()),
@@ -129,6 +168,30 @@ export async function activate(context: vscode.ExtensionContext) {
       DonateWebview.createOrShow();
     }),
 
+    // 模式切换命令
+    vscode.commands.registerCommand("fund-helper.switchToWebview", async () => {
+      await vscode.commands.executeCommand("setContext", "fund-helper.viewMode", "webview");
+      // 保存用户选择
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      await config.update("defaultViewMode", "webview", vscode.ConfigurationTarget.Global);
+      vscode.commands.executeCommand("fundWebviewView.focus");
+      vscode.window.showInformationMessage("已切换到表格视图");
+    }),
+
+    vscode.commands.registerCommand("fund-helper.switchToTreeView", async () => {
+      await vscode.commands.executeCommand("setContext", "fund-helper.viewMode", "tree");
+      // 保存用户选择
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      await config.update("defaultViewMode", "tree", vscode.ConfigurationTarget.Global);
+      vscode.commands.executeCommand("fundList.focus");
+      vscode.window.showInformationMessage("已切换到普通视图");
+    }),
+
+    vscode.commands.registerCommand("fund-helper.refreshWebview", async () => {
+      await webviewViewProvider.refresh();
+      vscode.window.showInformationMessage("数据已刷新");
+    }),
+
     vscode.commands.registerCommand("fund-helper.filterFunds", async () => {
       const keyword = await vscode.window.showInputBox({
         prompt: "输入基金名称或代码以进行筛选",
@@ -182,6 +245,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("fund-helper")) {
         refreshData();
+        webviewViewProvider.refresh();
         setupAutoRefresh();
       }
     }),
@@ -190,6 +254,18 @@ export async function activate(context: vscode.ExtensionContext) {
   // 5️⃣ 初始加载 & 自动刷新
   refreshData();
   setupAutoRefresh();
+
+  // 6️⃣ 设置初始视图模式 - 从配置读取
+  const config = vscode.workspace.getConfiguration("fund-helper");
+  const defaultViewMode = config.get<string>("defaultViewMode", "tree");
+  await vscode.commands.executeCommand("setContext", "fund-helper.viewMode", defaultViewMode);
+  
+  // 如果默认是 webview，自动聚焦到 webview
+  if (defaultViewMode === "webview") {
+    setTimeout(() => {
+      vscode.commands.executeCommand("fundWebviewView.focus");
+    }, 500);
+  }
 }
 
 export function deactivate() {

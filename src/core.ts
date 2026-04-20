@@ -5,14 +5,25 @@ import { searchFund, getNetValueHistory, fetchMarketIndices } from "./fundServic
 import { isMarketClosed } from "./holidayService";
 import { FundTreeDataProvider, SortMethod, FundTreeItem } from "./fundTreeView";
 import { updateStatusBar } from "./statusBar";
+import { FundDataManager } from "./fundDataManager";
+import { FundWebviewViewProvider } from "./fundWebviewView";
 
 let refreshTimer: NodeJS.Timeout | undefined;
 let treeDataProvider: FundTreeDataProvider;
 let treeView: vscode.TreeView<FundTreeItem>;
+let dataManager: FundDataManager | undefined;
+let webviewProvider: FundWebviewViewProvider | undefined;
 
-export function initCore(provider: FundTreeDataProvider, view: vscode.TreeView<FundTreeItem>) {
+export function initCore(
+  provider: FundTreeDataProvider, 
+  view: vscode.TreeView<FundTreeItem>,
+  fundDataManager?: FundDataManager,
+  webviewViewProvider?: FundWebviewViewProvider
+) {
   treeDataProvider = provider;
   treeView = view;
+  dataManager = fundDataManager;
+  webviewProvider = webviewViewProvider;
 }
 
 export function deactivateCore() {
@@ -36,6 +47,11 @@ export async function refreshData() {
   updateStatusBar(list);
   if (treeView) {
     treeView.title = `基金列表(${list.length})`;
+  }
+  
+  // 同时刷新 webview（如果存在）
+  if (webviewProvider) {
+    await webviewProvider.refresh();
   }
 }
 
@@ -349,39 +365,11 @@ export async function importFund() {
       return;
     }
 
-    // 询问是否覆盖
-    const choice = await vscode.window.showQuickPick(
-      [
-        { label: "合并导入（保留现有基金）", mode: "merge" },
-        { label: "覆盖导入（替换全部基金）", mode: "replace" },
-      ],
-      { placeHolder: `发现 ${newFunds.length} 个基金，请选择导入方式` },
-    );
-    if (!choice) {
-      return;
-    }
-
-    let finalFunds: FundConfig[];
-    if ((choice as any).mode === "replace") {
-      finalFunds = newFunds;
-    } else {
-      // 合并：新增不存在的，已存在的更新份额和成本
-      finalFunds = [...getFundConfigs()];
-      for (const nf of newFunds) {
-        const existing = finalFunds.find((f) => f.code === nf.code);
-        if (existing) {
-          existing.num = nf.num;
-          existing.cost = nf.cost;
-        } else {
-          finalFunds.push(nf);
-        }
-      }
-    }
-
-    await saveFundConfigs(finalFunds);
+    // 直接覆盖导入，不再询问用户
+    await saveFundConfigs(newFunds);
     await refreshData();
     vscode.window.showInformationMessage(
-      `导入成功！共 ${finalFunds.length} 个基金`,
+      `导入成功！共 ${newFunds.length} 个基金（已覆盖原有数据）`,
     );
   } catch (e: any) {
     vscode.window.showErrorMessage(`导入失败: ${e.message}`);
