@@ -115,6 +115,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     });
 
     this._sendMarketStatus();
+    this._sendPrivacyMode();
   }
 
   private _sendMarketStatus(): void {
@@ -129,6 +130,15 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
         isOpen: marketOpen,
         isClosed: marketClosed,
       },
+    });
+  }
+
+  private _sendPrivacyMode(): void {
+    const config = vscode.workspace.getConfiguration("fund-helper");
+    const privacyMode = config.get<boolean>("privacyMode", false);
+    this.postMessage({
+      command: "updatePrivacyMode",
+      value: privacyMode,
     });
   }
 
@@ -298,6 +308,17 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
 
       case "getColumnSettings":
         this._sendColumnSettings();
+        break;
+
+      case "getPrivacyMode":
+        this._sendPrivacyMode();
+        break;
+
+      case "savePrivacyMode":
+        if (message.value !== undefined) {
+          const config = vscode.workspace.getConfiguration("fund-helper");
+          await config.update("privacyMode", message.value, vscode.ConfigurationTarget.Global);
+        }
         break;
 
       case "saveColumnSettings":

@@ -314,8 +314,13 @@ export async function exportFund() {
   const funds = getFundConfigs();
   const exportData = { funds };
 
+  const now = new Date();
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const timestamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const defaultFilename = `VSCode_基金助手配置备份_${timestamp}.json`;
+
   const uri = await vscode.window.showSaveDialog({
-    defaultUri: vscode.Uri.file("fund-list.json"),
+    defaultUri: vscode.Uri.file(defaultFilename),
     filters: { "JSON 文件": ["json"] },
   });
 

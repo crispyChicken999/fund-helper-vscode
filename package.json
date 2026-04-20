@@ -2,7 +2,7 @@
   "name": "fund-helper",
   "displayName": "基金助手",
   "description": "在 VSCode 侧边栏查看自选基金实时估值、涨跌幅与收益",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "CrispyChicken",
   "publisher": "CrispyChicken",
   "license": "MIT",
@@ -63,14 +63,14 @@
           "id": "fundList",
           "icon": "resources/fund-icon.svg",
           "name": "普通视图",
-          "when": "fund-helper.viewMode == tree"
+          "when": "config.fund-helper.defaultViewMode != 'webview'"
         },
         {
           "type": "webview",
           "icon": "resources/fund-icon.svg",
           "id": "fundWebviewView",
           "name": "表格视图",
-          "when": "fund-helper.viewMode == webview"
+          "when": "config.fund-helper.defaultViewMode == 'webview'"
         }
       ]
     },
@@ -216,32 +216,32 @@
       "view/title": [
         {
           "command": "fund-helper.switchToWebview",
-          "when": "view == fundList && fund-helper.viewMode == tree",
+          "when": "view == fundList && config.fund-helper.defaultViewMode != 'webview'",
           "group": "navigation@0"
         },
         {
           "command": "fund-helper.switchToTreeView",
-          "when": "view == fundWebviewView && fund-helper.viewMode == webview",
+          "when": "view == fundWebviewView && config.fund-helper.defaultViewMode == 'webview'",
           "group": "navigation@0"
         },
         {
           "command": "fund-helper.refreshFund",
-          "when": "view == fundList && fund-helper.viewMode == tree",
+          "when": "view == fundList && config.fund-helper.defaultViewMode != 'webview'",
           "group": "navigation@1"
         },
         {
           "command": "fund-helper.refreshFund",
-          "when": "view == fundWebviewView && fund-helper.viewMode == webview",
+          "when": "view == fundWebviewView && config.fund-helper.defaultViewMode == 'webview'",
           "group": "navigation@1"
         },
         {
           "command": "fund-helper.addFund",
-          "when": "view == fundList && fund-helper.viewMode == tree",
+          "when": "view == fundList && config.fund-helper.defaultViewMode != 'webview'",
           "group": "navigation@2"
         },
         {
           "command": "fund-helper.addFund",
-          "when": "view == fundWebviewView && fund-helper.viewMode == webview",
+          "when": "view == fundWebviewView && config.fund-helper.defaultViewMode == 'webview'",
           "group": "navigation@2"
         },
         {
@@ -251,7 +251,7 @@
         },
         {
           "command": "fund-helper.analyzeFunds",
-          "when": "view == fundWebviewView && fund-helper.viewMode == webview",
+          "when": "view == fundWebviewView && config.fund-helper.defaultViewMode == 'webview'",
           "group": "navigation@3"
         },
         {
@@ -517,6 +517,11 @@
             "新版表格视图"
           ],
           "description": "默认启动时使用的视图模式"
+        },
+        "fund-helper.privacyMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "开启隐私模式（自动隐藏敏感数据）"
         },
         "fund-helper.webviewColumnOrder": {
           "type": "array",

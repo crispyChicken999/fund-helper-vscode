@@ -170,7 +170,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // 模式切换命令
     vscode.commands.registerCommand("fund-helper.switchToWebview", async () => {
-      await vscode.commands.executeCommand("setContext", "fund-helper.viewMode", "webview");
       // 保存用户选择
       const config = vscode.workspace.getConfiguration("fund-helper");
       await config.update("defaultViewMode", "webview", vscode.ConfigurationTarget.Global);
@@ -179,7 +178,6 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.commands.registerCommand("fund-helper.switchToTreeView", async () => {
-      await vscode.commands.executeCommand("setContext", "fund-helper.viewMode", "tree");
       // 保存用户选择
       const config = vscode.workspace.getConfiguration("fund-helper");
       await config.update("defaultViewMode", "tree", vscode.ConfigurationTarget.Global);
@@ -254,18 +252,6 @@ export async function activate(context: vscode.ExtensionContext) {
   // 5️⃣ 初始加载 & 自动刷新
   refreshData();
   setupAutoRefresh();
-
-  // 6️⃣ 设置初始视图模式 - 从配置读取
-  const config = vscode.workspace.getConfiguration("fund-helper");
-  const defaultViewMode = config.get<string>("defaultViewMode", "tree");
-  await vscode.commands.executeCommand("setContext", "fund-helper.viewMode", defaultViewMode);
-  
-  // 如果默认是 webview，自动聚焦到 webview
-  if (defaultViewMode === "webview") {
-    setTimeout(() => {
-      vscode.commands.executeCommand("fundWebviewView.focus");
-    }, 500);
-  }
 }
 
 export function deactivate() {
