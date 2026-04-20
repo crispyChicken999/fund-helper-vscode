@@ -83,6 +83,11 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
   }
 
   private _sendDataToWebview(fundDataList: ExtendedFundInfo[]): void {
+    if (this._view) {
+      // 像普通视图一样，在表格视图上也添加数量显示
+      this._view.title = `表格视图(${fundDataList.length})`;
+    }
+
     const mergedData = fundDataList.map((fund) => ({
       code: fund.code,
       name: fund.name,
