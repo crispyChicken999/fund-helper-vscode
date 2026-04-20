@@ -595,12 +595,11 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && npm run copy-webview && node esbuild.js",
-    "watch": "npm run copy-webview && node esbuild.js --watch",
-    "package": "npm run check-types && npm run copy-webview && node esbuild.js --production",
+    "compile": "npm run check-types && node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "npm run check-types && node esbuild.js --production",
     "check-types": "tsc --noEmit",
-    "lint": "tsc --noEmit",
-    "copy-webview": "node scripts/copy-webview.js"
+    "lint": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^18.0.0",

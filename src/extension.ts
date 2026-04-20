@@ -9,16 +9,16 @@ import {
   FundTreeDataProvider,
   FundTreeItem,
   FundDragAndDropController,
-} from "./fundTreeView";
+} from "./sidebar/treeview";
 import {
   createStatusBar,
   disposeStatusBar,
 } from "./statusBar";
 import { analyzeFunds, configureAI } from "./aiService";
-import { FundDetailWebview } from "./fundWebview";
+import { FundDetailWebview } from "./fundDetailWebview";
 import { MarketWebview } from "./marketWebview";
 import { DonateWebview } from "./donate";
-import { FundWebviewViewProvider } from "./fundWebviewView";
+import { FundWebviewViewProvider } from "./sidebar/webview";
 import { FundDataManager } from "./fundDataManager";
 import {
   initCore,

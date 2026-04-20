@@ -3,10 +3,10 @@ import * as fs from "fs";
 import { FundConfig } from "./fundModel";
 import { searchFund, getNetValueHistory, fetchMarketIndices } from "./fundService";
 import { isMarketClosed } from "./holidayService";
-import { FundTreeDataProvider, SortMethod, FundTreeItem } from "./fundTreeView";
+import { FundTreeDataProvider, SortMethod, FundTreeItem } from "./sidebar/treeview";
 import { updateStatusBar } from "./statusBar";
 import { FundDataManager } from "./fundDataManager";
-import { FundWebviewViewProvider } from "./fundWebviewView";
+import { FundWebviewViewProvider } from "./sidebar/webview";
 
 let refreshTimer: NodeJS.Timeout | undefined;
 let treeDataProvider: FundTreeDataProvider;

@@ -16,10 +16,10 @@ import {
   calcDailyGain,
   calcHoldingGain,
   calcHoldingGainRate,
-} from "./fundModel";
-import { MarketIndex } from "./fundService";
-import { isMarketClosed, isMarketOpen } from "./holidayService";
-import { FundDataManager, ExtendedFundInfo } from "./fundDataManager";
+} from "../../fundModel";
+import { MarketIndex } from "../../fundService";
+import { isMarketClosed, isMarketOpen } from "../../holidayService";
+import { FundDataManager, ExtendedFundInfo } from "../../fundDataManager";
 
 export type SortMethod =
   | "default"
@@ -129,7 +129,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
         this._fundDataList = await this._dataManager.refreshFundData();
       } else {
         // 降级：使用本地获取（保持兼容性）
-        const { getFundData } = await import("./fundService");
+        const { getFundData } = await import("../../fundService");
         this._fundDataList = await getFundData(configs, this._fundDataList);
       }
     } catch (e: any) {
