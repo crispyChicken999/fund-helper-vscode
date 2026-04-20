@@ -15,7 +15,7 @@ import {
   disposeStatusBar,
 } from "./statusBar";
 import { analyzeFunds, configureAI } from "./aiService";
-import { FundDetailWebview } from "./fundDetailWebview";
+import { FundDetailWebview } from "./detail";
 import { MarketWebview } from "./marketWebview";
 import { DonateWebview } from "./donate";
 import { FundWebviewViewProvider } from "./sidebar/webview";
