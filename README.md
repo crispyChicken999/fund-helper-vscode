@@ -8,7 +8,7 @@
 
 ![License](https://badgen.net/badge/License/MIT/red)
 ![VSCode](https://badgen.net/badge/VSCode/1.82.0+/blue?icon=visualstudio)
-![Version](https://badgen.net/badge/Version/0.1.9/orange?icon=git)
+![Version](https://badgen.net/badge/Version/0.2.0/orange?icon=git)
 ![Platform](https://badgen.net/badge/Platform/Windows|MacOS|Linux/purple?icon=windows)
 
 ![Downloads](https://badgen.net/vs-marketplace/d/CrispyChicken.fund-helper?label=Downloads&color=blue)
@@ -58,9 +58,10 @@
 10. ⏰ **自动刷新**：交易时间内自动刷新数据，间隔可配置。智能识别周末和法定节假日，非交易日停止刷新
 11. 🧠 **AI 智能分析**：接入多种 AI 大模型（OpenAI, 阿里云百炼, 硅基流动, DeepSeek 等），自动生成专业投资诊断报告
 12. 🔍 **搜索/筛选**：侧边栏内置搜索框，按名称或代码实时筛选基金列表，支持一键清除
-13. 📈 **行情中心（🆕）**：侧边栏可折叠节点，展示四大指数实时数据；行情 Webview 包含大盘资金统计、资金流向折线图（ECharts）、行业/风格/概念/地域板块排行（支持今日/5日/10日切换）
-14. 📅 **开市/休市提示（🆕）**：行情中心 item 前实时显示「开市」/「休市中」状态
+13. 📈 **行情中心**：侧边栏可折叠节点，展示四大指数实时数据；行情 Webview 包含大盘资金统计、资金流向折线图（ECharts）、行业/风格/概念/地域板块排行（支持今日/5日/10日切换）
+14. 📅 **开市/休市提示**：行情中心 item 前实时显示「开市」/「休市中」状态
 15. 💾 **数据持久化**：基金列表、排序方式保存到 VSCode 用户全局配置
+16. 🎨 **界面优化（🆕）**：全新表格视图设计，支持按列排序、调整列宽；Tooltip 样式统一优化；状态栏仅亏损时显示绿色警示，减少色彩干扰
 
 ## 💻 系统要求 (System Requirements)
 
