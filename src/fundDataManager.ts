@@ -117,17 +117,14 @@ export class FundDataManager {
 
       // 获取分组配置
       const fundGroups = getFundGroups();
-      console.log('[FundDataManager] fundGroups:', fundGroups);
       const codeToGroup = new Map<string, string>();
       for (const [gName, codes] of Object.entries(fundGroups)) {
-        console.log('[FundDataManager] Group:', gName, 'codes:', codes);
         for (const code of codes) {
           if (!codeToGroup.has(code)) {
             codeToGroup.set(code, gName);
           }
         }
       }
-      console.log('[FundDataManager] codeToGroup size:', codeToGroup.size);
 
       // 合并数据
       this._fundDataCache = fundDataList.map((fund) => {

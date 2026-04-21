@@ -188,15 +188,9 @@ export function getGroupScripts(): string[] {
     }
 
     function syncFromHost() {
-      console.log('[GroupManager] syncFromHost called, initialized:', state.initialized);
-      
       var rawFunds = options.getFundData ? options.getFundData() : [];
       var rawGroups = options.getAvailableGroups ? options.getAvailableGroups() : [];
       var rawFundGroups = options.getFundGroups ? options.getFundGroups() : {};
-      
-      console.log('[GroupManager] syncFromHost - rawGroups:', rawGroups);
-      console.log('[GroupManager] syncFromHost - rawFunds count:', rawFunds.length);
-      console.log('[GroupManager] syncFromHost - rawFundGroups:', rawFundGroups);
       
       state.funds = Array.isArray(rawFunds) ? rawFunds.slice() : [];
       
@@ -205,7 +199,6 @@ export function getGroupScripts(): string[] {
       
       // 如果已经初始化过，保持用户调整的顺序
       if (state.initialized && state.allCodes.length > 0) {
-        console.log('[GroupManager] Already initialized, preserving user order');
         var codeSet = new Set(newAllCodes);
         var orderedCodes = [];
         // 保留原有顺序中仍存在的基金
@@ -221,13 +214,11 @@ export function getGroupScripts(): string[] {
         });
         state.allCodes = orderedCodes;
       } else {
-        console.log('[GroupManager] First initialization');
         state.allCodes = newAllCodes;
       }
 
       // 如果已经初始化，不要覆盖用户的分组修改
       if (state.initialized) {
-        console.log('[GroupManager] Already initialized, keeping user changes');
         // 只更新基金数据，不更新分组数据
         return;
       }
@@ -247,13 +238,11 @@ export function getGroupScripts(): string[] {
         }
       }
 
-      console.log('[GroupManager] Final group order:', order);
 
       // 初始化分组数据
       var newGroups = {};
       
       // 首次初始化：直接使用配置文件中的分组数据
-      console.log('[GroupManager] First initialization - using fundGroups from config');
       
       // 直接使用 rawFundGroups 中的数据
       for (var k = 0; k < hostGroups.length; k++) {
@@ -262,12 +251,9 @@ export function getGroupScripts(): string[] {
           // 从 rawFundGroups 获取这个分组的基金列表
           var codes = rawFundGroups[g] || [];
           newGroups[g] = Array.isArray(codes) ? codes.slice() : [];
-          console.log('[GroupManager] Group', g, 'has', newGroups[g].length, 'funds:', newGroups[g]);
         }
       }
       
-      console.log('[GroupManager] Final groups:', Object.keys(newGroups));
-      console.log('[GroupManager] Final order:', order);
 
       state.groups = newGroups;
       state.groupOrder = uniqueList(order);
@@ -277,7 +263,6 @@ export function getGroupScripts(): string[] {
       }
       
       state.initialized = true;
-      console.log('[GroupManager] syncFromHost completed, initialized:', state.initialized);
     }
 
     function ensureDom() {
@@ -441,7 +426,6 @@ export function getGroupScripts(): string[] {
       }
       dom.topList.innerHTML = "";
 
-      console.log('[GroupManager] renderTopGroups - checking styles');
       
       state.groupOrder.forEach(function (group, index) {
         var item = document.createElement("div");
@@ -464,19 +448,6 @@ export function getGroupScripts(): string[] {
         left.appendChild(name);
         item.appendChild(left);
         
-        // 调试：检查样式
-        setTimeout(function() {
-          var computedStyle = window.getComputedStyle(name);
-          console.log('[GroupManager] Item name styles:', {
-            overflow: computedStyle.overflow,
-            textOverflow: computedStyle.textOverflow,
-            whiteSpace: computedStyle.whiteSpace,
-            minWidth: computedStyle.minWidth,
-            flex: computedStyle.flex,
-            width: computedStyle.width
-          });
-        }, 100);
-
         var actions = document.createElement("div");
         actions.className = "group-manager-item-actions";
 

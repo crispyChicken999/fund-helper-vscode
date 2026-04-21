@@ -102,8 +102,6 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
   }
 
   private _sendDataToWebview(fundDataList: ExtendedFundInfo[]): void {
-    console.log('[Webview] _sendDataToWebview called, fundDataList length:', fundDataList.length);
-    
     try {
       if (this._view) {
         // 像普通视图一样，在表格视图上也添加数量显示
@@ -131,15 +129,10 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     // 获取所有可用分组
     const fundGroups = getFundGroups();
     const fundGroupOrder = getFundGroupOrder();
-    console.log('[Webview] fundGroups:', fundGroups);
-    console.log('[Webview] fundGroupOrder:', fundGroupOrder);
     
     const allGroups = fundGroupOrder.length > 0 
       ? fundGroupOrder 
       : Object.keys(fundGroups);  // 如果没有保存顺序，使用对象键顺序
-
-    console.log('[Webview] Sending to frontend - allGroups:', allGroups);
-    console.log('[Webview] Sending to frontend - fundGroups:', fundGroups);
 
     this.postMessage({
       command: "updateFundData",
@@ -426,7 +419,6 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
 
       case "saveGroupManagement":
         if (message.payload) {
-          console.log('[Webview] saveGroupManagement received, payload:', message.payload);
           
           const payload = message.payload as {
             groupOrder?: string[];
@@ -445,8 +437,6 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
             ? payload.groupOrder.filter((g) => g && g !== "全部")
             : Object.keys(incomingGroups).filter((g) => g !== "全部");
 
-          console.log('[Webview] incomingGroups:', incomingGroups);
-          console.log('[Webview] incomingOrder:', incomingOrder);
 
           // 单个基金仅允许属于一个分组，按 groupOrder 的优先级去重。
           const usedCodes = new Set<string>();
@@ -471,9 +461,6 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
             nextGroups[groupName] = codes;
           }
 
-          console.log('[Webview] nextGroups to save:', nextGroups);
-          console.log('[Webview] incomingOrder to save:', incomingOrder);
-
           // 保存基金顺序
           if (Array.isArray(payload.orderedCodes) && payload.orderedCodes.length > 0) {
             const orderedFunds: Array<{ code: string; cost: string; num: string }> = [];
@@ -488,21 +475,16 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
                 orderedFunds.push(fund);
               }
             }
-            console.log('[Webview] Saving orderedFunds, count:', orderedFunds.length);
             await config.update("funds", orderedFunds, vscode.ConfigurationTarget.Global);
           }
 
           // 先保存分组数据到设置
-          console.log('[Webview] Saving fundGroups...');
           await saveFundGroups(nextGroups);
-          console.log('[Webview] Saving fundGroupOrder...');
           await saveFundGroupOrder(incomingOrder);
           
-          console.log('[Webview] Reloading fund data...');
           // 重新刷新数据，确保从设置中读取最新的分组信息
           await this._loadFundData();
           
-          console.log('[Webview] Group management saved successfully');
           vscode.window.showInformationMessage("分组变更已保存");
         }
         break;
