@@ -384,6 +384,19 @@
     "configuration": {
       "title": "基金助手",
       "properties": {
+        "fund-helper.fundGroups": {
+          "type": "object",
+          "default": {},
+          "description": "基金分组配置（格式：{ \"groupName\": [\"code1\", \"code2\"] }）"
+        },
+        "fund-helper.fundGroupOrder": {
+          "type": "array",
+          "default": [],
+          "description": "基金分组顺序（格式：[\"groupName1\", \"groupName2\"]）",
+          "items": {
+            "type": "string"
+          }
+        },
         "fund-helper.funds": {
           "type": "array",
           "default": [],

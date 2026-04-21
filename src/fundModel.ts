@@ -7,6 +7,7 @@ export interface FundConfig {
   code: string;
   num: string; // 持有份额（字符串）
   cost: string; // 持仓成本价（字符串）
+  group?: string; // 基金所属分组
 }
 
 /** 基金实时数据 */

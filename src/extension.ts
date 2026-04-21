@@ -32,6 +32,8 @@ import {
   exportFund,
   importFund,
   setupAutoRefresh,
+  getFundGroups,
+  saveFundGroups,
 } from "./core";
 
 let treeDataProvider: FundTreeDataProvider;
@@ -166,6 +168,119 @@ export async function activate(context: vscode.ExtensionContext) {
             panel.postMessage({ command: 'marketStatResponse', reqId: message.reqId, data: stat });
           }
         });
+      }
+    }),
+
+    vscode.commands.registerCommand("fund-helper.addGroup", async () => {
+      const groupName = await vscode.window.showInputBox({
+        prompt: "请输入新分组名称",
+        placeHolder: "例如：自定组合A"
+      });
+      if (!groupName) return;
+      
+      const fundGroups = getFundGroups();
+      if (fundGroups[groupName] !== undefined) {
+        vscode.window.showErrorMessage(`分组 "${groupName}" 已存在`);
+        return;
+      }
+      
+      fundGroups[groupName] = [];
+      await saveFundGroups(fundGroups);
+      await refreshData();
+      vscode.window.showInformationMessage(`成功添加分组: ${groupName}`);
+    }),
+
+    vscode.commands.registerCommand("fund-helper.setFundGroup", async (code: string) => {
+      // 如果没有传code进来，则需要让用户先选基金
+      if (!code) return;
+      const fundGroups = getFundGroups();
+      const groups = Object.keys(fundGroups);
+      const items = [{ label: '无分组 (移出当前组)', description: '' }, ...groups.map(g => ({ label: g }))];
+      
+      const picked = await vscode.window.showQuickPick(items, { placeHolder: '选择要移入的分组' });
+      if (!picked) return;
+
+      // 移出原分组
+      for (const key of Object.keys(fundGroups)) {
+        fundGroups[key] = fundGroups[key].filter((c: string) => c !== code);
+      }
+
+      // 加入新分组
+      if (picked.label !== '无分组 (移出当前组)') {
+        if (!fundGroups[picked.label]) fundGroups[picked.label] = [];
+        if (!fundGroups[picked.label].includes(code)) {
+          fundGroups[picked.label].push(code);
+        }
+      }
+
+      await saveFundGroups(fundGroups);
+      await refreshData();
+      vscode.window.showInformationMessage(`已将基金 ${code} 移至 ${picked.label}`);
+    }),
+
+    vscode.commands.registerCommand("fund-helper.manageGroups", async () => {
+      const fundGroups = getFundGroups();
+      const groups = Object.keys(fundGroups);
+      
+      const actions = [
+        { label: '$(add) 添加新分组', action: 'add' },
+        { label: '$(edit) 重命名分组', action: 'rename' },
+        { label: '$(trash) 删除分组', action: 'delete' },
+        { label: '$(arrow-both) 调整分组顺序', action: 'reorder' },
+      ];
+      
+      const picked = await vscode.window.showQuickPick(actions, { placeHolder: '选择操作' });
+      if (!picked) return;
+      
+      switch (picked.action) {
+        case 'add':
+          await vscode.commands.executeCommand("fund-helper.addGroup");
+          break;
+          
+        case 'rename':
+          const groupToRename = await vscode.window.showQuickPick(groups, { placeHolder: '选择要重命名的分组' });
+          if (!groupToRename) return;
+          
+          const newName = await vscode.window.showInputBox({
+            prompt: '输入新的分组名称',
+            value: groupToRename,
+            validateInput: (value) => {
+              if (!value) return '分组名称不能为空';
+              if (value !== groupToRename && groups.includes(value)) return '分组名称已存在';
+              return null;
+            }
+          });
+          
+          if (newName && newName !== groupToRename) {
+            fundGroups[newName] = fundGroups[groupToRename];
+            delete fundGroups[groupToRename];
+            await saveFundGroups(fundGroups);
+            await refreshData();
+            vscode.window.showInformationMessage(`已将分组 "${groupToRename}" 重命名为 "${newName}"`);
+          }
+          break;
+          
+        case 'delete':
+          const groupToDelete = await vscode.window.showQuickPick(groups, { placeHolder: '选择要删除的分组' });
+          if (!groupToDelete) return;
+          
+          const confirm = await vscode.window.showWarningMessage(
+            `确定要删除分组 "${groupToDelete}" 吗？该分组下的基金将变为无分组状态。`,
+            { modal: true },
+            '确定'
+          );
+          
+          if (confirm === '确定') {
+            delete fundGroups[groupToDelete];
+            await saveFundGroups(fundGroups);
+            await refreshData();
+            vscode.window.showInformationMessage(`已删除分组 "${groupToDelete}"`);
+          }
+          break;
+          
+        case 'reorder':
+          vscode.window.showInformationMessage('分组顺序调整功能开发中...');
+          break;
       }
     }),
 

@@ -6,6 +6,7 @@
 import * as vscode from "vscode";
 import { FundInfo, FundConfig } from "./fundModel";
 import { getFundData, fetchFundRelateTheme } from "./fundService";
+import { getFundGroups } from "./core";
 
 /**
  * 账户汇总数据
@@ -24,6 +25,7 @@ export interface AccountSummary {
  */
 export interface ExtendedFundInfo extends FundInfo {
   relateTheme?: string;  // 关联板块
+  group?: string; // 所属分组
 }
 
 /**
@@ -110,11 +112,33 @@ export class FundDataManager {
       // 更新缓存
       this._relateThemeCache = { ...this._relateThemeCache, ...relateThemeMap };
 
+      // 构建code到config的映射，以便快速查找分组
+      const configMap = new Map(configs.map(c => [c.code, c]));
+
+      // 获取分组配置
+      const fundGroups = getFundGroups();
+      console.log('[FundDataManager] fundGroups:', fundGroups);
+      const codeToGroup = new Map<string, string>();
+      for (const [gName, codes] of Object.entries(fundGroups)) {
+        console.log('[FundDataManager] Group:', gName, 'codes:', codes);
+        for (const code of codes) {
+          if (!codeToGroup.has(code)) {
+            codeToGroup.set(code, gName);
+          }
+        }
+      }
+      console.log('[FundDataManager] codeToGroup size:', codeToGroup.size);
+
       // 合并数据
-      this._fundDataCache = fundDataList.map((fund) => ({
-        ...fund,
-        relateTheme: this._relateThemeCache[fund.code] || '',
-      }));
+      this._fundDataCache = fundDataList.map((fund) => {
+        const groupName = codeToGroup.get(fund.code) || "全部";
+
+        return {
+          ...fund,
+          relateTheme: this._relateThemeCache[fund.code] || '',
+          group: groupName // 合并分组信息
+        };
+      });
 
       return this._fundDataCache;
     } catch (error) {

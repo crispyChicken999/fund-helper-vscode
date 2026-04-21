@@ -61,6 +61,29 @@ export function getFundConfigs(): FundConfig[] {
     .get<FundConfig[]>("funds", []);
 }
 
+export function getFundGroups(): Record<string, string[]> {
+  return vscode.workspace
+    .getConfiguration("fund-helper")
+    .get<Record<string, string[]>>("fundGroups", {});
+}
+
+export async function saveFundGroups(groups: Record<string, string[]>) {
+  await vscode.workspace
+    .getConfiguration("fund-helper")
+    .update("fundGroups", groups, vscode.ConfigurationTarget.Global);
+}
+
+export function getFundGroupOrder(): string[] {
+  return vscode.workspace
+    .getConfiguration("fund-helper")
+    .get<string[]>("fundGroupOrder", []);
+}
+
+export async function saveFundGroupOrder(order: string[]) {
+  await vscode.workspace
+    .getConfiguration("fund-helper")
+    .update("fundGroupOrder", order, vscode.ConfigurationTarget.Global);
+}
 export async function saveFundConfigs(funds: FundConfig[]) {
   await vscode.workspace
     .getConfiguration("fund-helper")
@@ -129,8 +152,26 @@ export async function deleteFund(code: string) {
     return;
   }
 
+  // 1. 从 funds 列表中删除
   const funds = getFundConfigs().filter((f) => f.code !== code);
   await saveFundConfigs(funds);
+  
+  // 2. 从所有分组中删除该基金
+  const fundGroups = getFundGroups();
+  let groupsModified = false;
+  
+  for (const groupName of Object.keys(fundGroups)) {
+    const originalLength = fundGroups[groupName].length;
+    fundGroups[groupName] = fundGroups[groupName].filter((c: string) => c !== code);
+    if (fundGroups[groupName].length !== originalLength) {
+      groupsModified = true;
+    }
+  }
+  
+  if (groupsModified) {
+    await saveFundGroups(fundGroups);
+  }
+  
   await refreshData();
   vscode.window.showInformationMessage(`已删除基金 ${code}`);
 }
@@ -311,8 +352,32 @@ export async function editPosition(code: string, name: string) {
 
 
 export async function exportFund() {
+  const config = vscode.workspace.getConfiguration("fund-helper");
   const funds = getFundConfigs();
-  const exportData = { funds };
+  const groups = getFundGroups();
+  const groupOrder = getFundGroupOrder();
+  const columnOrder = config.get<string[]>("webviewColumnOrder", []);
+  const visibleColumns = config.get<string[]>("webviewVisibleColumns", []);
+  const sortMethod = config.get<string>("sortMethod", "default");
+  const refreshInterval = config.get<number>("refreshInterval", 30);
+  const hideStatusBar = config.get<boolean>("hideStatusBar", false);
+  const defaultViewMode = config.get<string>("defaultViewMode", "tree");
+  const privacyMode = config.get<boolean>("privacyMode", false);
+  
+  const exportData = { 
+    funds,
+    groups,
+    groupOrder,
+    columnSettings: {
+      columnOrder,
+      visibleColumns
+    },
+    sortMethod,
+    refreshInterval,
+    hideStatusBar,
+    defaultViewMode,
+    privacyMode
+  };
 
   const now = new Date();
   const pad = (n: number) => n.toString().padStart(2, '0');
@@ -325,7 +390,45 @@ export async function exportFund() {
   });
 
   if (uri) {
-    fs.writeFileSync(uri.fsPath, JSON.stringify(exportData, null, 2), "utf-8");
+    // 自定义 JSON 格式化：
+    // - funds 数组中的每个对象在一行显示
+    // - groups 的每个数组在一行显示
+    // - groupOrder、columnOrder、visibleColumns 数组在一行显示
+    
+    const fundsJson = funds.map(f => JSON.stringify(f)).join(',\n    ');
+    
+    // groups: 每个分组的数组在一行显示
+    const groupsLines: string[] = [];
+    for (const [key, value] of Object.entries(groups)) {
+      groupsLines.push(`    ${JSON.stringify(key)}: ${JSON.stringify(value)}`);
+    }
+    const groupsJson = groupsLines.length > 0 
+      ? '{\n' + groupsLines.join(',\n') + '\n  }'
+      : '{}';
+    
+    // 数组在一行显示
+    const groupOrderJson = JSON.stringify(groupOrder);
+    const columnOrderJson = JSON.stringify(columnOrder);
+    const visibleColumnsJson = JSON.stringify(visibleColumns);
+    
+    const formattedJson = `{
+  "funds": [
+    ${fundsJson}
+  ],
+  "groups": ${groupsJson},
+  "groupOrder": ${groupOrderJson},
+  "columnSettings": {
+    "columnOrder": ${columnOrderJson},
+    "visibleColumns": ${visibleColumnsJson}
+  },
+  "sortMethod": ${JSON.stringify(sortMethod)},
+  "refreshInterval": ${refreshInterval},
+  "hideStatusBar": ${hideStatusBar},
+  "defaultViewMode": ${JSON.stringify(defaultViewMode)},
+  "privacyMode": ${privacyMode}
+}`;
+    
+    fs.writeFileSync(uri.fsPath, formattedJson, "utf-8");
     vscode.window.showInformationMessage(`基金列表已导出到 ${uri.fsPath}`);
   }
 }
@@ -347,8 +450,45 @@ export async function importFund() {
     const data = JSON.parse(content);
 
     let fundsList: any[] = [];
+    let groupsData: Record<string, string[]> = {};
+    let groupOrderData: string[] = [];
+    let columnSettingsData: { columnOrder?: string[]; visibleColumns?: string[] } = {};
+    let sortMethodData: string | undefined;
+    let refreshIntervalData: number | undefined;
+    let hideStatusBarData: boolean | undefined;
+    let defaultViewModeData: string | undefined;
+    let privacyModeData: boolean | undefined;
+
     if (Array.isArray(data.funds)) {
       fundsList = data.funds;
+      // 导入分组信息
+      if (data.groups && typeof data.groups === 'object') {
+        groupsData = data.groups;
+      }
+      // 导入分组顺序
+      if (data.groupOrder && Array.isArray(data.groupOrder)) {
+        groupOrderData = data.groupOrder;
+      }
+      // 导入列设置
+      if (data.columnSettings && typeof data.columnSettings === 'object') {
+        columnSettingsData = data.columnSettings;
+      }
+      // 导入其他设置
+      if (typeof data.sortMethod === 'string') {
+        sortMethodData = data.sortMethod;
+      }
+      if (typeof data.refreshInterval === 'number') {
+        refreshIntervalData = data.refreshInterval;
+      }
+      if (typeof data.hideStatusBar === 'boolean') {
+        hideStatusBarData = data.hideStatusBar;
+      }
+      if (typeof data.defaultViewMode === 'string') {
+        defaultViewModeData = data.defaultViewMode;
+      }
+      if (typeof data.privacyMode === 'boolean') {
+        privacyModeData = data.privacyMode;
+      }
     } else if (Array.isArray(data)) {
       fundsList = data;
     } else {
@@ -370,11 +510,71 @@ export async function importFund() {
       return;
     }
 
+    const config = vscode.workspace.getConfiguration("fund-helper");
+
     // 直接覆盖导入，不再询问用户
     await saveFundConfigs(newFunds);
+    
+    // 导入分组信息
+    if (Object.keys(groupsData).length > 0) {
+      await saveFundGroups(groupsData);
+    }
+
+    // 导入分组顺序
+    if (groupOrderData.length > 0) {
+      await saveFundGroupOrder(groupOrderData);
+    }
+
+    // 导入列设置
+    if (columnSettingsData.columnOrder && Array.isArray(columnSettingsData.columnOrder)) {
+      await config.update("webviewColumnOrder", columnSettingsData.columnOrder, vscode.ConfigurationTarget.Global);
+    }
+    if (columnSettingsData.visibleColumns && Array.isArray(columnSettingsData.visibleColumns)) {
+      await config.update("webviewVisibleColumns", columnSettingsData.visibleColumns, vscode.ConfigurationTarget.Global);
+    }
+
+    // 导入其他设置
+    if (sortMethodData !== undefined) {
+      await config.update("sortMethod", sortMethodData, vscode.ConfigurationTarget.Global);
+    }
+    if (refreshIntervalData !== undefined) {
+      await config.update("refreshInterval", refreshIntervalData, vscode.ConfigurationTarget.Global);
+    }
+    if (hideStatusBarData !== undefined) {
+      await config.update("hideStatusBar", hideStatusBarData, vscode.ConfigurationTarget.Global);
+    }
+    if (defaultViewModeData !== undefined) {
+      await config.update("defaultViewMode", defaultViewModeData, vscode.ConfigurationTarget.Global);
+    }
+    if (privacyModeData !== undefined) {
+      await config.update("privacyMode", privacyModeData, vscode.ConfigurationTarget.Global);
+    }
+
     await refreshData();
+
+    // 构建导入成功消息
+    const messages: string[] = [`${newFunds.length} 个基金`];
+    if (Object.keys(groupsData).length > 0) {
+      messages.push(`${Object.keys(groupsData).length} 个分组`);
+    }
+    if (groupOrderData.length > 0) {
+      messages.push('分组顺序');
+    }
+    if (columnSettingsData.columnOrder || columnSettingsData.visibleColumns) {
+      messages.push('列设置');
+    }
+    const otherSettings: string[] = [];
+    if (sortMethodData !== undefined) otherSettings.push('排序方式');
+    if (refreshIntervalData !== undefined) otherSettings.push('刷新间隔');
+    if (hideStatusBarData !== undefined) otherSettings.push('状态栏设置');
+    if (defaultViewModeData !== undefined) otherSettings.push('默认视图');
+    if (privacyModeData !== undefined) otherSettings.push('隐私模式');
+    if (otherSettings.length > 0) {
+      messages.push(otherSettings.join('、'));
+    }
+    
     vscode.window.showInformationMessage(
-      `导入成功！共 ${newFunds.length} 个基金（已覆盖原有数据）`,
+      `导入成功！${messages.join('、')}（已覆盖原有数据）`,
     );
   } catch (e: any) {
     vscode.window.showErrorMessage(`导入失败: ${e.message}`);
