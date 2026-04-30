@@ -140,6 +140,54 @@ async function fetchFundEstimateChange(code: string): Promise<number | null> {
 }
 
 /**
+ * 批量从 FundMNFInfo 接口获取基金数据
+ * @param codes 基金代码数组
+ * @returns 基金代码到数据的映射
+ */
+async function fetchBatchFundFromMNFInfo(codes: string[]): Promise<Map<string, any>> {
+  const resultMap = new Map<string, any>();
+  
+  if (codes.length === 0) {
+    return resultMap;
+  }
+  
+  // FundMNFInfo 接口支持逗号分隔的多个基金代码
+  const fcodes = codes.join(',');
+  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=vscode&Fcodes=${fcodes}`;
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 批量请求增加超时时间
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
+    if (!res.ok) {
+      return resultMap;
+    }
+    
+    const data = (await res.json()) as any;
+    
+    if (data.Datas && Array.isArray(data.Datas)) {
+      for (const fund of data.Datas) {
+        const code = fund.FCODE;
+        resultMap.set(code, {
+          navchgrt: fund.NAVCHGRT, // 净值涨跌幅
+          jzrq: fund.PDATE, // 净值日期
+          dwjz: fund.NAV, // 单位净值
+          name: fund.SHORTNAME, // 基金名称
+          gszzl: fund.GSZZL, // 估算涨跌幅（可能为null）
+          gztime: (data.Expansion as any)?.GZTIME || "", // 更新时间
+        });
+      }
+    }
+  } catch (error) {
+    console.error('批量获取 MNFInfo 数据失败:', error);
+  }
+  
+  return resultMap;
+}
+
+/**
  * 从 FundMNFInfo 接口获取基金数据（备选方案，用于 QDII 等特殊基金）
  */
 async function fetchFundFromMNFInfo(code: string): Promise<any> {
@@ -220,15 +268,18 @@ export async function getFundData(
     return [];
   }
 
-  const results = await Promise.allSettled(
-    configs.map((cfg) => fetchSingleFund(cfg.code)),
-  );
+  // 并行获取：fundgz 估值数据 + MNFInfo 真实净值数据
+  const codes = configs.map(cfg => cfg.code);
+  const [gzResults, mnfInfoMap] = await Promise.all([
+    Promise.allSettled(configs.map((cfg) => fetchSingleFund(cfg.code))),
+    fetchBatchFundFromMNFInfo(codes)
+  ]);
 
   const fundList: FundInfo[] = [];
 
   for (let i = 0; i < configs.length; i++) {
     const cfg = configs[i];
-    const result = results[i];
+    const result = gzResults[i];
     const val = result.status === "fulfilled" ? result.value : null;
 
     const shares = parseFloat(cfg.num) || 0;
@@ -246,6 +297,7 @@ export async function getFundData(
           estimatedValue: null,
           changePercent: 0,
           updateTime: "获取失败",
+          netValueDate: "", // 净值日期
           isRealValue: false,
           shares,
           cost,
@@ -255,6 +307,18 @@ export async function getFundData(
       continue;
     }
 
+    // 从批量获取的 MNFInfo 数据中获取真实净值信息
+    const mnfInfo = mnfInfoMap.get(cfg.code);
+    if (mnfInfo) {
+      // 将 MNFInfo 数据合并到 fundgz 数据中
+      if (!val.navchgrt && mnfInfo.navchgrt !== undefined) {
+        val.navchgrt = mnfInfo.navchgrt;
+      }
+      if (!val.jzrq && mnfInfo.jzrq) {
+        val.jzrq = mnfInfo.jzrq;
+      }
+    }
+
     const jzrq = val.jzrq;
     const gztime = val.gztime;
 
@@ -262,7 +326,7 @@ export async function getFundData(
     let netValue = isNaN(parseFloat(val.dwjz)) ? 0 : parseFloat(val.dwjz);
     let estimatedValue: number | null = isNaN(parseFloat(val.gsz)) ? null : parseFloat(val.gsz);
     let changePercent = isNaN(parseFloat(val.gszzl)) ? 0 : parseFloat(val.gszzl);
-    let navChgRt = changePercent; // 使用估值涨跌幅作为实际涨跌幅
+    let navChgRt = 0; // 默认为 0
 
     // 处理从 MNFInfo 接口获取的数据（QDII 基金等）
     if (val._fromMNFInfo) {
@@ -271,10 +335,20 @@ export async function getFundData(
       navChgRt = val._navChgRt;
       // QDII 基金不显示盘中估值
       estimatedValue = null;
-    } else if (jzrq && gztime && typeof gztime === "string" && jzrq === gztime.substring(0, 10)) {
-      // fundgz 接口数据：如果净值日期等于更新时间日期，表示已更新为实时净值
+      // QDII 基金的净值是真实净值（上一个交易日的）
       isRealValue = true;
-      estimatedValue = netValue;
+    } else {
+      // fundgz 接口数据
+      // navChgRt 始终使用真实的净值涨跌幅（从 MNFInfo 接口获取）
+      if (val.navchgrt !== undefined && !isNaN(parseFloat(val.navchgrt))) {
+        navChgRt = parseFloat(val.navchgrt);
+      }
+      
+      // 判断是否已更新为实时净值
+      if (jzrq && gztime && typeof gztime === "string" && jzrq === gztime.substring(0, 10)) {
+        isRealValue = true;
+        estimatedValue = netValue;
+      }
     }
 
     fundList.push({
@@ -284,6 +358,7 @@ export async function getFundData(
       estimatedValue,
       changePercent,
       updateTime: val.gztime || "",
+      netValueDate: jzrq || "", // 净值日期（上一个交易日的日期）
       isRealValue,
       shares,
       cost,

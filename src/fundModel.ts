@@ -22,6 +22,8 @@ export interface FundInfo {
   changePercent: number;
   /** 估值更新时间 */
   updateTime: string;
+  /** 净值日期（上一个交易日的日期，格式：YYYY-MM-DD） */
+  netValueDate: string;
   /** 是否已更新为真实净值 */
   isRealValue: boolean;
   /** 实际日涨跌幅(%) */
@@ -47,27 +49,26 @@ export function calcHoldingAmount(fund: FundInfo): number {
   return fund.netValue * fund.shares;
 }
 
-/** 计算估算日收益 */
+/** 计算当日收益（基于上一个交易日的真实涨跌幅） */
 export function calcDailyGain(fund: FundInfo): number {
   if (fund.shares <= 0) {
     return 0;
   }
 
-  // 如果当天是休市，估算收益应返回 0
+  // 如果当天是休市，当日收益应返回 0
   if (isMarketClosed()) {
     return 0;
   }
 
-  if (fund.isRealValue) {
-    // 采用真实的实际净值计算收益
+  // 始终使用 navChgRt（上一个交易日的真实涨跌幅）来计算当日收益
+  // navChgRt 是基于最新净值的真实涨跌幅
+  if (fund.navChgRt !== 0) {
     return (
       (fund.netValue - fund.netValue / (1 + fund.navChgRt * 0.01)) *
       fund.shares
     );
   }
-  if (fund.estimatedValue !== null) {
-    return (fund.estimatedValue - fund.netValue) * fund.shares;
-  }
+  
   return 0;
 }
 

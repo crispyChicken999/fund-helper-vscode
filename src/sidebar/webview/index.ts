@@ -118,6 +118,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       gszzl: fund.changePercent.toString(),
       dwjz: fund.netValue.toString(),
       gztime: fund.updateTime,
+      netValueDate: fund.netValueDate, // 净值日期（上一个交易日的日期）
       num: fund.shares.toString(),
       cost: fund.cost.toString(),
       navChgRt: fund.navChgRt.toString(),
