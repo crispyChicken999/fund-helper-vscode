@@ -151,7 +151,16 @@ export async function activate(context: vscode.ExtensionContext) {
     ),
     vscode.commands.registerCommand(
       "fund-helper.viewFundDetail",
-      (item: FundTreeItem) => item?.fundInfo && FundDetailWebview.createOrShow(context.extensionUri, item.fundInfo)
+      (item: FundTreeItem) =>
+        item?.fundInfo &&
+        FundDetailWebview.createOrShow(
+          context.extensionUri,
+          item.fundInfo,
+          async (code: string) => {
+            await fundDataManager.refreshFundData();
+            return fundDataManager.getCachedFundData().find((fund) => fund.code === code);
+          },
+        )
     ),
 
     vscode.commands.registerCommand("fund-helper.openMarket", () => {
