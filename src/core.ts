@@ -125,7 +125,34 @@ export async function addFund() {
     let addedCount = 0;
     for (const s of selected) {
       if (!funds.some((f) => f.code === s.code)) {
-        funds.push({ code: s.code, num: "0", cost: "0" });
+        let num = "0";
+        let cost = "0";
+        
+        const numInput = await vscode.window.showInputBox({
+          prompt: `请输入 ${s.label} 的持有份额 (选填)`,
+          placeHolder: "默认: 0",
+        });
+        if (numInput === undefined) {
+          // 用户按了取消，直接跳过当前基金添加
+          continue;
+        }
+        if (numInput.trim() !== "") {
+          num = numInput.trim();
+        }
+
+        const costInput = await vscode.window.showInputBox({
+          prompt: `请输入 ${s.label} 的持仓成本价 (选填)`,
+          placeHolder: "默认: 0",
+        });
+        if (costInput === undefined) {
+          // 用户按了取消
+          continue;
+        }
+        if (costInput.trim() !== "") {
+          cost = costInput.trim();
+        }
+
+        funds.push({ code: s.code, num, cost });
         addedCount++;
       }
     }
