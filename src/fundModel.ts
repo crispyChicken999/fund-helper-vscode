@@ -55,17 +55,10 @@ export function calcDailyGain(fund: FundInfo): number {
     return 0;
   }
 
-  // 始终使用 navChgRt（上一个交易日的真实涨跌幅）来计算当日收益
-  // navChgRt 是基于最新净值的真实涨跌幅
-  // 注意：即使在休市日，也显示最后一个交易日的真实收益
-  if (fund.navChgRt !== 0) {
-    return (
-      (fund.netValue - fund.netValue / (1 + fund.navChgRt * 0.01)) *
-      fund.shares
-    );
-  }
-  
-  return 0;
+  // 使用简单的公式：持有金额 × 涨跌幅百分比
+  // 这与 webview 的计算方式一致
+  const holdingAmount = fund.netValue * fund.shares;
+  return (holdingAmount * fund.navChgRt) / 100;
 }
 
 /** 计算持有收益 */

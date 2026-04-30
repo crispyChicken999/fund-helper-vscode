@@ -311,11 +311,15 @@ export async function getFundData(
     const mnfInfo = mnfInfoMap.get(cfg.code);
     if (mnfInfo) {
       // 将 MNFInfo 数据合并到 fundgz 数据中
-      if (!val.navchgrt && mnfInfo.navchgrt !== undefined) {
+      // 始终优先使用 MNFInfo 的最新数据（因为 fundgz 可能返回旧数据）
+      if (mnfInfo.navchgrt !== undefined) {
         val.navchgrt = mnfInfo.navchgrt;
       }
-      if (!val.jzrq && mnfInfo.jzrq) {
+      if (mnfInfo.jzrq) {
         val.jzrq = mnfInfo.jzrq;
+      }
+      if (mnfInfo.dwjz !== undefined) {
+        val.dwjz = mnfInfo.dwjz;
       }
     }
 
