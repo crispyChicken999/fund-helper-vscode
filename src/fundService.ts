@@ -20,6 +20,170 @@ function parseJsonp(text: string): any {
 }
 
 /**
+ * 获取基金持仓信息
+ */
+async function fetchFundInvestmentPosition(code: string): Promise<any> {
+  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const data = (await res.json()) as any;
+    if (data.Datas) {
+      return data.Datas;
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * 获取股票实时行情
+ */
+async function fetchStockRealTimeData(secids: string): Promise<any> {
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fields=f1,f2,f3,f4,f12,f13,f14&fltt=2&secids=${secids}&_=${Date.now()}`;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const data = (await res.json()) as any;
+    if (data.data && data.data.diff) {
+      return data.data.diff;
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * 根据持仓和股票行情计算估算涨幅（完全按浏览器插件的逻辑）
+ */
+function calcEstimateChange(positions: any[], stockData: any[]): number {
+  if (!positions || positions.length === 0 || !stockData || stockData.length === 0) {
+    return 0;
+  }
+
+  // 第一步：计算总权重
+  let totalWeight = 0;
+  positions.forEach((position: any) => {
+    const weight = parseFloat(position.JZBL) || 0;
+    if (weight > 0) {
+      totalWeight += weight;
+    }
+  });
+
+  // 第二步：按位置索引计算加权涨幅
+  let totalWeightedChange = 0;
+  positions.forEach((position: any, index: number) => {
+    const weight = parseFloat(position.JZBL) || 0;
+    const stockItem = stockData[index]; // 直接按索引，不通过代码查找
+    const changePercent = (stockItem && parseFloat(stockItem.f3)) || 0;
+    
+    if (weight > 0 && !isNaN(changePercent)) {
+      const weightedValue = (weight / totalWeight) * changePercent;
+      totalWeightedChange += weightedValue;
+    }
+  });
+
+  return parseFloat(totalWeightedChange.toFixed(2));
+}
+
+/**
+ * 获取基金实时估算涨幅（用于 QDII 等特殊基金）
+ */
+async function fetchFundEstimateChange(code: string): Promise<number | null> {
+  try {
+    // 获取基金持仓
+    const positionData = await fetchFundInvestmentPosition(code);
+    if (!positionData || !positionData.fundStocks) {
+      return null;
+    }
+
+    const fundStocks = positionData.fundStocks;
+    if (!Array.isArray(fundStocks) || fundStocks.length === 0) {
+      return null;
+    }
+
+    // 构建股票代码字符串
+    const secids = fundStocks
+      .map((stock: any) => {
+        if (stock.NEWTEXCH && stock.GPDM) {
+          return `${stock.NEWTEXCH}.${stock.GPDM}`;
+        }
+        return null;
+      })
+      .filter((code: string | null) => code !== null)
+      .join(',');
+
+    if (!secids) {
+      return null;
+    }
+
+    // 获取股票实时行情
+    const stockData = await fetchStockRealTimeData(secids);
+    if (!stockData) {
+      return null;
+    }
+
+    // 计算加权涨幅
+    const estimateChange = calcEstimateChange(fundStocks, stockData);
+    return estimateChange;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * 从 FundMNFInfo 接口获取基金数据（备选方案，用于 QDII 等特殊基金）
+ */
+async function fetchFundFromMNFInfo(code: string): Promise<any> {
+  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=vscode&Fcodes=${code}`;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      return null;
+    }
+    const data = (await res.json()) as any;
+    
+    if (data.Datas && Array.isArray(data.Datas) && data.Datas.length > 0) {
+      const fund = data.Datas[0];
+      
+      // 尝试获取实时估算涨幅
+      const estimateChange = await fetchFundEstimateChange(code);
+      
+      // 转换数据格式，使其与 fundgz 接口返回的格式兼容
+      const result = {
+        fundcode: fund.FCODE,
+        name: fund.SHORTNAME,
+        dwjz: fund.NAV, // 单位净值
+        gsz: null, // QDII 无盘中估值
+        gszzl: fund.GSZZL, // 估算涨跌幅（可能为null）
+        navchgrt: fund.NAVCHGRT, // 净值涨跌幅
+        jzrq: fund.PDATE, // 净值日期
+        gztime: (data.Expansion as any)?.GZTIME || "", // 更新时间
+        // 标记这是从备选接口获取的数据
+        _fromMNFInfo: true,
+        _navChgRt: (estimateChange ?? parseFloat(fund.NAVCHGRT)) || 0, // 优先使用实时估算涨幅，否则用 NAVCHGRT
+        _estimateChange: estimateChange, // 是否是实时估算（用于标记）
+      };
+      return result;
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
  * 获取单个基金实时估值
  */
 async function fetchSingleFund(code: string): Promise<any> {
@@ -31,10 +195,17 @@ async function fetchSingleFund(code: string): Promise<any> {
     clearTimeout(timeoutId);
     if (!res.ok) return null;
     const text = await res.text();
-    return parseJsonp(text);
+    const parsed = parseJsonp(text);
+    
+    // 如果返回为空（jsonpgz()），尝试备选方案
+    if (!parsed) {
+      return await fetchFundFromMNFInfo(code);
+    }
+    
+    return parsed;
   } catch (error) {
-    console.error(`fetch fund ${code} failed`, error);
-    return null;
+    // 如果主接口出错，也尝试备选方案
+    return await fetchFundFromMNFInfo(code);
   }
 }
 
@@ -93,7 +264,15 @@ export async function getFundData(
     let changePercent = isNaN(parseFloat(val.gszzl)) ? 0 : parseFloat(val.gszzl);
     let navChgRt = changePercent; // 使用估值涨跌幅作为实际涨跌幅
 
-    if (jzrq && gztime && typeof gztime === "string" && jzrq === gztime.substring(0, 10)) {
+    // 处理从 MNFInfo 接口获取的数据（QDII 基金等）
+    if (val._fromMNFInfo) {
+      // QDII 基金没有盘中估值，使用净值涨跌幅
+      changePercent = val._navChgRt;
+      navChgRt = val._navChgRt;
+      // QDII 基金不显示盘中估值
+      estimatedValue = null;
+    } else if (jzrq && gztime && typeof gztime === "string" && jzrq === gztime.substring(0, 10)) {
+      // fundgz 接口数据：如果净值日期等于更新时间日期，表示已更新为实时净值
       isRealValue = true;
       estimatedValue = netValue;
     }
