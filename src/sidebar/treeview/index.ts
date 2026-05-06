@@ -654,8 +654,8 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       { label: "日收益率\u3000", value: `${signStr(totalDailyRate)}%`, icon: getIcon(totalDailyRate), color: getColor(totalDailyRate), highlight: totalDailyRate > 0 },
       { label: "今日上涨\u3000", value: `${upCount} 只 (+${totalDailyUp.toFixed(2)})`, icon: "arrow-up", color: "errorForeground", highlight: true },
       { label: "今日下跌\u3000", value: `${downCount} 只 (${totalDailyDown.toFixed(2)})`, icon: "arrow-down", color: "testing.iconPassed" },
-      { label: "累计收益\u3000", value: signStr(totalHoldingGain), icon: getIcon(totalHoldingGain), color: getColor(totalHoldingGain), highlight: totalHoldingGain > 0 },
-      { label: "累计收益率", value: `${signStr(totalHoldingRate)}%`, icon: getIcon(totalHoldingRate), color: getColor(totalHoldingRate), highlight: totalHoldingRate > 0 },
+      { label: "持有收益\u3000", value: signStr(totalHoldingGain), icon: getIcon(totalHoldingGain), color: getColor(totalHoldingGain), highlight: totalHoldingGain > 0 },
+      { label: "持有收益率", value: `${signStr(totalHoldingRate)}%`, icon: getIcon(totalHoldingRate), color: getColor(totalHoldingRate), highlight: totalHoldingRate > 0 },
       { label: "累计盈利\u3000", value: `${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})`, icon: "triangle-up", color: "errorForeground", highlight: true },
       { label: "累计亏损\u3000", value: `${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})`, icon: "triangle-down", color: "testing.iconPassed" },
     ];

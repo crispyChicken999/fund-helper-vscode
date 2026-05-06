@@ -139,13 +139,13 @@ export function updateStatusBar(fundList: FundInfo[]): void {
   md.appendMarkdown(`$(database) 持有金额：${hl(totalAmount.toFixed(2), "#909399")}\n\n`);
   md.appendMarkdown(`$(triangle-up) 累计盈利：**${holdingUpCount}** 只，共计：${hl("+" + totalHoldingUp.toFixed(2), "#f56c6c")}\n\n`);
   md.appendMarkdown(`$(triangle-down) 累计亏损：**${holdingDownCount}** 只，共计：${hl(totalHoldingDown.toFixed(2), "#4eb61b")}\n\n`);
-  md.appendMarkdown(`$(diff) 累计收益：${hl(`${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}`, holdingColor)}\n\n`);
+  md.appendMarkdown(`$(diff) 持有收益：${hl(`${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}`, holdingColor)}\n\n`);
 
   const totalHoldingRate =
     totalAmount > 0
       ? (totalHoldingGain / (totalAmount - totalHoldingGain)) * 100
       : 0;
-  md.appendMarkdown(`$(symbol-numeric) 累计收益率：${hl(`${totalHoldingRate >= 0 ? "+" : ""}${totalHoldingRate.toFixed(2)}%`, holdingColor)}\n\n`);
+  md.appendMarkdown(`$(symbol-numeric) 持有收益率：${hl(`${totalHoldingRate >= 0 ? "+" : ""}${totalHoldingRate.toFixed(2)}%`, holdingColor)}\n\n`);
 
   md.appendMarkdown(`\n ___ \n\n`);
 
@@ -156,9 +156,9 @@ export function updateStatusBar(fundList: FundInfo[]): void {
   md.appendMarkdown(`$(clock) 更新时间：**${timeStr}**\n\n`);
   md.appendMarkdown(`\n ___ \n\n`);
 
-  const copyText = isClosed 
-    ? `【基金统计（休市）】\n持有金额：${totalAmount.toFixed(2)}\n累计盈利：${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})\n累计亏损：${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})\n累计收益：${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}\n累计收益率：${totalHoldingRate >= 0 ? "+" : ""}${totalHoldingRate.toFixed(2)}%\n自选数量：${fundList.length} 只\n更新时间：${timeStr}`
-    : `【今日基金统计】\n上涨基金：${upCount} 只 (+${totalEstimatedUp.toFixed(2)})\n下跌基金：${downCount} 只 (${totalEstimatedDown.toFixed(2)})\n估算收益：${totalEstimatedGain >= 0 ? "+" : ""}${totalEstimatedGain.toFixed(2)}\n估算收益率：${(totalAmount > 0 ? (totalEstimatedGain / totalAmount) * 100 : 0).toFixed(2)}%\n持有金额：${totalAmount.toFixed(2)}\n累计盈利：${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})\n累计亏损：${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})\n累计收益：${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}\n累计收益率：${totalHoldingRate >= 0 ? "+" : ""}${totalHoldingRate.toFixed(2)}%\n自选数量：${fundList.length} 只\n更新时间：${timeStr}`;
+  const copyText = isClosed
+    ? `【基金统计（休市）】\n持有金额：${totalAmount.toFixed(2)}\n累计盈利：${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})\n累计亏损：${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})\n持有收益：${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}\n持有收益率：${totalHoldingRate >= 0 ? "+" : ""}${totalHoldingRate.toFixed(2)}%\n自选数量：${fundList.length} 只\n更新时间：${timeStr}`
+    : `【今日基金统计】\n上涨基金：${upCount} 只 (+${totalEstimatedUp.toFixed(2)})\n下跌基金：${downCount} 只 (${totalEstimatedDown.toFixed(2)})\n估算收益：${totalEstimatedGain >= 0 ? "+" : ""}${totalEstimatedGain.toFixed(2)}\n估算收益率：${(totalAmount > 0 ? (totalEstimatedGain / totalAmount) * 100 : 0).toFixed(2)}%\n持有金额：${totalAmount.toFixed(2)}\n累计盈利：${holdingUpCount} 只 (+${totalHoldingUp.toFixed(2)})\n累计亏损：${holdingDownCount} 只 (${totalHoldingDown.toFixed(2)})\n持有收益：${totalHoldingGain >= 0 ? "+" : ""}${totalHoldingGain.toFixed(2)}\n持有收益率：${totalHoldingRate >= 0 ? "+" : ""}${totalHoldingRate.toFixed(2)}%\n自选数量：${fundList.length} 只\n更新时间：${timeStr}`;
   const uriEncoded = encodeURIComponent(JSON.stringify(copyText));
   md.appendMarkdown(`[$(copy) 复制统计信息](command:fund-helper.copyFundDetail?${uriEncoded})\n\n`);
 
