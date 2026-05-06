@@ -2,6 +2,13 @@
 
 本文档记录了"基金助手"(Fund Helper) VS Code 扩展的所有重要更改。
 
+## [0.3.0] - 2026-05-06
+
+### 问题修复 (Bug Fixes)
+
+- 🐛 **修复菜单moreAction的显示范围**：package中的菜单项仅在fundList和fundWebviewList中显示，不然全部窗口都会出现我们的指令，这就很困扰了。
+
+
 ## [0.2.9] - 2026-05-06
 
 ### 新增功能 (Features)

@@ -2,7 +2,7 @@
   "name": "fund-helper",
   "displayName": "基金助手",
   "description": "在 VSCode 侧边栏查看自选基金实时估值、涨跌幅与收益",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "author": "CrispyChicken",
   "publisher": "CrispyChicken",
   "license": "MIT",
@@ -308,56 +308,67 @@
       "view/title": [
         {
           "command": "fund-helper.switchToWebview",
-          "when": "config.fund-helper.defaultViewMode != 'webview'",
+          "when": "(view == fundList || view == fundWebviewView) && config.fund-helper.defaultViewMode != 'webview'",
           "group": "navigation@0"
         },
         {
           "command": "fund-helper.switchToTreeView",
-          "when": "config.fund-helper.defaultViewMode == 'webview'",
+          "when": "(view == fundList || view == fundWebviewView) && config.fund-helper.defaultViewMode == 'webview'",
           "group": "navigation@0"
         },
         {
           "command": "fund-helper.refreshFund",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "navigation@1"
         },
         {
           "command": "fund-helper.addFund",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "navigation@2"
         },
         {
           "command": "fund-helper.analyzeFunds",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "navigation@3"
         },
         {
           "command": "fund-helper.importFund",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "1-data@1"
         },
         {
           "command": "fund-helper.exportFund",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "1-data@2"
         },
         {
           "command": "fund-helper.configureAI",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "2-ai@1"
         },
         {
           "submenu": "fund-helper.submenu.statusBar",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "3-display@1"
         },
         {
           "submenu": "fund-helper.submenu.privacyMode",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "3-display@2"
         },
         {
           "submenu": "fund-helper.submenu.grayscaleMode",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "3-display@3"
         },
         {
           "command": "fund-helper.setRefreshInterval",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "4-refresh@1"
         },
         {
           "submenu": "fund-helper.submenu.autoRefresh",
+          "when": "view == fundList || view == fundWebviewView",
           "group": "4-refresh@2"
         }
       ],
