@@ -42,8 +42,6 @@ export interface NetValueRecord {
   changePercent: number;
 }
 
-import { isMarketClosed } from "./holidayService";
-
 /** 计算持有额 */
 export function calcHoldingAmount(fund: FundInfo): number {
   return fund.netValue * fund.shares;

@@ -18,7 +18,7 @@ import {
   calcHoldingGainRate,
 } from "../../fundModel";
 import { MarketIndex } from "../../fundService";
-import { isMarketClosed, isMarketOpen } from "../../holidayService";
+import { isMarketOpen } from "../../holidayService";
 import { FundDataManager, ExtendedFundInfo } from "../../fundDataManager";
 
 export type SortMethod =
@@ -122,7 +122,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       this._onDidChangeTreeData.fire();
       return;
     }
-    
+
     try {
       // 如果有数据管理器，使用共享数据
       if (this._dataManager) {
@@ -190,19 +190,19 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
 
     const tooltip = new vscode.MarkdownString(
       "✨ **全新表格视图模式** ✨\n\n" +
-        "---\n\n" +
-        "🎉 我们推出了全新的表格视图模式！\n\n" +
-        "📊 **新视图特点：**\n\n" +
-        "  - 📈 更直观的表格布局\n\n" +
-        "  - 💰 一目了然的收益展示\n\n" +
-        "  - 🔍 强大的搜索和排序功能\n\n" +
-        "  - 🎨 更美观的界面设计\n\n" +
-        "  - 📱 更好的数据可视化\n\n" +
-        "---\n\n" +
-        "💡 **点击即可切换到新视图**\n\n" +
-        "🔄 随时可以切换回旧视图\n\n" +
-        "---\n\n" +
-        "🚀 **快来体验吧！**"
+      "---\n\n" +
+      "🎉 我们推出了全新的表格视图模式！\n\n" +
+      "📊 **新视图特点：**\n\n" +
+      "  - 📈 更直观的表格布局\n\n" +
+      "  - 💰 一目了然的收益展示\n\n" +
+      "  - 🔍 强大的搜索和排序功能\n\n" +
+      "  - 🎨 更美观的界面设计\n\n" +
+      "  - 📱 更好的数据可视化\n\n" +
+      "---\n\n" +
+      "💡 **点击即可切换到新视图**\n\n" +
+      "🔄 随时可以切换回旧视图\n\n" +
+      "---\n\n" +
+      "🚀 **快来体验吧！**"
     );
 
     tooltip.isTrusted = true;
@@ -229,23 +229,23 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
 
     const tooltip = new vscode.MarkdownString(
       "🐟 **基金助手插件 - 开源支持** 🐟\n\n" +
-        "---\n\n" +
-        "💡 这是一个**完全免费**的开源 VSCode 插件\n\n" +
-        "🚀 如果这个插件对您有所帮助\n\n" +
-        "☕ 可以考虑给项目点个星星~\n\n" +
-        "✨ **您的支持将用于：**\n\n" +
-        "  - 持续维护和更新功能\n\n" +
-        "  - 修复bug和优化体验\n\n" +
-        "  - 开发更多实用功能\n\n" +
-        "🥰 用爱发电不易，期待您的支持~\n\n" +
-        "---\n\n" +
-        "⚠️ **点击后将打开 GitHub 仓库页面**\n\n" +
-        "💼 建议在没人盯着/注意时，或者在休息时间打开哦~\n\n" +
-        "🤝 **感谢您的理解和支持！**\n\n" +
-        "---\n\n" +
-        "🌟 **觉得不错？欢迎给项目仓库点个星星~**\n\n" +
-        "⭐ [**给项目点个星吧！**](https://github.com/crispyChicken999/fund-helper-vscode) ⭐\n\n" +
-        "📢 *您的每个 ⭐ 都是对开发者最大的鼓励！*"
+      "---\n\n" +
+      "💡 这是一个**完全免费**的开源 VSCode 插件\n\n" +
+      "🚀 如果这个插件对您有所帮助\n\n" +
+      "☕ 可以考虑给项目点个星星~\n\n" +
+      "✨ **您的支持将用于：**\n\n" +
+      "  - 持续维护和更新功能\n\n" +
+      "  - 修复bug和优化体验\n\n" +
+      "  - 开发更多实用功能\n\n" +
+      "🥰 用爱发电不易，期待您的支持~\n\n" +
+      "---\n\n" +
+      "⚠️ **点击后将打开 GitHub 仓库页面**\n\n" +
+      "💼 建议在没人盯着/注意时，或者在休息时间打开哦~\n\n" +
+      "🤝 **感谢您的理解和支持！**\n\n" +
+      "---\n\n" +
+      "🌟 **觉得不错？欢迎给项目仓库点个星星~**\n\n" +
+      "⭐ [**给项目点个星吧！**](https://github.com/crispyChicken999/fund-helper-vscode) ⭐\n\n" +
+      "📢 *您的每个 ⭐ 都是对开发者最大的鼓励！*"
     );
 
     tooltip.isTrusted = true;
@@ -296,9 +296,37 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     const [field, dir] = this._sortMethod.split("_");
     const asc = dir === "asc";
 
+    // 获取今天日期用于检查数据更新状态
+    const now = new Date();
+    const todayMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const todayDay = String(now.getDate()).padStart(2, '0');
+    const todayDate = `${todayMonth}-${todayDay}`;
+
+    const getUpdateDate = (updateTime: string): string => {
+      if (!updateTime || typeof updateTime !== 'string' || updateTime.length < 10) {
+        return '';
+      }
+      return updateTime.substring(5, 10); // "YYYY-MM-DD HH:MM" -> "MM-DD"
+    };
+
+    const isDataUpdatedToday = (f: FundInfo): boolean => {
+      const updateDate = getUpdateDate(f.updateTime);
+      return updateDate === todayDate;
+    };
+
+    // 计算估算收益（基于 estimatedValue，与 tooltip 和详情项一致）
+    const getEstimatedGain = (f: FundInfo): number => {
+      if (!isDataUpdatedToday(f)) {
+        return 0;
+      }
+      return f.estimatedValue !== null
+        ? (f.estimatedValue - f.netValue) * f.shares
+        : 0;
+    };
+
     const sorters: Record<string, (f: FundInfo) => number> = {
       changePercent: (f) => f.changePercent,
-      dailyGain: (f) => calcDailyGain(f),
+      dailyGain: (f) => getEstimatedGain(f),
       holdingAmount: (f) => calcHoldingAmount(f),
       holdingGain: (f) => calcHoldingGain(f),
       holdingGainRate: (f) => calcHoldingGainRate(f),
@@ -658,7 +686,31 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
   }
 
   private _createFundItem(fund: FundInfo): FundTreeItem {
-    const dailyGain = calcDailyGain(fund);
+    // 检查 API 数据是否已更新到今天
+    const now = new Date();
+    const todayMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const todayDay = String(now.getDate()).padStart(2, '0');
+    const todayDate = `${todayMonth}-${todayDay}`;
+
+    // 从 updateTime 提取日期部分 (MM-DD)
+    const getUpdateDate = (updateTime: string): string => {
+      if (!updateTime || typeof updateTime !== 'string' || updateTime.length < 10) {
+        return '';
+      }
+      return updateTime.substring(5, 10); // "YYYY-MM-DD HH:MM" -> "MM-DD"
+    };
+
+    const updateDate = getUpdateDate(fund.updateTime);
+    const isDataUpdatedToday = updateDate === todayDate;
+
+    // 计算估算收益（基于 estimatedValue，与 tooltip 和详情项一致）
+    const estimatedGain = fund.estimatedValue !== null
+      ? (fund.estimatedValue - fund.netValue) * fund.shares
+      : 0;
+
+    // 只有当 API 数据已更新到今天，才显示估算收益；否则为 0
+    const displayEstimatedGain = isDataUpdatedToday ? estimatedGain : 0;
+
     const holdingAmount = calcHoldingAmount(fund);
     const holdingGain = calcHoldingGain(fund);
     const holdingGainRate = calcHoldingGainRate(fund);
@@ -666,6 +718,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
 
     const fmtPercent = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
     const fmtVal = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
+    const fmtDisplayVal = (v: number) => v === 0 && !isDataUpdatedToday ? "--" : fmtVal(v);
 
     // 根据排序方式决定括号内容、description
     let bracketText = ""; // 括号内显示
@@ -678,7 +731,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
         // (涨跌幅) 名称  估算收益
         bracketText = fmtPercent(fund.changePercent);
         bracketValue = fund.changePercent;
-        descText = fund.shares > 0 ? fmtVal(dailyGain) : "";
+        descText = fund.shares > 0 ? fmtDisplayVal(displayEstimatedGain) : "";
         iconValue = fund.changePercent;
         break;
 
@@ -686,7 +739,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
         // (持有额) 名称  涨跌幅 估算收益
         bracketText = fmtMoney(holdingAmount);
         bracketValue = holdingAmount;
-        descText = `${fmtPercent(fund.changePercent)}  ${fund.shares > 0 ? fmtVal(dailyGain) : ""}`;
+        descText = `${fmtPercent(fund.changePercent)}  ${fund.shares > 0 ? fmtDisplayVal(displayEstimatedGain) : ""}`;
         iconValue = fund.changePercent;
         break;
 
@@ -694,7 +747,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
         // (持有收益) 名称  涨跌幅 估算收益
         bracketText = fmtVal(holdingGain);
         bracketValue = holdingGain;
-        descText = `${fmtPercent(fund.changePercent)}  ${fund.shares > 0 ? fmtVal(dailyGain) : ""}`;
+        descText = `${fmtPercent(fund.changePercent)}  ${fund.shares > 0 ? fmtDisplayVal(displayEstimatedGain) : ""}`;
         iconValue = fund.changePercent;
         break;
 
@@ -702,15 +755,15 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
         // (持有收益率) 名称  涨跌幅 估算收益
         bracketText = fund.cost > 0 ? fmtPercent(holdingGainRate) : "--";
         bracketValue = holdingGainRate;
-        descText = `${fmtPercent(fund.changePercent)}  ${fund.shares > 0 ? fmtVal(dailyGain) : ""}`;
+        descText = `${fmtPercent(fund.changePercent)}  ${fund.shares > 0 ? fmtDisplayVal(displayEstimatedGain) : ""}`;
         iconValue = fund.changePercent;
         break;
 
       default:
         // 默认 / 估算收益排序: (估算收益) 名称  涨跌幅
-        if (fund.shares > 0) {
-          bracketText = fmtVal(dailyGain);
-          bracketValue = dailyGain;
+        if (fund.shares > 0 && isDataUpdatedToday) {
+          bracketText = fmtVal(estimatedGain);
+          bracketValue = estimatedGain;
         }
         descText = fmtPercent(fund.changePercent);
         iconValue = fund.changePercent;
