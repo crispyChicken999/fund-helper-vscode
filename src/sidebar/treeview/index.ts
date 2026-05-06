@@ -779,8 +779,16 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     const hl = (text: string, color: string) =>
       `**<span style="color:${color};background-color:${color}33;">&nbsp;${text}&nbsp;</span>**`;
 
+    // 计算所需数据
+    const estimatedGain =
+      fund.estimatedValue !== null
+        ? (fund.estimatedValue - fund.netValue) * fund.shares
+        : 0;
+
     const changeStr = `${sign(fund.changePercent)}${fund.changePercent.toFixed(2)}%`;
+    const estimatedGainStr = `${sign(estimatedGain)}${estimatedGain.toFixed(2)}`;
     const dailyGainStr = `${sign(dailyGain)}${dailyGain.toFixed(2)}`;
+    const dailyChangeStr = `${sign(fund.navChgRt)}${fund.navChgRt.toFixed(2)}%`;
     const holdGainStr = `${sign(holdingGain)}${holdingGain.toFixed(2)}`;
     const holdRateStr =
       fund.cost > 0
@@ -790,39 +798,73 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       fund.estimatedValue !== null ? fund.estimatedValue.toFixed(4) : "--";
     const updateStr = fund.updateTime ? fund.updateTime : "--";
 
+    // 提取日期（格式：MM-DD）
+    const estimatedDateLabel = fund.updateTime
+      ? fund.updateTime.substring(5, 10) // 从 "2026-05-06 09:48" 提取 "05-06"
+      : "";
+    const netValueDateLabel = fund.netValueDate
+      ? fund.netValueDate.substring(5, 10) // 从 "2026-05-06" 提取 "05-06"
+      : "";
+
     const md = new vscode.MarkdownString();
     md.isTrusted = true;
     md.supportThemeIcons = true;
     md.supportHtml = true;
 
-    // 基金名称 + 代码（与统计收益相同的一级标题）
+    // 基金名称 + 代码
     md.appendMarkdown(`### \u3000${fund.name}\n\n`);
     md.appendMarkdown(`*代码：${fund.code}*\n\n`);
     md.appendMarkdown(`\n ___ \n\n`);
 
+    // 盘中估算数据（顺序同表格视图）
+    md.appendMarkdown(
+      `$(graph-line) 估算涨幅\u3000：${hl(
+        changeStr,
+        pickColor(fund.changePercent),
+      )}${estimatedDateLabel ? ` (${estimatedDateLabel})` : ""}\n\n`,
+    );
+    md.appendMarkdown(
+      `$(pulse) 估算收益\u3000：${hl(
+        estimatedGainStr,
+        pickColor(estimatedGain),
+      )}${estimatedDateLabel ? ` (${estimatedDateLabel})` : ""}\n\n`,
+    );
+    md.appendMarkdown(`\n ___ \n\n`);
+
+    // 实际涨跌幅（上一交易日）
+    md.appendMarkdown(
+      `$(graph-line) 当日涨幅\u3000：${hl(
+        dailyChangeStr,
+        pickColor(fund.navChgRt),
+      )}${netValueDateLabel ? ` (${netValueDateLabel})` : ""}\n\n`,
+    );
+    md.appendMarkdown(
+      `$(pulse) 当日收益\u3000：${hl(
+        dailyGainStr,
+        pickColor(dailyGain),
+      )}${netValueDateLabel ? ` (${netValueDateLabel})` : ""}\n\n`,
+    );
+    md.appendMarkdown(`\n ___ \n\n`);
+
     // 持仓信息
-    md.appendMarkdown(`$(database) 持有额\u3000\u3000：${fmtMoney(holdingAmount)}\n\n`);
-    md.appendMarkdown(`$(pie-chart) 持有份额\u3000：${fund.shares > 0 ? fund.shares.toFixed(2) : "--"}\n\n`);
     md.appendMarkdown(
       `$(diff) 持有收益\u3000：${hl(holdGainStr, pickColor(holdingGain))}\n\n`,
     );
     md.appendMarkdown(
       `$(symbol-numeric) 持有收益率：${hl(holdRateStr, pickColor(holdingGainRate))}\n\n`,
     );
+    md.appendMarkdown(`\n ___ \n\n`);
+
+    md.appendMarkdown(`$(database) 持有额\u3000\u3000：${fmtMoney(holdingAmount)}\n\n`);
+    md.appendMarkdown(`$(pie-chart) 持有份额\u3000：${fund.shares > 0 ? fund.shares.toFixed(2) : "--"}\n\n`);
     md.appendMarkdown(
       `$(credit-card) 成本价\u3000\u3000：${fund.cost > 0 ? fund.cost.toFixed(4) : "--"}\n\n`,
     );
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 估值信息
-    md.appendMarkdown(`$(pulse) 单位净值\u3000：${fund.netValue > 0 ? fund.netValue.toFixed(4) : "--"}\n\n`);
     md.appendMarkdown(`$(graph) 估算净值\u3000：${estValueStr}\n\n`);
-    md.appendMarkdown(
-      `$(graph-line) 涨跌幅\u3000\u3000：${hl(changeStr, pickColor(fund.changePercent))}\n\n`,
-    );
-    md.appendMarkdown(
-      `$(pulse) 估算收益\u3000：${hl(dailyGainStr, pickColor(dailyGain))}\n\n`,
-    );
+    md.appendMarkdown(`$(pulse) 单位净值\u3000：${fund.netValue > 0 ? fund.netValue.toFixed(4) : "--"}\n\n`);
     md.appendMarkdown(`\n ___ \n\n`);
 
     // 时间
@@ -831,7 +873,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
 
     // 复制命令
     const sharesStr = fund.shares > 0 ? fund.shares.toFixed(2) : "--";
-    const copyText = `【${fund.name} (${fund.code})】\n持有额：${fmtMoney(holdingAmount)}\n持有份额：${sharesStr}\n持有收益：${holdGainStr}\n持有收益率：${holdRateStr}\n成本价：${fund.cost > 0 ? fund.cost.toFixed(4) : "--"}\n单位净值：${fund.netValue > 0 ? fund.netValue.toFixed(4) : "--"}\n估算净值：${estValueStr}\n涨跌幅：${changeStr}\n估算收益：${dailyGainStr}\n更新时间：${updateStr}`;
+    const copyText = `【${fund.name} (${fund.code})】\n估算涨幅${estimatedDateLabel ? ` (${estimatedDateLabel})` : ""}：${changeStr}\n估算收益${estimatedDateLabel ? ` (${estimatedDateLabel})` : ""}：${estimatedGainStr}\n当日涨幅${netValueDateLabel ? ` (${netValueDateLabel})` : ""}：${dailyChangeStr}\n当日收益${netValueDateLabel ? ` (${netValueDateLabel})` : ""}：${dailyGainStr}\n持有收益：${holdGainStr}\n持有收益率：${holdRateStr}\n持有额：${fmtMoney(holdingAmount)}\n持有份额：${sharesStr}\n成本价：${fund.cost > 0 ? fund.cost.toFixed(4) : "--"}\n估算净值：${estValueStr}\n单位净值：${fund.netValue > 0 ? fund.netValue.toFixed(4) : "--"}\n更新时间：${updateStr}`;
     const uriEncoded = encodeURIComponent(JSON.stringify(copyText));
     md.appendMarkdown(`[$(copy) 复制基金信息](command:fund-helper.copyFundDetail?${uriEncoded})\n`);
 
@@ -843,6 +885,18 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     const holdingGain = calcHoldingGain(fund);
     const holdingGainRate = calcHoldingGainRate(fund);
     const dailyGain = calcDailyGain(fund);
+    const estimatedGain =
+      fund.estimatedValue !== null
+        ? (fund.estimatedValue - fund.netValue) * fund.shares
+        : 0;
+
+    // 提取日期标签
+    const estimatedDateLabel = fund.updateTime
+      ? fund.updateTime.substring(5, 10)
+      : "";
+    const netValueDateLabel = fund.netValueDate
+      ? fund.netValueDate.substring(5, 10)
+      : "";
 
     const getIcon = (val: number) => (val > 0 ? "arrow-up" : val < 0 ? "arrow-down" : "dash");
     const getColor = (val: number) =>
@@ -852,8 +906,34 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     const details: { label: string; value: string; icon: string; color?: string; copyValue?: string; highlight?: boolean }[] = [
       { label: "基金名称\u3000", value: fund.name, icon: "tag", copyValue: fund.name },
       { label: "基金代码\u3000", value: fund.code, icon: "symbol-number", copyValue: fund.code },
-      { label: "持有额\u3000\u3000", value: fmtMoney(holdingAmount), icon: "database" },
-      { label: "持有份额\u3000", value: fund.shares > 0 ? fund.shares.toFixed(2) : "--", icon: "pie-chart" },
+      {
+        label: `估算涨幅\u3000`,
+        value: `${fund.changePercent >= 0 ? "+" : ""}${fund.changePercent.toFixed(2)}%${estimatedDateLabel ? ` (${estimatedDateLabel})` : ""}`,
+        icon: getIcon(fund.changePercent),
+        color: getColor(fund.changePercent),
+        highlight: fund.changePercent > 0,
+      },
+      {
+        label: `估算收益\u3000`,
+        value: `${signStr(estimatedGain)}${estimatedDateLabel ? ` (${estimatedDateLabel})` : ""}`,
+        icon: getIcon(estimatedGain),
+        color: getColor(estimatedGain),
+        highlight: estimatedGain > 0,
+      },
+      {
+        label: `当日涨幅\u3000`,
+        value: `${fund.navChgRt >= 0 ? "+" : ""}${fund.navChgRt.toFixed(2)}%${netValueDateLabel ? ` (${netValueDateLabel})` : ""}`,
+        icon: getIcon(fund.navChgRt),
+        color: getColor(fund.navChgRt),
+        highlight: fund.navChgRt > 0,
+      },
+      {
+        label: `当日收益\u3000`,
+        value: `${signStr(dailyGain)}${netValueDateLabel ? ` (${netValueDateLabel})` : ""}`,
+        icon: getIcon(dailyGain),
+        color: getColor(dailyGain),
+        highlight: dailyGain > 0,
+      },
       {
         label: `持有收益\u3000`,
         value: signStr(holdingGain),
@@ -868,30 +948,18 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
         color: fund.cost > 0 ? getColor(holdingGainRate) : undefined,
         highlight: holdingGainRate > 0,
       },
+      { label: "持有额\u3000\u3000", value: fmtMoney(holdingAmount), icon: "database" },
+      { label: "持有份额\u3000", value: fund.shares > 0 ? fund.shares.toFixed(2) : "--", icon: "pie-chart" },
       { label: "成本价\u3000\u3000", value: fund.cost > 0 ? fund.cost.toFixed(4) : "--", icon: "credit-card" },
-      {
-        label: "单位净值\u3000",
-        value: fund.netValue > 0 ? fund.netValue.toFixed(4) : "--",
-        icon: "pulse",
-      },
       {
         label: "估算净值\u3000",
         value: fund.estimatedValue !== null ? fund.estimatedValue.toFixed(4) : "--",
         icon: "graph",
       },
       {
-        label: `涨跌幅\u3000\u3000`,
-        value: `${signStr(fund.changePercent)}%`,
-        icon: getIcon(fund.changePercent),
-        color: getColor(fund.changePercent),
-        highlight: fund.changePercent > 0,
-      },
-      {
-        label: `估算收益\u3000`,
-        value: signStr(dailyGain),
-        icon: getIcon(dailyGain),
-        color: getColor(dailyGain),
-        highlight: dailyGain > 0,
+        label: "单位净值\u3000",
+        value: fund.netValue > 0 ? fund.netValue.toFixed(4) : "--",
+        icon: "pulse",
       },
       {
         label: "更新时间\u3000",
