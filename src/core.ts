@@ -390,8 +390,9 @@ export async function exportFund() {
   const hideStatusBar = config.get<boolean>("hideStatusBar", false);
   const defaultViewMode = config.get<string>("defaultViewMode", "tree");
   const privacyMode = config.get<boolean>("privacyMode", false);
-  
-  const exportData = { 
+  const grayscaleMode = config.get<boolean>("grayscaleMode", false);
+
+  const exportData = {
     funds,
     groups,
     groupOrder,
@@ -403,7 +404,8 @@ export async function exportFund() {
     refreshInterval,
     hideStatusBar,
     defaultViewMode,
-    privacyMode
+    privacyMode,
+    grayscaleMode
   };
 
   const now = new Date();
@@ -421,40 +423,41 @@ export async function exportFund() {
     // - funds 数组中的每个对象在一行显示
     // - groups 的每个数组在一行显示
     // - groupOrder、columnOrder、visibleColumns 数组在一行显示
-    
+
     const fundsJson = funds.map(f => JSON.stringify(f)).join(',\n    ');
-    
+
     // groups: 每个分组的数组在一行显示
     const groupsLines: string[] = [];
     for (const [key, value] of Object.entries(groups)) {
       groupsLines.push(`    ${JSON.stringify(key)}: ${JSON.stringify(value)}`);
     }
-    const groupsJson = groupsLines.length > 0 
+    const groupsJson = groupsLines.length > 0
       ? '{\n' + groupsLines.join(',\n') + '\n  }'
       : '{}';
-    
+
     // 数组在一行显示
     const groupOrderJson = JSON.stringify(groupOrder);
     const columnOrderJson = JSON.stringify(columnOrder);
     const visibleColumnsJson = JSON.stringify(visibleColumns);
-    
+
     const formattedJson = `{
-  "funds": [
-    ${fundsJson}
-  ],
-  "groups": ${groupsJson},
-  "groupOrder": ${groupOrderJson},
-  "columnSettings": {
-    "columnOrder": ${columnOrderJson},
-    "visibleColumns": ${visibleColumnsJson}
-  },
-  "sortMethod": ${JSON.stringify(sortMethod)},
-  "refreshInterval": ${refreshInterval},
-  "hideStatusBar": ${hideStatusBar},
-  "defaultViewMode": ${JSON.stringify(defaultViewMode)},
-  "privacyMode": ${privacyMode}
-}`;
-    
+      "funds": [
+        ${fundsJson}
+      ],
+      "groups": ${groupsJson},
+      "groupOrder": ${groupOrderJson},
+      "columnSettings": {
+        "columnOrder": ${columnOrderJson},
+        "visibleColumns": ${visibleColumnsJson}
+      },
+      "sortMethod": ${JSON.stringify(sortMethod)},
+      "refreshInterval": ${refreshInterval},
+      "hideStatusBar": ${hideStatusBar},
+      "defaultViewMode": ${JSON.stringify(defaultViewMode)},
+      "privacyMode": ${privacyMode},
+      "grayscaleMode": ${grayscaleMode}
+    }`;
+
     fs.writeFileSync(uri.fsPath, formattedJson, "utf-8");
     vscode.window.showInformationMessage(`基金列表已导出到 ${uri.fsPath}`);
   }
@@ -485,6 +488,7 @@ export async function importFund() {
     let hideStatusBarData: boolean | undefined;
     let defaultViewModeData: string | undefined;
     let privacyModeData: boolean | undefined;
+    let grayscaleModeData: boolean | undefined;
 
     if (Array.isArray(data.funds)) {
       fundsList = data.funds;
@@ -516,6 +520,9 @@ export async function importFund() {
       if (typeof data.privacyMode === 'boolean') {
         privacyModeData = data.privacyMode;
       }
+      if (typeof data.grayscaleMode === 'boolean') {
+        grayscaleModeData = data.grayscaleMode;
+      }
     } else if (Array.isArray(data)) {
       fundsList = data;
     } else {
@@ -541,7 +548,7 @@ export async function importFund() {
 
     // 直接覆盖导入，不再询问用户
     await saveFundConfigs(newFunds);
-    
+
     // 导入分组信息
     if (Object.keys(groupsData).length > 0) {
       await saveFundGroups(groupsData);
@@ -576,6 +583,9 @@ export async function importFund() {
     if (privacyModeData !== undefined) {
       await config.update("privacyMode", privacyModeData, vscode.ConfigurationTarget.Global);
     }
+    if (grayscaleModeData !== undefined) {
+      await config.update("grayscaleMode", grayscaleModeData, vscode.ConfigurationTarget.Global);
+    }
 
     await refreshData();
 
@@ -596,10 +606,11 @@ export async function importFund() {
     if (hideStatusBarData !== undefined) otherSettings.push('状态栏设置');
     if (defaultViewModeData !== undefined) otherSettings.push('默认视图');
     if (privacyModeData !== undefined) otherSettings.push('隐私模式');
+    if (grayscaleModeData !== undefined) otherSettings.push('灰色模式');
     if (otherSettings.length > 0) {
       messages.push(otherSettings.join('、'));
     }
-    
+
     vscode.window.showInformationMessage(
       `导入成功！${messages.join('、')}（已覆盖原有数据）`,
     );

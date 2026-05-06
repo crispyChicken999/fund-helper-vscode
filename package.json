@@ -2,7 +2,7 @@
   "name": "fund-helper",
   "displayName": "基金助手",
   "description": "在 VSCode 侧边栏查看自选基金实时估值、涨跌幅与收益",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "author": "CrispyChicken",
   "publisher": "CrispyChicken",
   "license": "MIT",
@@ -98,11 +98,11 @@
       },
       {
         "command": "fund-helper.exportFund",
-        "title": "导出基金列表"
+        "title": "导出配置与持仓"
       },
       {
         "command": "fund-helper.importFund",
-        "title": "导入基金列表"
+        "title": "导入配置与持仓"
       },
       {
         "command": "fund-helper.configureAI",
@@ -161,8 +161,66 @@
       },
       {
         "command": "fund-helper.toggleStatusBarHide",
-        "title": "切换状态栏隐藏/显示状态",
+        "title": "状态栏金额显示/隐藏",
         "icon": "$(eye)"
+      },
+      {
+        "command": "fund-helper.setStatusBarAmountVisible",
+        "title": "状态栏金额：开启显示"
+      },
+      {
+        "command": "fund-helper.setStatusBarAmountVisibleCurrent",
+        "title": "状态栏金额：开启显示（当前）"
+      },
+      {
+        "command": "fund-helper.setStatusBarAmountHidden",
+        "title": "状态栏金额：关闭显示"
+      },
+      {
+        "command": "fund-helper.setStatusBarAmountHiddenCurrent",
+        "title": "状态栏金额：关闭显示（当前）"
+      },
+      {
+        "command": "fund-helper.togglePrivacyMode",
+        "title": "隐私模式：显示/隐藏敏感数据",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "fund-helper.setPrivacyModeOn",
+        "title": "隐私模式：开启"
+      },
+      {
+        "command": "fund-helper.setPrivacyModeOnCurrent",
+        "title": "隐私模式：开启（当前）"
+      },
+      {
+        "command": "fund-helper.setPrivacyModeOff",
+        "title": "隐私模式：关闭"
+      },
+      {
+        "command": "fund-helper.setPrivacyModeOffCurrent",
+        "title": "隐私模式：关闭（当前）"
+      },
+      {
+        "command": "fund-helper.toggleGrayscaleMode",
+        "title": "灰色模式：开启/关闭",
+        "icon": "$(circle-large-outline)"
+      },
+      {
+        "command": "fund-helper.setGrayscaleModeOn",
+        "title": "灰色模式：开启"
+      },
+      {
+        "command": "fund-helper.setGrayscaleModeOnCurrent",
+        "title": "灰色模式：开启（当前）"
+      },
+      {
+        "command": "fund-helper.setGrayscaleModeOff",
+        "title": "灰色模式：关闭"
+      },
+      {
+        "command": "fund-helper.setGrayscaleModeOffCurrent",
+        "title": "灰色模式：关闭（当前）"
       },
       {
         "command": "fund-helper.copyFundDetail",
@@ -202,6 +260,22 @@
         "title": "开启/关闭自动刷新"
       },
       {
+        "command": "fund-helper.setAutoRefreshOn",
+        "title": "自动刷新：开启"
+      },
+      {
+        "command": "fund-helper.setAutoRefreshOnCurrent",
+        "title": "自动刷新：开启（当前）"
+      },
+      {
+        "command": "fund-helper.setAutoRefreshOff",
+        "title": "自动刷新：关闭"
+      },
+      {
+        "command": "fund-helper.setAutoRefreshOffCurrent",
+        "title": "自动刷新：关闭（当前）"
+      },
+      {
         "command": "fund-helper.switchToWebview",
         "title": "切换表格视图",
         "icon": "$(table)"
@@ -212,95 +286,167 @@
         "icon": "$(list-tree)"
       }
     ],
+    "submenus": [
+      {
+        "id": "fund-helper.submenu.statusBar",
+        "label": "状态栏金额"
+      },
+      {
+        "id": "fund-helper.submenu.privacyMode",
+        "label": "隐私模式"
+      },
+      {
+        "id": "fund-helper.submenu.grayscaleMode",
+        "label": "灰色模式"
+      },
+      {
+        "id": "fund-helper.submenu.autoRefresh",
+        "label": "自动刷新"
+      }
+    ],
     "menus": {
       "view/title": [
         {
           "command": "fund-helper.switchToWebview",
-          "when": "view == fundList && config.fund-helper.defaultViewMode != 'webview'",
+          "when": "config.fund-helper.defaultViewMode != 'webview'",
           "group": "navigation@0"
         },
         {
           "command": "fund-helper.switchToTreeView",
-          "when": "view == fundWebviewView && config.fund-helper.defaultViewMode == 'webview'",
+          "when": "config.fund-helper.defaultViewMode == 'webview'",
           "group": "navigation@0"
         },
         {
           "command": "fund-helper.refreshFund",
-          "when": "view == fundList && config.fund-helper.defaultViewMode != 'webview'",
-          "group": "navigation@1"
-        },
-        {
-          "command": "fund-helper.refreshFund",
-          "when": "view == fundWebviewView && config.fund-helper.defaultViewMode == 'webview'",
           "group": "navigation@1"
         },
         {
           "command": "fund-helper.addFund",
-          "when": "view == fundList && config.fund-helper.defaultViewMode != 'webview'",
-          "group": "navigation@2"
-        },
-        {
-          "command": "fund-helper.addFund",
-          "when": "view == fundWebviewView && config.fund-helper.defaultViewMode == 'webview'",
           "group": "navigation@2"
         },
         {
           "command": "fund-helper.analyzeFunds",
-          "when": "view == fundList",
-          "group": "navigation@3"
-        },
-        {
-          "command": "fund-helper.analyzeFunds",
-          "when": "view == fundWebviewView && config.fund-helper.defaultViewMode == 'webview'",
           "group": "navigation@3"
         },
         {
           "command": "fund-helper.importFund",
-          "when": "view == fundList"
-        },
-        {
-          "command": "fund-helper.importFund",
-          "when": "view == fundWebviewView"
+          "group": "1-data@1"
         },
         {
           "command": "fund-helper.exportFund",
-          "when": "view == fundList"
-        },
-        {
-          "command": "fund-helper.exportFund",
-          "when": "view == fundWebviewView"
+          "group": "1-data@2"
         },
         {
           "command": "fund-helper.configureAI",
-          "when": "view == fundList"
+          "group": "2-ai@1"
         },
         {
-          "command": "fund-helper.configureAI",
-          "when": "view == fundWebviewView"
+          "submenu": "fund-helper.submenu.statusBar",
+          "group": "3-display@1"
         },
         {
-          "command": "fund-helper.toggleStatusBarHide",
-          "when": "view == fundList"
+          "submenu": "fund-helper.submenu.privacyMode",
+          "group": "3-display@2"
         },
         {
-          "command": "fund-helper.toggleStatusBarHide",
-          "when": "view == fundWebviewView"
-        },
-        {
-          "command": "fund-helper.setRefreshInterval",
-          "when": "view == fundList"
+          "submenu": "fund-helper.submenu.grayscaleMode",
+          "group": "3-display@3"
         },
         {
           "command": "fund-helper.setRefreshInterval",
-          "when": "view == fundWebviewView"
+          "group": "4-refresh@1"
         },
         {
-          "command": "fund-helper.toggleAutoRefresh",
-          "when": "view == fundList"
+          "submenu": "fund-helper.submenu.autoRefresh",
+          "group": "4-refresh@2"
+        }
+      ],
+      "fund-helper.submenu.statusBar": [
+        {
+          "command": "fund-helper.setStatusBarAmountVisibleCurrent",
+          "when": "config.fund-helper.hideStatusBar == false",
+          "group": "1"
         },
         {
-          "command": "fund-helper.toggleAutoRefresh",
-          "when": "view == fundWebviewView"
+          "command": "fund-helper.setStatusBarAmountVisible",
+          "when": "config.fund-helper.hideStatusBar == true",
+          "group": "1"
+        },
+        {
+          "command": "fund-helper.setStatusBarAmountHiddenCurrent",
+          "when": "config.fund-helper.hideStatusBar == true",
+          "group": "2"
+        },
+        {
+          "command": "fund-helper.setStatusBarAmountHidden",
+          "when": "config.fund-helper.hideStatusBar == false",
+          "group": "2"
+        }
+      ],
+      "fund-helper.submenu.privacyMode": [
+        {
+          "command": "fund-helper.setPrivacyModeOnCurrent",
+          "when": "config.fund-helper.privacyMode == true",
+          "group": "1"
+        },
+        {
+          "command": "fund-helper.setPrivacyModeOn",
+          "when": "config.fund-helper.privacyMode == false",
+          "group": "1"
+        },
+        {
+          "command": "fund-helper.setPrivacyModeOffCurrent",
+          "when": "config.fund-helper.privacyMode == false",
+          "group": "2"
+        },
+        {
+          "command": "fund-helper.setPrivacyModeOff",
+          "when": "config.fund-helper.privacyMode == true",
+          "group": "2"
+        }
+      ],
+      "fund-helper.submenu.grayscaleMode": [
+        {
+          "command": "fund-helper.setGrayscaleModeOnCurrent",
+          "when": "config.fund-helper.grayscaleMode == true",
+          "group": "1"
+        },
+        {
+          "command": "fund-helper.setGrayscaleModeOn",
+          "when": "config.fund-helper.grayscaleMode == false",
+          "group": "1"
+        },
+        {
+          "command": "fund-helper.setGrayscaleModeOffCurrent",
+          "when": "config.fund-helper.grayscaleMode == false",
+          "group": "2"
+        },
+        {
+          "command": "fund-helper.setGrayscaleModeOff",
+          "when": "config.fund-helper.grayscaleMode == true",
+          "group": "2"
+        }
+      ],
+      "fund-helper.submenu.autoRefresh": [
+        {
+          "command": "fund-helper.setAutoRefreshOnCurrent",
+          "when": "config.fund-helper.refreshInterval != 0",
+          "group": "1"
+        },
+        {
+          "command": "fund-helper.setAutoRefreshOn",
+          "when": "config.fund-helper.refreshInterval == 0",
+          "group": "1"
+        },
+        {
+          "command": "fund-helper.setAutoRefreshOffCurrent",
+          "when": "config.fund-helper.refreshInterval == 0",
+          "group": "2"
+        },
+        {
+          "command": "fund-helper.setAutoRefreshOff",
+          "when": "config.fund-helper.refreshInterval != 0",
+          "group": "2"
         }
       ],
       "view/item/context": [
@@ -535,6 +681,11 @@
           "type": "boolean",
           "default": false,
           "description": "开启隐私模式（自动隐藏敏感数据）"
+        },
+        "fund-helper.grayscaleMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "开启灰色模式（列表区域应用灰阶滤镜）"
         },
         "fund-helper.webviewColumnOrder": {
           "type": "array",

@@ -239,11 +239,11 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       "  - 开发更多实用功能\n\n" +
       "🥰 用爱发电不易，期待您的支持~\n\n" +
       "---\n\n" +
-      "⚠️ **点击后将打开 GitHub 仓库页面**\n\n" +
+      "⚠️ **点击后将打开 赞赏 页面**\n\n" +
       "💼 建议在没人盯着/注意时，或者在休息时间打开哦~\n\n" +
       "🤝 **感谢您的理解和支持！**\n\n" +
       "---\n\n" +
-      "🌟 **觉得不错？欢迎给项目仓库点个星星~**\n\n" +
+      "🌟 **觉得不错？也欢迎给项目仓库点个星星~**\n\n" +
       "⭐ [**给项目点个星吧！**](https://github.com/crispyChicken999/fund-helper-vscode) ⭐\n\n" +
       "📢 *您的每个 ⭐ 都是对开发者最大的鼓励！*"
     );

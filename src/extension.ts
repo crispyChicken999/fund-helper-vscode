@@ -125,6 +125,66 @@ export async function activate(context: vscode.ExtensionContext) {
       await config.update("hideStatusBar", !current, vscode.ConfigurationTarget.Global);
       vscode.window.showInformationMessage(current ? "已显示状态栏收益" : "已隐藏状态栏收益，鼠标悬停可查看详情");
     }),
+    vscode.commands.registerCommand("fund-helper.setStatusBarAmountVisible", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      await config.update("hideStatusBar", false, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage("已显示状态栏收益");
+    }),
+    vscode.commands.registerCommand("fund-helper.setStatusBarAmountVisibleCurrent", async () => {
+      await vscode.commands.executeCommand("fund-helper.setStatusBarAmountVisible");
+    }),
+    vscode.commands.registerCommand("fund-helper.setStatusBarAmountHidden", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      await config.update("hideStatusBar", true, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage("已隐藏状态栏收益，鼠标悬停可查看详情");
+    }),
+    vscode.commands.registerCommand("fund-helper.setStatusBarAmountHiddenCurrent", async () => {
+      await vscode.commands.executeCommand("fund-helper.setStatusBarAmountHidden");
+    }),
+    vscode.commands.registerCommand("fund-helper.togglePrivacyMode", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      const current = config.get<boolean>("privacyMode", false);
+      await config.update("privacyMode", !current, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage(current ? "已关闭隐私模式" : "已开启隐私模式");
+    }),
+    vscode.commands.registerCommand("fund-helper.setPrivacyModeOn", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      await config.update("privacyMode", true, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage("已开启隐私模式");
+    }),
+    vscode.commands.registerCommand("fund-helper.setPrivacyModeOnCurrent", async () => {
+      await vscode.commands.executeCommand("fund-helper.setPrivacyModeOn");
+    }),
+    vscode.commands.registerCommand("fund-helper.setPrivacyModeOff", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      await config.update("privacyMode", false, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage("已关闭隐私模式");
+    }),
+    vscode.commands.registerCommand("fund-helper.setPrivacyModeOffCurrent", async () => {
+      await vscode.commands.executeCommand("fund-helper.setPrivacyModeOff");
+    }),
+    vscode.commands.registerCommand("fund-helper.toggleGrayscaleMode", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      const current = config.get<boolean>("grayscaleMode", false);
+      await config.update("grayscaleMode", !current, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage(current ? "已关闭灰色模式" : "已开启灰色模式");
+    }),
+    vscode.commands.registerCommand("fund-helper.setGrayscaleModeOn", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      await config.update("grayscaleMode", true, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage("已开启灰色模式");
+    }),
+    vscode.commands.registerCommand("fund-helper.setGrayscaleModeOnCurrent", async () => {
+      await vscode.commands.executeCommand("fund-helper.setGrayscaleModeOn");
+    }),
+    vscode.commands.registerCommand("fund-helper.setGrayscaleModeOff", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      await config.update("grayscaleMode", false, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage("已关闭灰色模式");
+    }),
+    vscode.commands.registerCommand("fund-helper.setGrayscaleModeOffCurrent", async () => {
+      await vscode.commands.executeCommand("fund-helper.setGrayscaleModeOff");
+    }),
     vscode.commands.registerCommand(
       "fund-helper.copyFundDetail",
       async (arg: FundTreeItem | string) => {
@@ -356,6 +416,24 @@ export async function activate(context: vscode.ExtensionContext) {
         await config.update("refreshInterval", 0, vscode.ConfigurationTarget.Global);
         vscode.window.showInformationMessage(`已关闭自动刷新`);
       }
+    }),
+    vscode.commands.registerCommand("fund-helper.setAutoRefreshOn", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      const current = config.get<number>("refreshInterval", 60);
+      const next = current > 0 ? current : 60;
+      await config.update("refreshInterval", next, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage(`已开启自动刷新，刷新间隔: ${next} 秒`);
+    }),
+    vscode.commands.registerCommand("fund-helper.setAutoRefreshOnCurrent", async () => {
+      await vscode.commands.executeCommand("fund-helper.setAutoRefreshOn");
+    }),
+    vscode.commands.registerCommand("fund-helper.setAutoRefreshOff", async () => {
+      const config = vscode.workspace.getConfiguration("fund-helper");
+      await config.update("refreshInterval", 0, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage("已关闭自动刷新");
+    }),
+    vscode.commands.registerCommand("fund-helper.setAutoRefreshOffCurrent", async () => {
+      await vscode.commands.executeCommand("fund-helper.setAutoRefreshOff");
     }),
 
     // 排序快捷命令（inline 按钮用）

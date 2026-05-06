@@ -156,6 +156,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
 
     this._sendMarketStatus();
     this._sendPrivacyMode();
+    this._sendGrayscaleMode();
   }
 
   private _sendMarketStatus(): void {
@@ -185,6 +186,15 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     this.postMessage({
       command: "updatePrivacyMode",
       value: privacyMode,
+    });
+  }
+
+  private _sendGrayscaleMode(): void {
+    const config = vscode.workspace.getConfiguration("fund-helper");
+    const grayscaleMode = config.get<boolean>("grayscaleMode", false);
+    this.postMessage({
+      command: "updateGrayscaleMode",
+      value: grayscaleMode,
     });
   }
 
@@ -525,10 +535,21 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
         this._sendPrivacyMode();
         break;
 
+      case "getGrayscaleMode":
+        this._sendGrayscaleMode();
+        break;
+
       case "savePrivacyMode":
         if (message.value !== undefined) {
           const config = vscode.workspace.getConfiguration("fund-helper");
           await config.update("privacyMode", message.value, vscode.ConfigurationTarget.Global);
+        }
+        break;
+
+      case "saveGrayscaleMode":
+        if (message.value !== undefined) {
+          const config = vscode.workspace.getConfiguration("fund-helper");
+          await config.update("grayscaleMode", message.value, vscode.ConfigurationTarget.Global);
         }
         break;
 
@@ -590,12 +611,19 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       '          <div class="stat-label">',
       '            账户资产',
       '            <button class="btn-toggle-privacy" id="btnTogglePrivacy" title="隐藏/显示敏感数据">',
-      '              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="icon-eye-open">',
-      '                <path d="M8 3C4.5 3 1.5 5.5 0 8c1.5 2.5 4.5 5 8 5s6.5-2.5 8-5c-1.5-2.5-4.5-5-8-5zm0 8c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z"/>',
-      '                <circle cx="8" cy="8" r="1.5"/>',
+      '              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="icon-eye-open">',
+      '                <path fill="currentColor" d="M12 9a3 3 0 0 1 3 3a3 3 0 0 1-3 3a3 3 0 0 1-3-3a3 3 0 0 1 3-3m0-4.5c5 0 9.27 3.11 11 7.5c-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12c1.73-4.39 6-7.5 11-7.5M3.18 12a9.821 9.821 0 0 0 17.64 0a9.821 9.821 0 0 0-17.64 0"/>',
       '              </svg>',
-      '              <svg width="16" height="16" viewBox="0 0 32 32" class="icon-eye-closed" style="display: none;">',
-      '                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 16a5 5 0 0 1-5 5m-5-5a5 5 0 0 1 5-5m-3 13.654A13.4 13.4 0 0 0 16 25c7.18 0 13-6 13-9c0-1.336-1.155-3.268-3.071-5M19.5 7.47A13.5 13.5 0 0 0 16 7C8.82 7 3 13 3 16c0 1.32 1.127 3.22 3 4.935M7 25L25 7"/>',
+      '              <svg width="16" height="16" viewBox="0 0 24 24" class="icon-eye-closed" style="display: none;">',
+      '                <path fill="currentColor" d="M2 5.27L3.28 4L20 20.72L18.73 22l-3.08-3.08c-1.15.38-2.37.58-3.65.58c-5 0-9.27-3.11-11-7.5c.69-1.76 1.79-3.31 3.19-4.54zM12 9a3 3 0 0 1 3 3a3 3 0 0 1-.17 1L11 9.17A3 3 0 0 1 12 9m0-4.5c5 0 9.27 3.11 11 7.5a11.8 11.8 0 0 1-4 5.19l-1.42-1.43A9.86 9.86 0 0 0 20.82 12A9.82 9.82 0 0 0 12 6.5c-1.09 0-2.16.18-3.16.5L7.3 5.47c1.44-.62 3.03-.97 4.7-.97M3.18 12A9.82 9.82 0 0 0 12 17.5c.69 0 1.37-.07 2-.21L11.72 15A3.064 3.064 0 0 1 9 12.28L5.6 8.87c-.99.85-1.82 1.91-2.42 3.13"/>',
+      '              </svg>',
+      '            </button>',
+      '            <button class="btn-toggle-grayscale" id="btnToggleGrayscale" title="开启灰色模式">',
+      '              <svg width="16" height="16" viewBox="0 0 24 24" class="icon-grayscale-on" style="display: none;">',
+      '                <path fill="currentColor" d="M20.49 20.49L3.51 3.51A.996.996 0 1 0 2.1 4.92l3.5 3.5a7.73 7.73 0 0 0-1.6 4.7C4 17.48 7.58 21 12 21c1.75 0 3.36-.56 4.67-1.5l2.4 2.4c.39.39 1.02.39 1.41 0c.4-.39.4-1.02.01-1.41M12 19c-3.31 0-6-2.63-6-5.87c0-1.19.36-2.32 1.02-3.28L12 14.83zM8.38 5.56l2.91-2.87c.39-.38 1.01-.38 1.4 0l4.95 4.87C19.1 8.99 20 10.96 20 13.13c0 1.18-.27 2.29-.74 3.3L12 9.17V4.81L9.8 6.97z"/>',
+      '              </svg>',
+      '              <svg width="16" height="16" viewBox="0 0 24 24" class="icon-grayscale-off">',
+      '                <path fill="currentColor" d="M12 4.81V19c-3.31 0-6-2.63-6-5.87c0-1.56.62-3.03 1.75-4.14zM6.35 7.56C4.9 8.99 4 10.96 4 13.13C4 17.48 7.58 21 12 21s8-3.52 8-7.87c0-2.17-.9-4.14-2.35-5.57L12.7 2.69c-.39-.38-1.01-.38-1.4 0z"/>',
       '              </svg>',
       '            </button>',
       '          </div>',
