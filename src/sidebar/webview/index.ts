@@ -163,12 +163,18 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     const now = new Date();
     const marketOpen = isMarketOpen(now);
     const marketClosed = isMarketClosed(now);
+    
+    // 获取当前日期（MM-DD 格式）
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const todayDate = `${month}-${day}`;
 
     this.postMessage({
       command: "updateMarketStatus",
       data: {
         isOpen: marketOpen,
         isClosed: marketClosed,
+        todayDate: todayDate,
       },
     });
   }
