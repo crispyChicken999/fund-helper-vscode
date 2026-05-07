@@ -441,22 +441,22 @@ export async function exportFund() {
     const visibleColumnsJson = JSON.stringify(visibleColumns);
 
     const formattedJson = `{
-      "funds": [
-        ${fundsJson}
-      ],
-      "groups": ${groupsJson},
-      "groupOrder": ${groupOrderJson},
-      "columnSettings": {
-        "columnOrder": ${columnOrderJson},
-        "visibleColumns": ${visibleColumnsJson}
-      },
-      "sortMethod": ${JSON.stringify(sortMethod)},
-      "refreshInterval": ${refreshInterval},
-      "hideStatusBar": ${hideStatusBar},
-      "defaultViewMode": ${JSON.stringify(defaultViewMode)},
-      "privacyMode": ${privacyMode},
-      "grayscaleMode": ${grayscaleMode}
-    }`;
+  "funds": [
+    ${fundsJson}
+  ],
+  "groups": ${groupsJson},
+  "groupOrder": ${groupOrderJson},
+  "columnSettings": {
+    "columnOrder": ${columnOrderJson},
+    "visibleColumns": ${visibleColumnsJson}
+  },
+  "sortMethod": ${JSON.stringify(sortMethod)},
+  "refreshInterval": ${refreshInterval},
+  "hideStatusBar": ${hideStatusBar},
+  "defaultViewMode": ${JSON.stringify(defaultViewMode)},
+  "privacyMode": ${privacyMode},
+  "grayscaleMode": ${grayscaleMode}
+}`;
 
     fs.writeFileSync(uri.fsPath, formattedJson, "utf-8");
     vscode.window.showInformationMessage(`基金列表已导出到 ${uri.fsPath}`);
