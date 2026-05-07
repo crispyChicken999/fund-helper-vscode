@@ -84,7 +84,7 @@ function calcEstimateChange(positions: any[], stockData: any[]): number {
     const weight = parseFloat(position.JZBL) || 0;
     const stockItem = stockData[index]; // 直接按索引，不通过代码查找
     const changePercent = (stockItem && parseFloat(stockItem.f3)) || 0;
-    
+
     if (weight > 0 && !isNaN(changePercent)) {
       const weightedValue = (weight / totalWeight) * changePercent;
       totalWeightedChange += weightedValue;
@@ -146,27 +146,27 @@ async function fetchFundEstimateChange(code: string): Promise<number | null> {
  */
 async function fetchBatchFundFromMNFInfo(codes: string[]): Promise<Map<string, any>> {
   const resultMap = new Map<string, any>();
-  
+
   if (codes.length === 0) {
     return resultMap;
   }
-  
+
   // FundMNFInfo 接口支持逗号分隔的多个基金代码
   const fcodes = codes.join(',');
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=vscode&Fcodes=${fcodes}`;
-  
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 批量请求增加超时时间
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timeoutId);
-    
+
     if (!res.ok) {
       return resultMap;
     }
-    
+
     const data = (await res.json()) as any;
-    
+
     if (data.Datas && Array.isArray(data.Datas)) {
       for (const fund of data.Datas) {
         const code = fund.FCODE;
@@ -183,7 +183,7 @@ async function fetchBatchFundFromMNFInfo(codes: string[]): Promise<Map<string, a
   } catch (error) {
     console.error('批量获取 MNFInfo 数据失败:', error);
   }
-  
+
   return resultMap;
 }
 
@@ -201,27 +201,26 @@ async function fetchFundFromMNFInfo(code: string): Promise<any> {
       return null;
     }
     const data = (await res.json()) as any;
-    
+
     if (data.Datas && Array.isArray(data.Datas) && data.Datas.length > 0) {
       const fund = data.Datas[0];
-      
-      // 尝试获取实时估算涨幅
+
+      // 尝试获取实时估算涨幅（今天的）
       const estimateChange = await fetchFundEstimateChange(code);
-      
+
       // 转换数据格式，使其与 fundgz 接口返回的格式兼容
       const result = {
         fundcode: fund.FCODE,
         name: fund.SHORTNAME,
         dwjz: fund.NAV, // 单位净值
         gsz: null, // QDII 无盘中估值
-        gszzl: fund.GSZZL, // 估算涨跌幅（可能为null）
-        navchgrt: fund.NAVCHGRT, // 净值涨跌幅
+        gszzl: estimateChange !== null ? estimateChange.toString() : null, // 估算涨跌幅（今天的实时估算）
+        navchgrt: fund.NAVCHGRT, // 净值涨跌幅（上一个交易日的真实涨跌幅）
         jzrq: fund.PDATE, // 净值日期
-        gztime: (data.Expansion as any)?.GZTIME || "", // 更新时间
+        gztime: (data.Expansion as any)?.GZTIME || "", // 更新时间（今天的日期）
         // 标记这是从备选接口获取的数据
         _fromMNFInfo: true,
-        _navChgRt: (estimateChange ?? parseFloat(fund.NAVCHGRT)) || 0, // 优先使用实时估算涨幅，否则用 NAVCHGRT
-        _estimateChange: estimateChange, // 是否是实时估算（用于标记）
+        _estimateChange: estimateChange, // 实时估算涨幅（今天的）
       };
       return result;
     }
@@ -244,12 +243,12 @@ async function fetchSingleFund(code: string): Promise<any> {
     if (!res.ok) return null;
     const text = await res.text();
     const parsed = parseJsonp(text);
-    
+
     // 如果返回为空（jsonpgz()），尝试备选方案
     if (!parsed) {
       return await fetchFundFromMNFInfo(code);
     }
-    
+
     return parsed;
   } catch (error) {
     // 如果主接口出错，也尝试备选方案
@@ -334,9 +333,17 @@ export async function getFundData(
 
     // 处理从 MNFInfo 接口获取的数据（QDII 基金等）
     if (val._fromMNFInfo) {
-      // QDII 基金没有盘中估值，使用净值涨跌幅
-      changePercent = val._navChgRt;
-      navChgRt = val._navChgRt;
+      // QDII 基金的估算涨跌幅（今天的实时估算）
+      if (val._estimateChange !== null && val._estimateChange !== undefined) {
+        changePercent = val._estimateChange;
+      } else {
+        // 如果没有实时估算，使用上一个交易日的涨跌幅
+        changePercent = isNaN(parseFloat(val.navchgrt)) ? 0 : parseFloat(val.navchgrt);
+      }
+
+      // QDII 基金的当日涨跌幅（上一个交易日的真实涨跌幅）
+      navChgRt = isNaN(parseFloat(val.navchgrt)) ? 0 : parseFloat(val.navchgrt);
+
       // QDII 基金不显示盘中估值
       estimatedValue = null;
       // QDII 基金的净值是真实净值（上一个交易日的）
@@ -347,7 +354,7 @@ export async function getFundData(
       if (val.navchgrt !== undefined && !isNaN(parseFloat(val.navchgrt))) {
         navChgRt = parseFloat(val.navchgrt);
       }
-      
+
       // 判断是否已更新为实时净值
       if (jzrq && gztime && typeof gztime === "string" && jzrq === gztime.substring(0, 10)) {
         isRealValue = true;
@@ -535,7 +542,7 @@ export async function fetchFundRelateTheme(fundCodes: string[]): Promise<any> {
 
   const fcode = fundCodes.join(',');
   const url = 'https://dgs.tiantianfunds.com/merge/m/api/jjxqy1_2';
-  
+
   const params = new URLSearchParams({
     deviceid: '1d747ff7-7201-443e-95bd-2d13e30b9ffe',
     version: '9.9.9',
@@ -566,7 +573,7 @@ export async function fetchFundRelateTheme(fundCodes: string[]): Promise<any> {
       signal: controller.signal
     });
     clearTimeout(tid);
-    
+
     if (!res.ok) { return null; }
     return await res.json();
   } catch (error) {
@@ -581,7 +588,7 @@ export async function fetchFundRelateTheme(fundCodes: string[]): Promise<any> {
  */
 export async function fetchFundDetailInfo(fundCode: string): Promise<any> {
   const url = 'https://dgs.tiantianfunds.com/merge/m/api/jjxqy1_2';
-  
+
   const params = new URLSearchParams({
     deviceid: 'fd7dac76-c5e9-4723-8fe6-7b436b2b1443',
     version: '9.9.9',
@@ -614,7 +621,7 @@ export async function fetchFundDetailInfo(fundCode: string): Promise<any> {
       signal: controller.signal
     });
     clearTimeout(tid);
-    
+
     if (!res.ok) { return null; }
     return await res.json();
   } catch (error) {

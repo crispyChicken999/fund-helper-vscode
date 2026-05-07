@@ -114,7 +114,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     const mergedData = fundDataList.map((fund) => ({
       code: fund.code,
       name: fund.name,
-      gsz: fund.estimatedValue?.toString() || fund.netValue.toString(),
+      gsz: fund.estimatedValue?.toString() || "0",  // QDII基金estimatedValue为null时，gsz应该为"0"而不是netValue
       gszzl: fund.changePercent.toString(),
       dwjz: fund.netValue.toString(),
       gztime: fund.updateTime,
@@ -130,9 +130,9 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     // 获取所有可用分组
     const fundGroups = getFundGroups();
     const fundGroupOrder = getFundGroupOrder();
-    
-    const allGroups = fundGroupOrder.length > 0 
-      ? fundGroupOrder 
+
+    const allGroups = fundGroupOrder.length > 0
+      ? fundGroupOrder
       : Object.keys(fundGroups);  // 如果没有保存顺序，使用对象键顺序
 
     this.postMessage({
@@ -164,7 +164,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     const now = new Date();
     const marketOpen = isMarketOpen(now);
     const marketClosed = isMarketClosed(now);
-    
+
     // 获取当前日期（MM-DD 格式）
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
@@ -238,11 +238,11 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     const config = vscode.workspace.getConfiguration("fund-helper");
     await config.update("webviewColumnOrder", data.columnOrder, vscode.ConfigurationTarget.Global);
     await config.update("webviewVisibleColumns", data.visibleColumns, vscode.ConfigurationTarget.Global);
-    
+
     this.postMessage({
       command: "columnSettingsSaved",
     });
-    
+
     await this._loadFundData();
   }
 
@@ -312,14 +312,14 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       case "openMarket":
         await vscode.commands.executeCommand("fund-helper.openMarket");
         break;
-      
+
       case "saveOrder":
         if (message.orderedCodes && Array.isArray(message.orderedCodes)) {
           const config = vscode.workspace.getConfiguration("fund-helper");
           const funds = config.get<
             Array<{ code: string; cost: string; num: string; group?: string }>
           >("funds", []);
-          
+
           // 根据 orderedCodes 对 funds 进行重新排序
           const orderedFunds: any[] = [];
           message.orderedCodes.forEach((code: string) => {
@@ -328,7 +328,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
               orderedFunds.push(found);
             }
           });
-          
+
           // 添加可能遗漏的（正常情况不会，但为了安全）
           funds.forEach(f => {
             if (!orderedFunds.some(of => of.code === f.code)) {
@@ -344,7 +344,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       case "deleteFund":
         if (message.code) {
           const config = vscode.workspace.getConfiguration("fund-helper");
-          
+
           // 1. 从 funds 列表中删除
           const funds = config.get<
             Array<{ code: string; cost: string; num: string }>
@@ -355,11 +355,11 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
             newFunds,
             vscode.ConfigurationTarget.Global
           );
-          
+
           // 2. 从所有分组中删除该基金
           const fundGroups = getFundGroups();
           let groupsModified = false;
-          
+
           for (const groupName of Object.keys(fundGroups)) {
             const originalLength = fundGroups[groupName].length;
             fundGroups[groupName] = fundGroups[groupName].filter((c: string) => c !== message.code);
@@ -367,11 +367,11 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
               groupsModified = true;
             }
           }
-          
+
           if (groupsModified) {
             await saveFundGroups(fundGroups);
           }
-          
+
           await this._loadFundData();
         }
         break;
@@ -409,7 +409,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
 
           await saveFundGroups(fundGroups);
           await this._loadFundData();
-          
+
           const groupName = targetGroup || "无分组";
           vscode.window.showInformationMessage(`已将基金 ${code} 移至 ${groupName}`);
         }
@@ -419,13 +419,13 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
         if (message.group) {
           const fundGroups = getFundGroups();
           const groupName = message.group;
-          
+
           // 删除分组
           delete fundGroups[groupName];
-          
+
           await saveFundGroups(fundGroups);
           await this._loadFundData();
-          
+
           vscode.window.showInformationMessage(`已删除分组 "${groupName}"`);
         }
         break;
@@ -436,7 +436,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
 
       case "saveGroupManagement":
         if (message.payload) {
-          
+
           const payload = message.payload as {
             groupOrder?: string[];
             groups?: Record<string, string[]>;
@@ -498,10 +498,10 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
           // 先保存分组数据到设置
           await saveFundGroups(nextGroups);
           await saveFundGroupOrder(incomingOrder);
-          
+
           // 重新刷新数据，确保从设置中读取最新的分组信息
           await this._loadFundData();
-          
+
           vscode.window.showInformationMessage("分组变更已保存");
         }
         break;
