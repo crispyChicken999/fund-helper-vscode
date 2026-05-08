@@ -307,6 +307,7 @@ export async function getFundData(
     }
 
     // 从批量获取的 MNFInfo 数据中获取真实净值信息
+    // 所有基金都使用 MNFInfo 数据，不再仅针对 QDII
     const mnfInfo = mnfInfoMap.get(cfg.code);
     if (mnfInfo) {
       // 将 MNFInfo 数据合并到 fundgz 数据中
@@ -356,6 +357,7 @@ export async function getFundData(
       }
 
       // 判断是否已更新为实时净值
+      // 如果 jzrq（净值日期）等于 gztime 的日期部分，说明已更新为实时净值
       if (jzrq && gztime && typeof gztime === "string" && jzrq === gztime.substring(0, 10)) {
         isRealValue = true;
         estimatedValue = netValue;

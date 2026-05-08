@@ -502,10 +502,19 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     let totalHoldingUp = 0;
     let totalHoldingDown = 0;
 
+    // 判断是否休市（与 StatusBar 保持一致）
+    const isClosed = isMarketOpen() === false;
+
     for (const f of this._fundDataList) {
       const amount = calcHoldingAmount(f);
-      const daily = calcDailyGain(f);
       const holding = calcHoldingGain(f);
+
+      // 计算估算收益（与 StatusBar 保持一致）
+      // 如果休市，估算收益为 0
+      let daily = 0;
+      if (!isClosed && f.estimatedValue !== null && f.shares > 0) {
+        daily = (f.estimatedValue - f.netValue) * f.shares;
+      }
 
       totalAmount += amount;
       totalDailyGain += daily;
@@ -607,10 +616,19 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     let totalHoldingUp = 0;
     let totalHoldingDown = 0;
 
+    // 判断是否休市（与 StatusBar 保持一致）
+    const isClosed = isMarketOpen() === false;
+
     for (const f of this._fundDataList) {
       const amount = calcHoldingAmount(f);
-      const daily = calcDailyGain(f);
       const holding = calcHoldingGain(f);
+
+      // 计算估算收益（与 StatusBar 保持一致）
+      // 如果休市，估算收益为 0
+      let daily = 0;
+      if (!isClosed && f.estimatedValue !== null && f.shares > 0) {
+        daily = (f.estimatedValue - f.netValue) * f.shares;
+      }
 
       totalAmount += amount;
       totalDailyGain += daily;

@@ -91,6 +91,15 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     await this._loadFundData();
   }
 
+  /**
+   * 重新设置自动刷新（配置变化时调用）
+   */
+  public refreshAutoRefresh(): void {
+    if (this._isVisible) {
+      this._setupAutoRefresh();
+    }
+  }
+
   public postMessage(message: any): void {
     if (this._view) {
       try {

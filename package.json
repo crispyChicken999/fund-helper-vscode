@@ -2,7 +2,7 @@
   "name": "fund-helper",
   "displayName": "基金助手",
   "description": "VSCode 查看基金估算收益、涨跌幅、行情等数据，支持分组、排序、AI分析等功能，助你轻松管理投资组合",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "author": "CrispyChicken",
   "publisher": "CrispyChicken",
   "license": "MIT",

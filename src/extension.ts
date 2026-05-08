@@ -451,6 +451,7 @@ export async function activate(context: vscode.ExtensionContext) {
       if (e.affectsConfiguration("fund-helper")) {
         refreshData();
         webviewViewProvider.refresh();
+        webviewViewProvider.refreshAutoRefresh(); // 重新设置 WebviewView 的自动刷新
         setupAutoRefresh();
       }
     }),
