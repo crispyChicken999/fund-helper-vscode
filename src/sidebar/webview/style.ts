@@ -1611,7 +1611,7 @@ export function getStyles(): string[] {
     '  font-size: 11px;',
     '  padding: 2px 6px;',
     '  border-radius: 4px;',
-    '  background: var(--vscode-button-secondaryBackground);',
+    '  background: var(--vscode-button-secondaryHoverBackground);',
     '  color: var(--vscode-button-secondaryForeground);',
     '  border: 0;',
     '  margin-left: 4px;',
