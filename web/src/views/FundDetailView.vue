@@ -544,6 +544,7 @@ onUnmounted(() => {
 .header-info {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
 }
 
 .fund-name {
