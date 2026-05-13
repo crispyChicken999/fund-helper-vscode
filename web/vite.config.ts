@@ -19,7 +19,11 @@ export default defineConfig({
       '/api-proxy/bkzj': {
         target: 'https://data.eastmoney.com',
         changeOrigin: true,
-        rewrite: path => path.replace(/^\/api-proxy\/bkzj/, '/dataapi/bkzj')
+        rewrite: path => path.replace(/^\/api-proxy\/bkzj/, '/dataapi/bkzj'),
+        headers: {
+          'Referer': 'https://data.eastmoney.com/',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
       },
       // fundmobapi 整个域名（来源检测）
       '/api-proxy/fundmob': {

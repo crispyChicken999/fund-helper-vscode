@@ -1,6 +1,6 @@
 // 分组业务逻辑服务
 
-import { useGroupStore } from '@/stores'
+import { useGroupStore, useFundStore } from '@/stores'
 import { storageService } from './storageService'
 
 /**
@@ -18,6 +18,9 @@ class GroupService {
     
     // 初始化到store
     groupStore.initGroupsFromObject(groups, groupOrder)
+    
+    // Sync fund groupKey based on group membership
+    this.syncFundGroupKeys()
     
     console.log(`已加载 ${Object.keys(groups).length} 个分组`)
   }
@@ -127,6 +130,28 @@ class GroupService {
       await groupStore.addFundToGroup(fundCode, nextGroupKey)
     }
     this.saveGroups()
+  }
+
+  /**
+   * Sync fund groupKey based on group membership (group.fundCodes)
+   */
+  syncFundGroupKeys(): void {
+    const groupStore = useGroupStore()
+    const fundStore = useFundStore()
+    
+    // Build a code -> groupKey map from all groups
+    const codeToGroupKey = new Map<string, string>()
+    for (const group of groupStore.getGroupList) {
+      for (const code of group.fundCodes) {
+        codeToGroupKey.set(code, group.key)
+      }
+    }
+    
+    // Apply to funds
+    for (const fund of fundStore.funds) {
+      const groupKey = codeToGroupKey.get(fund.code)
+      fund.groupKey = groupKey
+    }
   }
 
   /**

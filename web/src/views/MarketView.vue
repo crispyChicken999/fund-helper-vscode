@@ -76,7 +76,7 @@
           </div>
           <div class="index-images">
             <div v-for="item in currentGlobalIndexItems" :key="item.nid" class="index-img-wrap">
-              <img :src="getIndexImageUrl(item.nid)" :alt="item.name" loading="lazy" />
+              <img :src="getStableImageUrl(item.nid)" :alt="item.name" loading="lazy" />
               <span class="img-label">{{ item.name }}</span>
             </div>
           </div>
@@ -117,7 +117,6 @@ import {
   fetchMarketStat,
   fetchFlowLine,
   fetchPlateData,
-  getIndexImageUrl,
   GLOBAL_INDEX_GROUPS,
   type IndexCardData,
   type MarketStatData,
@@ -154,6 +153,9 @@ const contentRef = ref<HTMLElement | null>(null)
 
 const indexCards = ref<IndexCardData[]>([])
 const marketStat = ref<MarketStatData | null>(null)
+
+// Stable timestamp for image URLs — only changes on manual refresh
+const imageTimestamp = ref(Date.now())
 
 const loadedTabs = new Set<string>()
 const activePlateRank = reactive<Record<string, PlateRankField>>({
@@ -211,6 +213,10 @@ function fmtChange(v: number) {
   return `${v > 0 ? '+' : ''}${v.toFixed(2)}`
 }
 
+function getStableImageUrl(nid: string) {
+  return `https://webquotepic.eastmoney.com/GetPic.aspx?imageType=WAPINDEX2&nid=${nid}&rnd=${imageTimestamp.value}`
+}
+
 // --- 数据加载 ---
 
 async function loadMarketTab() {
@@ -260,6 +266,7 @@ async function handleRefresh() {
   refreshing.value = true
   try {
     loadedTabs.clear()
+    imageTimestamp.value = Date.now()
     await loadTabOnce(activeMainTab.value)
   } finally {
     refreshing.value = false
@@ -348,7 +355,7 @@ async function renderPlateChart(tab: string, data: { name: string; value: number
         return `${name}<br/>净流入: <span style="color:${color};font-weight:600;">${sign}${p.value.toFixed(2)}</span> 亿`
       }
     },
-    grid: { left: 50, right: 20, top: 20, bottom: 60 },
+    grid: { left: 50, right: 20, top: 20, bottom: 80 },
     xAxis: {
       type: 'category',
       data: names,
@@ -361,7 +368,7 @@ async function renderPlateChart(tab: string, data: { name: string; value: number
       splitLine: { lineStyle: { color: 'var(--border-color)', type: 'dashed' } }
     },
     dataZoom: [
-      { type: 'slider', start: 0, end: Math.min(100, (30 / Math.max(data.length, 1)) * 100), bottom: 4, height: 18 },
+      { type: 'slider', start: 0, end: Math.min(100, (30 / Math.max(data.length, 1)) * 100), bottom: 16, height: 18 },
       { type: 'inside' }
     ],
     series: [{
@@ -396,6 +403,7 @@ function scheduleNext() {
     const d = new Date().getDay()
     if (d >= 1 && d <= 5 && h >= 9 && h < 15) {
       loadedTabs.clear()
+      imageTimestamp.value = Date.now()
       await loadTabOnce(activeMainTab.value)
     }
     scheduleNext()
@@ -478,7 +486,7 @@ onUnmounted(() => {
 .main-tab-item {
   padding: 6px 14px;
   font-size: 13px;
-  border-radius: 16px;
+  border-radius: 8px 8px 0 0;
   cursor: pointer;
   white-space: nowrap;
   user-select: none;

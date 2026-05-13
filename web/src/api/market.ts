@@ -1,9 +1,8 @@
 /**
- * 行情中心 API — 对齐 VSCode 版 marketWebview.ts
- * 使用 push2.eastmoney.com（允许跨域）和 data.eastmoney.com（需代理）
+ * 行情中心 API — 全面使用 JSONP / 直接 fetch（无代理）
  */
 
-import { proxyFetch } from '@/api/proxy'
+import { fetchJSON } from '@/utils/jsonp'
 
 // ==================== 类型定义 ====================
 
@@ -36,16 +35,15 @@ export interface PlateItem {
   value: number  // 净流入（亿元）
 }
 
-// ==================== 大盘指数 ====================
+// ==================== 大盘指数（push2 允许跨域） ====================
 
 const INDEX_SECIDS = '1.000001,1.000300,0.399001,0.399006'
 
 export async function fetchIndexCards(): Promise<IndexCardData[]> {
   const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f13,f14&secids=${INDEX_SECIDS}&_=${Date.now()}`
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
-    if (!res.ok) return []
-    const data = await res.json()
+    const data = await fetchJSON<any>(url)
+    if (!data) return []
     const items: IndexCardData[] = (data?.data?.diff ?? []).map((d: any) => ({
       code: `${d.f13}.${d.f12}`,
       name: d.f14,
@@ -59,14 +57,13 @@ export async function fetchIndexCards(): Promise<IndexCardData[]> {
   }
 }
 
-// ==================== 两市统计 ====================
+// ==================== 两市统计（push2 允许跨域） ====================
 
 export async function fetchMarketStat(): Promise<MarketStatData | null> {
   const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&secids=1.000001,0.399001&fields=f1,f2,f3,f4,f6,f12,f13,f104,f105,f106&_=${Date.now()}`
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
-    if (!res.ok) return null
-    const data = await res.json()
+    const data = await fetchJSON<any>(url)
+    if (!data) return null
     const diff = data?.data?.diff ?? []
     if (diff.length < 2) return null
     const sh = diff[0]
@@ -82,14 +79,13 @@ export async function fetchMarketStat(): Promise<MarketStatData | null> {
   }
 }
 
-// ==================== 资金流向折线图 ====================
+// ==================== 资金流向折线图（push2 允许跨域） ====================
 
 export async function fetchFlowLine(): Promise<FlowLinePoint[]> {
   const url = `https://push2.eastmoney.com/api/qt/stock/fflow/kline/get?lmt=0&klt=1&secid=1.000001&secid2=0.399001&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63&_=${Date.now()}`
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
-    if (!res.ok) return []
-    const data = await res.json()
+    const data = await fetchJSON<any>(url)
+    if (!data) return []
     const klines: string[] = data?.data?.klines ?? []
     return klines.map(line => {
       const parts = line.split(',')
@@ -107,7 +103,7 @@ export async function fetchFlowLine(): Promise<FlowLinePoint[]> {
   }
 }
 
-// ==================== 板块资金流向（需 Vite proxy） ====================
+// ==================== 板块资金流向（直接 fetch，如失败则走 Vite proxy） ====================
 
 export type PlateRankField = 'f62' | 'f164' | 'f174'
 
@@ -127,19 +123,43 @@ export async function fetchPlateData(
   rankField: PlateRankField = 'f62'
 ): Promise<PlateItem[]> {
   const code = getPlateCode(plateTab)
-  const url = `https://data.eastmoney.com/dataapi/bkzj/getbkzj?key=${rankField}&code=${encodeURIComponent(code)}`
+  const targetUrl = `https://data.eastmoney.com/dataapi/bkzj/getbkzj?key=${rankField}&code=${encodeURIComponent(code)}`
+
   try {
-    const res = await proxyFetch(url, { signal: AbortSignal.timeout(12000) })
-    if (!res.ok) return []
-    const data = await res.json()
-    const list: any[] = data?.data ?? []
-    return list.map(item => ({
+    // 先尝试直接请求（可能无 CORS 限制）
+    const res = await fetch(targetUrl, { signal: AbortSignal.timeout(8000) })
+    if (res.ok) {
+      const data = await res.json()
+      return parsePlateResponse(data, rankField)
+    }
+  } catch {
+    // 直接请求失败，尝试 Vite proxy（仅开发环境）
+  }
+
+  // Fallback: 开发环境走 Vite proxy
+  if (import.meta.env.DEV) {
+    try {
+      const proxyUrl = `/api-proxy/bkzj/getbkzj?key=${rankField}&code=${encodeURIComponent(code)}`
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) })
+      if (res.ok) {
+        const data = await res.json()
+        return parsePlateResponse(data, rankField)
+      }
+    } catch { /* ignore */ }
+  }
+
+  return []
+}
+
+function parsePlateResponse(data: any, rankField: string): PlateItem[] {
+  // API 返回结构: { data: { total, diff: [{f12,f13,f14,f62/f164/f174}] } }
+  const list: any[] = data?.data?.diff ?? data?.data ?? []
+  return list
+    .map(item => ({
       name: item.f14 ?? item.name ?? '',
       value: (item[rankField] ?? 0) / 1e8
     }))
-  } catch {
-    return []
-  }
+    .sort((a, b) => b.value - a.value)
 }
 
 // ==================== 全球指数图片 ====================
@@ -181,7 +201,7 @@ export function getIndexImageUrl(nid: string): string {
   return `https://webquotepic.eastmoney.com/GetPic.aspx?imageType=WAPINDEX2&nid=${nid}&rnd=${Date.now()}`
 }
 
-// ==================== 兼容旧接口（保留导出避免其他文件报错） ====================
+// ==================== 兼容旧接口 ====================
 
 export interface MarketData {
   code: string

@@ -162,10 +162,10 @@ function estClass(v: number) {
 .fund-tooltip-overlay {
   position: fixed;
   inset: 0;
-  z-index: 3000;
+  z-index: 2000;
+  align-items: center;
   background: rgba(0, 0, 0, 0.45);
   display: flex;
-  align-items: flex-end;
   justify-content: center;
   padding: 16px;
   box-sizing: border-box;
@@ -248,9 +248,7 @@ function estClass(v: number) {
 }
 
 @media (min-width: 520px) {
-  .fund-tooltip-overlay {
-    align-items: center;
-  }
+
   .fund-tooltip-panel {
     border-radius: 8px;
   }

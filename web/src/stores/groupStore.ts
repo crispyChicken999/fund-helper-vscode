@@ -157,6 +157,9 @@ export const useGroupStore = defineStore('group', {
       this.groups.clear()
       this.groupOrder = []
       
+      // Build a name->key map for ordering
+      const nameToKey = new Map<string, string>()
+      
       Object.entries(groupsObj).forEach(([name, fundCodes]) => {
         const key = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         const group: Group = {
@@ -168,24 +171,41 @@ export const useGroupStore = defineStore('group', {
         }
         this.groups.set(key, group)
         this.groupOrder.push(key)
+        nameToKey.set(name, key)
       })
       
+      // If order is provided (as group names), reorder by name
       if (order && order.length > 0) {
-        this.groupOrder = order
+        const orderedKeys: string[] = []
+        for (const name of order) {
+          const key = nameToKey.get(name)
+          if (key) orderedKeys.push(key)
+        }
+        // Append any keys not in the order list
+        for (const key of this.groupOrder) {
+          if (!orderedKeys.includes(key)) orderedKeys.push(key)
+        }
+        this.groupOrder = orderedKeys
       }
     },
 
     // 导出为对象格式（用于存储）
     exportGroupsToObject(): { groups: Record<string, string[]>, groupOrder: string[] } {
       const groupsObj: Record<string, string[]> = {}
+      const nameOrder: string[] = []
       
-      this.groups.forEach(group => {
-        groupsObj[group.name] = group.fundCodes
-      })
+      // Use groupOrder to maintain order
+      for (const key of this.groupOrder) {
+        const group = this.groups.get(key)
+        if (group) {
+          groupsObj[group.name] = group.fundCodes
+          nameOrder.push(group.name)
+        }
+      }
       
       return {
         groups: groupsObj,
-        groupOrder: this.groupOrder
+        groupOrder: nameOrder
       }
     }
   }

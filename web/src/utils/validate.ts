@@ -79,16 +79,14 @@ export function validateLanguage(language: string): boolean {
 
 /**
  * 生成随机JSONBox名称
- * @returns 随机生成的Box名称（20-64字符）
+ * Per jsonbox docs: BOX_ID should contain only alphanumeric characters & underscore, at least 20 characters long.
+ * @returns 随机生成的Box名称
  */
 export function generateJsonboxName(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
-  const length = 32 // 生成32字符长度
-  let result = 'box_'
-  
-  for (let i = 0; i < length - 4; i++) {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  let result = 'fundhelper_'
+  for (let i = 0; i < 21; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length))
   }
-  
   return result
 }

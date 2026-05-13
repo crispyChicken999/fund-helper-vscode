@@ -96,24 +96,24 @@
 
       <!-- 基金概况 -->
       <div v-show="activeTab === 'overview'" class="tab-panel">
-        <div v-if="overview || mnDetail" class="info-list">
-          <div class="info-row"><span>基金类型</span><span>{{ mnDetail?.fundType || overview?.ftype || '--' }}</span></div>
-          <div class="info-row"><span>风险等级</span><span>{{ riskLabel(overview?.riskLevel || '') }}</span></div>
-          <div class="info-row"><span>成立日期</span><span>{{ mnDetail?.estabDate || overview?.estabDate || '--' }}</span></div>
-          <div class="info-row"><span>基金规模</span><span>{{ (mnDetail?.fundScale || overview?.endNav) ? (mnDetail?.fundScale || overview?.endNav) + ' 亿元' : '--' }}</span></div>
-          <div class="info-row"><span>基金公司</span><span>{{ mnDetail?.company || overview?.company || '--' }}</span></div>
-          <div class="info-row"><span>基金经理</span><span>{{ mnDetail?.managerName || managers[0]?.name || '--' }}</span></div>
-          <div class="info-row"><span>单位净值</span><span>{{ mnDetail?.nav ? mnDetail.nav + ' (' + mnDetail.navDate + ')' : '--' }}</span></div>
-          <div class="info-row"><span>累计净值</span><span>{{ mnDetail?.accNav || '--' }}</span></div>
-          <div class="info-row" v-if="mnDetail?.buyStatus || mnDetail?.sellStatus"><span>交易状态</span><span>{{ mnDetail?.buyStatus }} / {{ mnDetail?.sellStatus }}</span></div>
-          <div class="info-row" v-if="overview?.indexName"><span>跟踪指数</span><span>{{ overview.indexName }}</span></div>
-          <div class="info-row" v-if="overview?.bench"><span>基准指数</span><span class="bench-text">{{ overview.bench }}</span></div>
+        <div v-if="overview" class="info-list">
+          <div class="info-row"><span>基金类型</span><span>{{ overview.ftype || '--' }}</span></div>
+          <div class="info-row"><span>风险等级</span><span>{{ riskLabel(overview.riskLevel || '') }}</span></div>
+          <div class="info-row"><span>成立日期</span><span>{{ overview.estabDate || '--' }}</span></div>
+          <div class="info-row"><span>基金规模</span><span>{{ overview.endNav ? overview.endNav + ' 亿元' : '--' }}</span></div>
+          <div class="info-row"><span>基金公司</span><span>{{ overview.company || '--' }}</span></div>
+          <div class="info-row"><span>基金经理</span><span>{{ overview.managerName || managers[0]?.name || '--' }}</span></div>
+          <div class="info-row"><span>单位净值</span><span>{{ overview.nav ? overview.nav + ' (' + overview.navDate + ')' : '--' }}</span></div>
+          <div class="info-row"><span>累计净值</span><span>{{ overview.accNav || '--' }}</span></div>
+          <div class="info-row" v-if="overview.buyStatus || overview.sellStatus"><span>交易状态</span><span>{{ overview.buyStatus }} / {{ overview.sellStatus }}</span></div>
+          <div class="info-row" v-if="overview.indexName"><span>跟踪指数</span><span>{{ overview.indexName }}</span></div>
+          <div class="info-row" v-if="overview.bench"><span>基准指数</span><span class="bench-text">{{ overview.bench }}</span></div>
         </div>
 
         <!-- 阶段收益率 -->
         <div v-if="periodIncrease" class="info-list" style="margin-top: 12px;">
           <div class="info-row section-title"><span>阶段收益率</span><span></span></div>
-          <div class="info-row"><span>近1周</span><span :class="pctClass(parseFloat(periodIncrease.weekRate))">{{ periodIncrease.weekRate ? periodIncrease.weekRate + '%' : '--' }}</span></div>
+          <div class="info-row"><span>近1周</span><span :class="pctClass(calcWeekRate)">{{ calcWeekRate !== null ? (calcWeekRate > 0 ? '+' : '') + calcWeekRate.toFixed(2) + '%' : '--' }}</span></div>
           <div class="info-row"><span>近1月</span><span :class="pctClass(parseFloat(periodIncrease.monthRate))">{{ periodIncrease.monthRate ? periodIncrease.monthRate + '%' : '--' }}{{ periodIncrease.monthRank ? ' (' + periodIncrease.monthRank + ')' : '' }}</span></div>
           <div class="info-row"><span>近3月</span><span :class="pctClass(parseFloat(periodIncrease.threeMonthRate))">{{ periodIncrease.threeMonthRate ? periodIncrease.threeMonthRate + '%' : '--' }}{{ periodIncrease.threeMonthRank ? ' (' + periodIncrease.threeMonthRank + ')' : '' }}</span></div>
           <div class="info-row"><span>近6月</span><span :class="pctClass(parseFloat(periodIncrease.sixMonthRate))">{{ periodIncrease.sixMonthRate ? periodIncrease.sixMonthRate + '%' : '--' }}{{ periodIncrease.sixMonthRank ? ' (' + periodIncrease.sixMonthRank + ')' : '' }}</span></div>
@@ -123,47 +123,37 @@
           <div class="info-row"><span>成立以来</span><span :class="pctClass(parseFloat(periodIncrease.sinceEstablishRate))">{{ periodIncrease.sinceEstablishRate ? periodIncrease.sinceEstablishRate + '%' : '--' }}</span></div>
         </div>
 
-        <div v-if="overview?.sourceRate || overview?.rate || overview?.sharp1 || overview?.maxRetra1" class="info-list" style="margin-top: 12px;">
-          <div class="info-row section-title"><span>费率与风险</span><span></span></div>
-          <div class="info-row" v-if="overview?.sourceRate"><span>申购费率</span><span>{{ overview.sourceRate }}</span></div>
-          <div class="info-row" v-if="overview?.rate"><span>管理费率</span><span>{{ overview.rate }}</span></div>
-          <div class="info-row" v-if="overview?.sharp1"><span>夏普比率(1年)</span><span>{{ overview.sharp1 }}</span></div>
-          <div class="info-row" v-if="overview?.maxRetra1"><span>最大回撤(1年)</span><span class="negative">{{ overview.maxRetra1 }}%</span></div>
-        </div>
-
-        <el-empty v-if="!overview && !mnDetail && !tabLoading" description="暂无概况数据" />
-        <div v-if="tabLoading && !overview && !mnDetail" class="loading-hint">加载中...</div>
+        <el-empty v-if="!overview && !tabLoading" description="暂无概况数据" />
+        <div v-if="tabLoading && !overview" class="loading-hint">加载中...</div>
       </div>
 
       <!-- 基金经理 -->
       <div v-show="activeTab === 'manager'" class="tab-panel">
-        <div v-if="managers.length || mnManagers.length" class="manager-list">
+        <div v-if="managers.length" class="manager-list">
           <div v-for="m in managers" :key="m.name" class="manager-card">
-            <div class="manager-name">{{ m.name }}</div>
-            <div class="manager-meta">
-              <span>任职时间：{{ m.startDate }} 至今</span>
-              <span v-if="m.returnRate">任职回报：<strong :class="pctClass(parseFloat(m.returnRate))">{{ m.returnRate }}%</strong></span>
+            <div class="manager-header">
+              <img v-if="m.avatar" class="manager-avatar" :src="m.avatar" :alt="m.name" @error="($event.target as HTMLImageElement).style.display='none'" />
+              <div class="manager-info">
+                <div class="manager-name">{{ m.name }}</div>
+                <div class="manager-tags">
+                  <span class="manager-tag">任职 {{ m.years }}</span>
+                  <span class="manager-tag" :class="pctClass(parseFloat(m.returnRate))">任职回报 {{ parseFloat(m.returnRate) > 0 ? '+' : '' }}{{ m.returnRate }}%</span>
+                </div>
+              </div>
             </div>
-            <div class="manager-meta">
-              <span v-if="m.years">从业年限：{{ m.years }}</span>
-              <span v-if="m.fundCount">管理基金：{{ m.fundCount }} 只</span>
+            <div class="manager-stats-row">
+              <div class="manager-stat">
+                <div class="stat-label">任职天数</div>
+                <div class="stat-value">{{ m.totalDays }}天</div>
+              </div>
+              <div class="manager-stat">
+                <div class="stat-label">年化收益</div>
+                <div class="stat-value" :class="pctClass(parseFloat(m.yieldSe))">{{ parseFloat(m.yieldSe) > 0 ? '+' : '' }}{{ m.yieldSe }}%</div>
+              </div>
             </div>
-            <div v-if="m.description" class="manager-desc">{{ m.description }}</div>
+            <div v-if="m.investmentIdea" class="manager-desc"><strong>投资理念：</strong>{{ m.investmentIdea }}</div>
+            <div v-if="m.resume" class="manager-resume"><strong>个人简历：</strong>{{ m.resume }}</div>
           </div>
-          <!-- Fallback to mnManagers if managers is empty -->
-          <template v-if="!managers.length">
-            <div v-for="m in mnManagers" :key="m.name" class="manager-card">
-              <div class="manager-name">{{ m.name }}</div>
-              <div class="manager-meta">
-                <span>任职时间：{{ m.startDate }} 至今</span>
-                <span v-if="m.totalReturn">任职回报：<strong :class="pctClass(parseFloat(m.totalReturn))">{{ m.totalReturn }}%</strong></span>
-              </div>
-              <div class="manager-meta">
-                <span v-if="m.years">从业年限：{{ m.years }}</span>
-                <span v-if="m.fundCount">管理基金：{{ m.fundCount }} 只</span>
-              </div>
-            </div>
-          </template>
         </div>
         <el-empty v-else-if="!tabLoading" description="暂无经理信息" />
         <div v-else class="loading-hint">加载中...</div>
@@ -246,20 +236,16 @@ import { fundService } from '@/services'
 import { formatCurrency, formatNumber, formatPrivacy } from '@/utils/format'
 import { loadEcharts } from '@/utils/echarts'
 import {
-  fetchFundDetailInfo,
-  fetchRelateThemes,
+  fetchFundOverview,
+  fetchManagerAndThemes,
   fetchNetValueHistory,
-  fetchFundMNDetail,
-  fetchPeriodIncrease,
-  fetchFundMNManager,
-  getPageSize,
+  fetchHistoryYield,
   type FundOverview,
+  type PeriodIncreaseData,
   type FundManager,
   type RelateThemeItem,
   type NetValueRecord,
-  type FundMNDetailData,
-  type PeriodIncreaseData,
-  type FundManagerDetail
+  type YieldRecord
 } from '@/api/fundDetail'
 
 // ==================== Props ====================
@@ -303,9 +289,8 @@ const showEditDialog = ref(false)
 const overview = ref<FundOverview | null>(null)
 const managers = ref<FundManager[]>([])
 const themes = ref<RelateThemeItem[]>([])
-const mnDetail = ref<FundMNDetailData | null>(null)
 const periodIncrease = ref<PeriodIncreaseData | null>(null)
-const mnManagers = ref<FundManagerDetail[]>([])
+const weekNavRecords = ref<NetValueRecord[]>([])
 
 const netValueRange = ref('1m')
 const profitRange = ref('1m')
@@ -350,6 +335,18 @@ const actualDailyGain = computed(() => {
   const navChgRt = fv.changePercent || 0
   if (!navChgRt) return 0
   return (fv.num || 0) * (fv.netValue || 0) * navChgRt / 100
+})
+
+// 近一周收益率 = (最新净值 - 5个交易日前净值) / 5个交易日前净值 * 100
+const calcWeekRate = computed((): number | null => {
+  const records = weekNavRecords.value
+  if (records.length < 2) return null
+  const latest = records[records.length - 1]!
+  // 取倒数第6个（即5个交易日前），如果不够就取第一个
+  const idx = Math.max(0, records.length - 6)
+  const older = records[idx]!
+  if (!older.netValue || older.netValue === 0) return null
+  return ((latest.netValue - older.netValue) / older.netValue) * 100
 })
 
 // ==================== 格式化 ====================
@@ -397,23 +394,26 @@ async function loadTabData(tab: string) {
       break
     case 'overview':
     case 'manager': {
-      const [result, detail, period, mgrList] = await Promise.all([
-        fetchFundDetailInfo(props.code),
-        fetchFundMNDetail(props.code),
-        fetchPeriodIncrease(props.code),
-        fetchFundMNManager(props.code)
+      const [overviewResult, managerResult, weekNav] = await Promise.all([
+        fetchFundOverview(props.code),
+        fetchManagerAndThemes(props.code),
+        fetchNetValueHistory(props.code, '1w')
       ])
-      overview.value = result.overview
-      managers.value = result.managers
-      mnDetail.value = detail
-      periodIncrease.value = period
-      mnManagers.value = mgrList
+      overview.value = overviewResult.overview
+      periodIncrease.value = overviewResult.periodIncrease
+      managers.value = managerResult.managers
+      themes.value = managerResult.themes
+      weekNavRecords.value = weekNav
       loadedTabs.add('overview')
       loadedTabs.add('manager')
+      loadedTabs.add('theme')
       break
     }
     case 'theme': {
-      themes.value = await fetchRelateThemes(props.code)
+      if (!themes.value.length) {
+        const result = await fetchManagerAndThemes(props.code)
+        themes.value = result.themes
+      }
       break
     }
     case 'netValue': {
@@ -441,8 +441,7 @@ async function handleRefresh() {
 // ==================== 历史净值图表 ====================
 
 async function loadNetValueChart() {
-  const pageSize = getPageSize(netValueRange.value)
-  const records = await fetchNetValueHistory(props.code, pageSize)
+  const records = await fetchNetValueHistory(props.code, netValueRange.value)
   await renderNetValueChart(records)
 }
 
@@ -457,31 +456,50 @@ async function renderNetValueChart(records: NetValueRecord[]) {
   if (!netValueChartRef.value) return
   if (!netValueChart) netValueChart = echarts.init(netValueChartRef.value)
 
+  if (!records.length) {
+    netValueChart.clear()
+    netValueChart.setOption({ title: { text: '暂无净值数据', left: 'center', top: 'center', textStyle: { fontSize: 13, fontWeight: 'normal' } } })
+    return
+  }
+
   const dates = records.map(r => r.date)
-  const values = records.map(r => r.netValue)
+  const dwjz = records.map(r => r.netValue)
+  const ljjz = records.map(r => r.accNetValue)
+  const jzzzl = records.map(r => r.changePercent)
 
   netValueChart.setOption({
-    tooltip: { trigger: 'axis' },
-    grid: { left: 50, right: 16, top: 16, bottom: 50, containLabel: false },
+    tooltip: {
+      trigger: 'axis',
+      formatter(params: any[]) {
+        let html = `<div style="font-size:12px">时间: ${params[0]?.axisValue}<br/>`
+        params.forEach((p: any) => {
+          html += `${p.marker}${p.seriesName}: ${Number(p.value).toFixed(4)}<br/>`
+        })
+        const idx = params[0]?.dataIndex
+        const rate = jzzzl[idx]
+        if (rate != null && rate !== 0) {
+          const color = rate > 0 ? '#f56c6c' : rate < 0 ? '#4eb61b' : 'inherit'
+          html += `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#909399;"></span>日增长率: <span style="color:${color};font-weight:bold;">${rate}%</span><br/>`
+        }
+        return html + '</div>'
+      }
+    },
+    legend: { data: ['单位净值', '累计净值'], bottom: 0, textStyle: { fontSize: 11 } },
+    grid: { left: 50, right: 16, top: 16, bottom: 60, containLabel: false },
     xAxis: { type: 'category', data: dates, axisLabel: { fontSize: 10 } },
-    yAxis: { type: 'value', scale: true, axisLabel: { fontSize: 10 } },
-    dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: 4, height: 18 }],
-    series: [{
-      type: 'line',
-      data: values,
-      smooth: true,
-      showSymbol: false,
-      lineStyle: { width: 2, color: '#3b82f6' },
-      areaStyle: { opacity: 0.08, color: '#3b82f6' }
-    }]
+    yAxis: { type: 'value', scale: true, axisLabel: { fontSize: 10, formatter: (v: number) => v.toFixed(4) } },
+    dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: 20, height: 18 }],
+    series: [
+      { name: '单位净值', type: 'line', data: dwjz, smooth: true, showSymbol: false, lineStyle: { width: 2, color: '#409EFF' } },
+      { name: '累计净值', type: 'line', data: ljjz, smooth: true, showSymbol: false, lineStyle: { width: 2, color: '#E6A23C' } }
+    ]
   }, true)
 }
 
 // ==================== 累计收益图表 ====================
 
 async function loadProfitChart() {
-  const pageSize = getPageSize(profitRange.value)
-  const records = await fetchNetValueHistory(props.code, pageSize)
+  const records = await fetchHistoryYield(props.code, profitRange.value)
   await renderProfitChart(records)
 }
 
@@ -490,38 +508,44 @@ async function switchProfitRange(range: string) {
   await loadProfitChart()
 }
 
-async function renderProfitChart(records: NetValueRecord[]) {
+async function renderProfitChart(records: YieldRecord[]) {
   const echarts = await loadEcharts()
   await nextTick()
   if (!profitChartRef.value) return
   if (!profitChart) profitChart = echarts.init(profitChartRef.value)
 
-  const cost = fundView.value?.cost || 1
+  if (!records.length) {
+    profitChart.clear()
+    profitChart.setOption({ title: { text: '暂无累计收益数据', left: 'center', top: 'center', textStyle: { fontSize: 13, fontWeight: 'normal' } } })
+    return
+  }
+
   const dates = records.map(r => r.date)
-  const profits = records.map(r => parseFloat((((r.netValue - cost) / cost) * 100).toFixed(2)))
+  const yieldData = records.map(r => r.yield)
+  const indexYieldData = records.map(r => r.indexYield)
+  const fundTypeYieldData = records.map(r => r.fundTypeYield)
 
   profitChart.setOption({
     tooltip: {
       trigger: 'axis',
       formatter(params: any[]) {
-        const p = params[0]
-        if (!p) return ''
-        const color = p.value >= 0 ? '#ef4444' : '#22c55e'
-        return `${p.axisValue}<br/><span style="color:${color}">收益率: ${p.value > 0 ? '+' : ''}${p.value}%</span>`
+        let html = `<div style="font-size:12px">时间: ${params[0]?.axisValue}<br/>`
+        params.forEach((p: any) => {
+          html += `${p.marker}${p.seriesName}: ${Number(p.value).toFixed(2)}%<br/>`
+        })
+        return html + '</div>'
       }
     },
-    grid: { left: 50, right: 16, top: 16, bottom: 50, containLabel: false },
+    legend: { data: ['涨幅', '沪深300', '同类平均'], bottom: 0, textStyle: { fontSize: 11 } },
+    grid: { left: 50, right: 16, top: 16, bottom: 60, containLabel: false },
     xAxis: { type: 'category', data: dates, axisLabel: { fontSize: 10 } },
     yAxis: { type: 'value', scale: true, axisLabel: { fontSize: 10, formatter: '{value}%' } },
-    dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: 4, height: 18 }],
-    series: [{
-      type: 'line',
-      data: profits,
-      smooth: true,
-      showSymbol: false,
-      lineStyle: { width: 2, color: '#8b5cf6' },
-      areaStyle: { opacity: 0.08, color: '#8b5cf6' }
-    }]
+    dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: 20, height: 18 }],
+    series: [
+      { name: '涨幅', type: 'line', data: yieldData, smooth: true, showSymbol: false, lineStyle: { width: 2, color: '#F56C6C' } },
+      { name: '沪深300', type: 'line', data: indexYieldData, smooth: true, showSymbol: false, lineStyle: { width: 2, color: '#67C23A' } },
+      { name: '同类平均', type: 'line', data: fundTypeYieldData, smooth: true, showSymbol: false, lineStyle: { width: 2, color: '#E6A23C' } }
+    ]
   }, true)
 }
 
@@ -667,13 +691,17 @@ onUnmounted(() => {
 .info-grid-2col {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 12px;
 }
 
 .grid-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  background: var(--el-fill-color-lighter);
 }
 
 .g-label {
@@ -739,7 +767,28 @@ onUnmounted(() => {
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
+}
+
+.manager-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.manager-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--el-border-color);
+}
+
+.manager-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .manager-name {
@@ -747,19 +796,56 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-.manager-meta {
+.manager-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  font-size: 12px;
+  gap: 6px;
+}
+
+.manager-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--el-fill-color-lighter);
   color: var(--el-text-color-secondary);
+}
+
+.manager-stats-row {
+  display: flex;
+  gap: 16px;
+  padding: 10px 14px;
+  background: var(--el-fill-color-lighter);
+  border-radius: 8px;
+}
+
+.manager-stat {
+  flex: 1;
+  text-align: center;
+}
+
+.manager-stat .stat-label {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+  margin-bottom: 4px;
+}
+
+.manager-stat .stat-value {
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .manager-desc {
   font-size: 12px;
   color: var(--el-text-color-secondary);
-  line-height: 1.5;
-  margin-top: 4px;
+  line-height: 1.6;
+}
+
+.manager-resume {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.6;
+  max-height: 220px;
+  overflow-y: auto;
 }
 
 /* 关联板块 */
@@ -818,7 +904,8 @@ onUnmounted(() => {
 /* 图表 */
 .chart-container {
   width: 100%;
-  height: 280px;
+  height: 300px;
+  padding-bottom: 16px;
 }
 
 /* 操作按钮 */
@@ -830,6 +917,7 @@ onUnmounted(() => {
 
 .action-row .el-button {
   flex: 1;
+  margin: 0;
 }
 
 /* 颜色 */

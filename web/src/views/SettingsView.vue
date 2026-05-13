@@ -48,11 +48,13 @@
                 :data-key="col.key"
                 class="column-settings-item"
                 :class="{ fixed: col.key === 'name' }"
+                @click="col.key !== 'name' && toggleColVisible(index, !col.visible)"
               >
                 <span class="drag-handle" :class="{ disabled: col.key === 'name' }">☰</span>
                 <el-checkbox
                   :model-value="col.visible"
                   :disabled="col.key === 'name'"
+                  @click.stop
                   @update:model-value="toggleColVisible(index, $event as boolean)"
                 />
                 <span class="col-label">{{ col.label }}</span>
@@ -60,8 +62,8 @@
                   <span class="col-fixed-tag">(固定)</span>
                 </template>
                 <template v-else>
-                  <el-button size="small" link :disabled="index <= 1" @click="moveColUp(index)">↑</el-button>
-                  <el-button size="small" link :disabled="index >= columnOrderDraft.length - 1" @click="moveColDown(index)">↓</el-button>
+                  <el-button size="small" link :disabled="index <= 1" @click.stop="moveColUp(index)">↑</el-button>
+                  <el-button size="small" link :disabled="index >= columnOrderDraft.length - 1" @click.stop="moveColDown(index)">↓</el-button>
                 </template>
               </li>
             </ul>
@@ -76,7 +78,7 @@
           <el-form-item label="Box Name">
             <el-input
               v-model="jsonboxName"
-              placeholder="box_xxxxxxxx"
+              placeholder="fundhelper_xxxxxxxx"
               @blur="handleJsonboxNameChange"
             >
               <template #append>
@@ -89,7 +91,10 @@
                 </el-button>
               </template>
             </el-input>
-            <div class="form-item-tip">用于与 VSCode 版本同步数据（box_ 开头）</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+              <div class="form-item-tip">字母数字下划线，至少20字符</div>
+              <el-button size="small" link type="primary" @click="handleRegenerateBoxName">重新生成</el-button>
+            </div>
           </el-form-item>
 
           <el-form-item label="同步操作">
@@ -113,6 +118,20 @@
               </el-button>
               <el-button @click="showSyncDialog = true">
                 📱 扫码/二维码
+              </el-button>
+              <el-button
+                @click="handleOpenJsonLink"
+                :disabled="!jsonboxName"
+              >
+                🔗 查看JSON
+              </el-button>
+              <el-button
+                type="danger"
+                plain
+                @click="handleClearRemote"
+                :disabled="!jsonboxName"
+              >
+                清空远程
               </el-button>
             </el-space>
           </el-form-item>
@@ -178,6 +197,7 @@ import Sortable from 'sortablejs'
 import { useSettingStore, useFundStore, useGroupStore, useSyncStore } from '@/stores'
 import { syncService } from '@/services'
 import { storageService } from '@/services/storageService'
+import { generateJsonboxName } from '@/utils/validate'
 
 const settingStore = useSettingStore()
 const fundStore = useFundStore()
@@ -303,7 +323,7 @@ function moveColDown(index: number) {
 }
 
 function resetColumnSettings() {
-  const defaultVisible = ['name', 'estimatedGain', 'estimatedChange', 'holdingGainRate', 'holdingGain', 'dailyChange', 'dailyGain']
+  const defaultVisible = ['name', 'estimatedGain', 'estimatedChange', 'holdingGainRate', 'holdingGain', 'amountShares', 'dailyChange', 'dailyGain', 'sector', 'cost']
   columnOrderDraft.value = allColumns.map(col => ({
     key: col.key,
     label: col.label,
@@ -352,6 +372,14 @@ async function handleJsonboxNameChange() {
   }
 }
 
+function handleRegenerateBoxName() {
+  const name = generateJsonboxName()
+  jsonboxName.value = name
+  settingStore.setJsonboxName(name)
+  storageService.saveSettings(settingStore.getSettings())
+  ElMessage.success('已重新生成 Box Name')
+}
+
 async function handleTestConnection() {
   if (!jsonboxName.value) {
     ElMessage.warning('请先输入 Box Name')
@@ -383,6 +411,26 @@ async function handleSyncFromCloud() {
     ElMessage.success('已从云端下载')
   } catch (e: any) {
     ElMessage.error('下载失败: ' + e.message)
+  }
+}
+
+function handleOpenJsonLink() {
+  if (!jsonboxName.value) {
+    ElMessage.warning('请先配置 Box Name')
+    return
+  }
+  const url = `https://jsonbox.cloud.exo-imaging.com/${jsonboxName.value}`
+  window.open(url, '_blank')
+}
+
+async function handleClearRemote() {
+  if (!jsonboxName.value) return
+  try {
+    await ElMessageBox.confirm('确定清空远程配置？此操作不可恢复。', '确认', { type: 'warning' })
+    await syncService.resetBox()
+    ElMessage.success('远程配置已清空')
+  } catch (e: any) {
+    if (e !== 'cancel') ElMessage.error(e?.message || '操作失败')
   }
 }
 
@@ -486,7 +534,22 @@ async function onFileSelected(e: Event) {
       refreshInterval.value = payload.refreshInterval
     }
     if (payload.sortMethod && typeof payload.sortMethod === 'string') {
-      const parts = payload.sortMethod.split('_')
+      // Map VSCode sortMethod format to web format
+      const sortMethodMap: Record<string, string> = {
+        'default': 'holdingGainRate_desc',
+        'changePercent_desc': 'estimatedChange_desc',
+        'changePercent_asc': 'estimatedChange_asc',
+        'dailyGain_desc': 'dailyGain_desc',
+        'dailyGain_asc': 'dailyGain_asc',
+        'holdingAmount_desc': 'amountShares_desc',
+        'holdingAmount_asc': 'amountShares_asc',
+        'holdingGain_desc': 'holdingGain_desc',
+        'holdingGain_asc': 'holdingGain_asc',
+        'holdingGainRate_desc': 'holdingGainRate_desc',
+        'holdingGainRate_asc': 'holdingGainRate_asc'
+      }
+      const mapped = sortMethodMap[payload.sortMethod] || payload.sortMethod
+      const parts = mapped.split('_')
       if (parts.length >= 2) {
         fundStore.setSortConfig(parts[0]!, parts[1] as 'asc' | 'desc')
       }
@@ -610,6 +673,8 @@ async function handleClearAll() {
   background: var(--el-bg-color);
   font-size: 13px;
   transition: background 0.15s;
+  cursor: pointer;
+  user-select: none;
 }
 
 .column-settings-item.fixed {

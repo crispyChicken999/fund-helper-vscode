@@ -52,17 +52,33 @@ class SyncService {
       // 设置Box ID
       jsonboxApi.setBoxId(settingStore.jsonboxName)
       
-      // 准备数据
+      // 准备数据 — 保持与 VSCode 导出格式一致
       const { groups, groupOrder } = groupStore.exportGroupsToObject()
       
+      // funds 只保留 code/num/cost（与 VSCode 格式一致）
+      const cleanFunds = fundStore.funds.map(f => ({
+        code: f.code,
+        num: String(f.num),
+        cost: String(f.cost)
+      }))
+      
+      const settings = settingStore.getSettings()
+      
       const data: JsonboxData = {
-        funds: fundStore.funds,
+        funds: cleanFunds as any,
         groups,
         groupOrder,
-        settings: settingStore.getSettings(),
+        columnSettings: {
+          columnOrder: settings.columnOrder,
+          visibleColumns: settings.visibleColumns
+        },
+        sortMethod: settings.sortMethod,
+        refreshInterval: settings.refreshInterval,
+        privacyMode: settings.privacyMode,
+        grayscaleMode: settings.grayscaleMode,
         version: syncStore.localVersion,
         lastModified: Date.now()
-      }
+      } as any
       
       // 上传到云端
       await jsonboxApi.write(data)
@@ -285,15 +301,30 @@ class SyncService {
     const syncStore = useSyncStore()
     
     const { groups, groupOrder } = groupStore.exportGroupsToObject()
+    const settings = settingStore.getSettings()
+    
+    // funds 只保留 code/num/cost（与 VSCode 格式一致）
+    const cleanFunds = fundStore.funds.map(f => ({
+      code: f.code,
+      num: String(f.num),
+      cost: String(f.cost)
+    }))
     
     return {
-      funds: fundStore.funds,
+      funds: cleanFunds as any,
       groups,
       groupOrder,
-      settings: settingStore.getSettings(),
+      columnSettings: {
+        columnOrder: settings.columnOrder,
+        visibleColumns: settings.visibleColumns
+      },
+      sortMethod: settings.sortMethod,
+      refreshInterval: settings.refreshInterval,
+      privacyMode: settings.privacyMode,
+      grayscaleMode: settings.grayscaleMode,
       version: syncStore.localVersion,
       lastModified: Date.now()
-    }
+    } as any
   }
 
   /**

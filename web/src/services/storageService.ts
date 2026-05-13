@@ -14,7 +14,7 @@ const STORAGE_KEYS = {
 
 export const FUND_HELPER_BOX_NAME_KEY = 'fund_helper_box_name'
 
-const ID_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
+const ID_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
 function randomId(length: number): string {
   const bytes = new Uint8Array(length)
@@ -27,23 +27,24 @@ function randomId(length: number): string {
 }
 
 /**
- * 保证本地存在 JSONBox 名称：优先读 fund_helper_box_name；无则迁移旧 settings 或生成 fh_ + 随机串。
+ * 保证本地存在 JSONBox 名称：优先读 fund_helper_box_name；无则迁移旧 settings 或生成 fundhelper_ + 随机串。
+ * Per jsonbox docs: BOX_ID should contain only alphanumeric characters & underscore, at least 20 characters long.
  */
 export function ensureBoxName(): string {
   let name = localStorage.getItem(FUND_HELPER_BOX_NAME_KEY)
-  if (!name) {
+  if (!name || !/^[a-zA-Z0-9_]{20,64}$/.test(name)) {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS)
       const parsed = raw ? (JSON.parse(raw) as { jsonboxName?: string }) : null
       const legacy = parsed?.jsonboxName
-      if (legacy && /^[a-zA-Z0-9_-]{20,64}$/.test(legacy)) {
+      if (legacy && /^[a-zA-Z0-9_]{20,64}$/.test(legacy)) {
         name = legacy
       }
     } catch {
       /* ignore */
     }
-    if (!name) {
-      name = `fh_${randomId(21)}`
+    if (!name || !/^[a-zA-Z0-9_]{20,64}$/.test(name)) {
+      name = `fundhelper_${randomId(21)}`
     }
     localStorage.setItem(FUND_HELPER_BOX_NAME_KEY, name)
   }

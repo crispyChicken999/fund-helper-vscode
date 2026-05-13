@@ -15,6 +15,16 @@
               <button class="btn-icon" :class="{ active: settingStore.grayscaleMode }" @click="toggleGrayscale" title="灰色模式">
                 <el-icon><MoonNight /></el-icon>
               </button>
+              <span class="stat-label-spacer"></span>
+              <el-button type="primary" size="small" @click="showAddFundDialog = true" title="添加基金">
+                <el-icon><Plus /></el-icon>
+              </el-button>
+              <el-button size="small" @click="handleRefresh" :loading="refreshing" title="刷新">
+                <el-icon><Refresh /></el-icon>
+              </el-button>
+              <el-button size="small" @click="showColumnSettings = true" title="列设置">
+                <el-icon><Operation /></el-icon>
+              </el-button>
             </div>
             <div class="stat-value-large">{{ formatAsset(totalAsset) }}</div>
           </div>
@@ -61,40 +71,31 @@
           ⚙
         </button>
       </div>
+
+      <!-- 搜索工具栏 -->
+      <div class="fund-toolbar">
+        <div class="search-box">
+          <el-input
+            v-model="searchQuery"
+            placeholder="搜索基金代码或名称"
+            clearable
+            size="small"
+            @input="handleSearch"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
+        <div class="market-status">
+          <span class="status-dot" :class="marketOpen ? 'status-open' : 'status-closed'"></span>
+          <span class="status-text">{{ marketOpen ? '开市' : '休市' }}</span>
+        </div>
+      </div>
     </template>
 
     <!-- 基金列表区 -->
     <div class="fund-list-main" v-loading="loading">
-        <div class="fund-toolbar">
-          <div class="search-box">
-            <el-input
-              v-model="searchQuery"
-              placeholder="搜索基金代码或名称"
-              clearable
-              size="small"
-              @input="handleSearch"
-            >
-              <template #prefix>
-                <el-icon><Search /></el-icon>
-              </template>
-            </el-input>
-          </div>
-          <el-button type="primary" size="small" @click="showAddFundDialog = true">
-            <el-icon><Plus /></el-icon>
-            <span>添加</span>
-          </el-button>
-          <el-button size="small" @click="handleRefresh" :loading="refreshing">
-            <el-icon><Refresh /></el-icon>
-          </el-button>
-          <el-button size="small" @click="showColumnSettings = true" title="列设置">
-            <el-icon><Operation /></el-icon>
-          </el-button>
-          <div class="market-status">
-            <span class="status-dot" :class="marketOpen ? 'status-open' : 'status-closed'"></span>
-            <span class="status-text">{{ marketOpen ? '开市' : '休市' }}</span>
-          </div>
-        </div>
-
         <div v-if="sortedRows.length > 0" class="fund-table-wrap">
           <el-table
             class="fund-el-table"
@@ -102,8 +103,7 @@
             row-key="code"
             border
             stripe
-            table-layout="auto"
-            :max-height="tableMaxHeight"
+            height="100%"
             :default-sort="defaultTableSort"
             @sort-change="handleTableSort"
             @row-contextmenu="onRowContextMenu"
@@ -111,15 +111,9 @@
             <el-table-column
               v-if="isColumnVisible('name')"
               fixed="left"
-              min-width="176"
-              :resizable="false"
+              width="176"
+              label="基金名称"
             >
-              <template #header>
-                <div class="col-head">
-                  <span>基金名称</span>
-                  <span class="col-head-sub">—</span>
-                </div>
-              </template>
               <template #default="{ row }">
                 <div class="fund-name-cell">
                   <div class="fund-name-row" @click="openTooltip(row)">
@@ -203,12 +197,6 @@
               </template>
             </el-table-column>
 
-            <el-table-column fixed="right" label="操作" width="120" align="center">
-              <template #default="{ row }">
-                <el-button type="primary" size="small" link @click="editFundByRow(row)">编辑</el-button>
-                <el-button type="danger" size="small" link @click="confirmDeleteByRow(row)">删除</el-button>
-              </template>
-            </el-table-column>
           </el-table>
         </div>
 
@@ -354,6 +342,65 @@
 
     <!-- 列设置对话框 -->
     <ColumnSettingsDialog v-model:visible="showColumnSettings" />
+
+    <!-- 加仓/减仓对话框 -->
+    <el-dialog v-model="showPositionDialog" :title="positionIsAdd ? '加仓' : '减仓'" width="90%" :close-on-click-modal="false">
+      <div v-if="positionRow" class="position-dialog-content">
+        <div class="position-fund-info">
+          <span class="fund-name">{{ positionRow.name }}</span>
+          <span class="fund-code">{{ positionRow.code }}</span>
+          <span class="fund-shares">当前份额：{{ positionRow.fund.num.toFixed(2) }}</span>
+        </div>
+
+        <!-- 历史净值选择 -->
+        <div class="nav-history-section">
+          <div class="section-label">选择{{ positionIsAdd ? '买入' : '卖出' }}日期净值：</div>
+          <div v-if="navHistoryLoading" class="nav-loading">加载历史净值中...</div>
+          <div v-else-if="navHistoryList.length" class="nav-list">
+            <div
+              v-for="item in navHistoryList"
+              :key="item.date"
+              class="nav-item"
+              :class="{ selected: selectedNavDate === item.date }"
+              @click="selectNavItem(item)"
+            >
+              <span class="nav-date">{{ item.date }}</span>
+              <span class="nav-value">净值: {{ item.netValue.toFixed(4) }}</span>
+              <span class="nav-change" :class="item.changePercent >= 0 ? 'positive' : 'negative'">
+                {{ item.changePercent >= 0 ? '+' : '' }}{{ item.changePercent.toFixed(2) }}%
+              </span>
+            </div>
+          </div>
+          <div v-else class="nav-empty">未获取到历史净值</div>
+        </div>
+
+        <!-- 输入金额/份额 -->
+        <el-form label-width="100px" style="margin-top: 12px;">
+          <el-form-item v-if="positionIsAdd" label="买入金额">
+            <el-input v-model.number="positionAmount" type="number" placeholder="输入买入金额（元）">
+              <template #append>元</template>
+            </el-input>
+          </el-form-item>
+          <el-form-item v-else label="卖出份额">
+            <el-input v-model.number="positionShares" type="number" :placeholder="`最多 ${positionRow.fund.num.toFixed(2)} 份`">
+              <template #append>份</template>
+            </el-input>
+          </el-form-item>
+
+          <!-- 计算结果预览 -->
+          <div v-if="positionIsAdd && positionAmount > 0 && selectedNavValue > 0" class="calc-preview">
+            <div>买入净值：{{ selectedNavValue.toFixed(4) }}</div>
+            <div>新增份额：{{ (positionAmount / selectedNavValue).toFixed(2) }}</div>
+            <div>新总份额：{{ ((positionRow.fund.num) + positionAmount / selectedNavValue).toFixed(2) }}</div>
+            <div>新成本价：{{ calcNewCost.toFixed(4) }}</div>
+          </div>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="showPositionDialog = false">取消</el-button>
+        <el-button type="primary" @click="handlePositionConfirm" :loading="submitting" :disabled="!canConfirmPosition">确定</el-button>
+      </template>
+    </el-dialog>
   </MainLayout>
 </template>
 
@@ -373,6 +420,7 @@ import type { GroupStats } from '@/components/GroupTooltip.vue'
 import { useFundStore, useGroupStore, useSettingStore } from '@/stores'
 import { fundService, groupService } from '@/services'
 import { searchFund } from '@/api/fundEastmoney'
+import { fetchNetValueHistory } from '@/api/fundDetail'
 import { formatCurrency, formatNumber, formatPrivacy } from '@/utils/format'
 import { validateFundCode, validateGroupName } from '@/utils/validate'
 import { getChinaMarketStatus } from '@/utils/marketChina'
@@ -397,8 +445,6 @@ const TABLE_COL_META: Record<string, TableColMeta> = {
   amountShares: { title: '金额/份额', sortProp: 'amountShares', minWidth: 116, align: 'right' },
   cost: { title: '成本/最新', sortProp: 'cost', minWidth: 108, align: 'right' }
 }
-
-const tableMaxHeight = 'min(70vh, calc(100dvh - 260px))'
 
 const router = useRouter()
 const fundStore = useFundStore()
@@ -455,6 +501,17 @@ const fundPickName = ref('')
 
 const tooltipVisible = ref(false)
 const tooltipRow = ref<FundRowDisplay | null>(null)
+
+// Position adjustment dialog
+const showPositionDialog = ref(false)
+const positionRow = ref<FundRowDisplay | null>(null)
+const positionIsAdd = ref(true)
+const positionAmount = ref(0)
+const positionShares = ref(0)
+const navHistoryLoading = ref(false)
+const navHistoryList = ref<{ date: string; netValue: number; changePercent: number }[]>([])
+const selectedNavDate = ref('')
+const selectedNavValue = ref(0)
 
 let groupPressTimer: ReturnType<typeof setTimeout> | null = null
 const LONG_PRESS_MS = 520
@@ -538,16 +595,31 @@ const defaultTableSort = computed(() => ({
 }))
 
 const enrichedRows = computed(() => {
+  // Build a code -> groupName map from all groups
+  const codeToGroupName = new Map<string, string>()
+  for (const group of groupStore.getGroupList) {
+    for (const code of group.fundCodes) {
+      codeToGroupName.set(code, group.name)
+    }
+  }
+
   return fundService.buildRowsForHome().map(row => ({
     ...row,
-    groupName: row.fund.groupKey ? groupStore.getGroup(row.fund.groupKey)?.name : undefined
+    groupName: codeToGroupName.get(row.code) || undefined
   }))
 })
 
 const filteredRows = computed(() => {
   let rows = enrichedRows.value
   if (selectedGroupKey.value !== 'all') {
-    rows = rows.filter(r => r.fund.groupKey === selectedGroupKey.value)
+    // Filter by group's fundCodes array (not fund.groupKey which is unreliable)
+    const group = groupStore.getGroup(selectedGroupKey.value)
+    if (group) {
+      const codesInGroup = new Set(group.fundCodes)
+      rows = rows.filter(r => codesInGroup.has(r.code))
+    } else {
+      rows = []
+    }
   }
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase()
@@ -732,24 +804,91 @@ function onTooltipDetail() {
 async function onTooltipAdjust(isAdd: boolean) {
   const row = tooltipRow.value
   if (!row) return
+  tooltipVisible.value = false
+  positionRow.value = row
+  positionIsAdd.value = isAdd
+  positionAmount.value = 0
+  positionShares.value = 0
+  selectedNavDate.value = ''
+  selectedNavValue.value = 0
+  showPositionDialog.value = true
+  loadNavHistory(row.code)
+}
+
+async function loadNavHistory(code: string) {
+  navHistoryLoading.value = true
+  navHistoryList.value = []
   try {
-    const { value } = await ElMessageBox.prompt(
-      isAdd ? '买入份额（将增加持仓）' : '卖出份额（将减少持仓）',
-      isAdd ? '加仓' : '减仓',
-      { inputPattern: /^\d+(\.\d{1,2})?$/, inputErrorMessage: '请输入有效份额' }
-    )
-    const delta = parseFloat(value)
-    const next = isAdd ? row.fund.num + delta : row.fund.num - delta
-    if (next <= 0) {
-      ElMessage.warning('卖出后份额必须大于0')
-      return
+    const records = await fetchNetValueHistory(code, '1m')
+    // Take last 15 records
+    navHistoryList.value = records.slice(-15).reverse()
+    // Auto-select the first (most recent)
+    if (navHistoryList.value.length > 0) {
+      selectNavItem(navHistoryList.value[0]!)
     }
-    await fundService.updateFund(row.code, next, row.fund.cost, row.fund.groupKey)
+  } catch {
+    navHistoryList.value = []
+  } finally {
+    navHistoryLoading.value = false
+  }
+}
+
+function selectNavItem(item: { date: string; netValue: number; changePercent: number }) {
+  selectedNavDate.value = item.date
+  selectedNavValue.value = item.netValue
+}
+
+const calcNewCost = computed(() => {
+  const row = positionRow.value
+  if (!row || !positionIsAdd.value || positionAmount.value <= 0 || selectedNavValue.value <= 0) return 0
+  const oldNum = row.fund.num
+  const oldCost = row.fund.cost
+  const addNum = positionAmount.value / selectedNavValue.value
+  const totalCost = oldCost * oldNum + selectedNavValue.value * addNum
+  const newNum = oldNum + addNum
+  return newNum > 0 ? totalCost / newNum : 0
+})
+
+const canConfirmPosition = computed(() => {
+  if (!positionRow.value) return false
+  if (positionIsAdd.value) {
+    return positionAmount.value > 0 && selectedNavValue.value > 0
+  } else {
+    return positionShares.value > 0 && positionShares.value <= positionRow.value.fund.num
+  }
+})
+
+async function handlePositionConfirm() {
+  const row = positionRow.value
+  if (!row) return
+  submitting.value = true
+  try {
+    if (positionIsAdd.value) {
+      // 加仓：计算新份额和加权平均成本
+      const addNum = positionAmount.value / selectedNavValue.value
+      const oldNum = row.fund.num
+      const oldCost = row.fund.cost
+      const totalCost = oldCost * oldNum + selectedNavValue.value * addNum
+      const newNum = oldNum + addNum
+      const newCost = newNum > 0 ? totalCost / newNum : 0
+      await fundService.updateFund(row.code, newNum, newCost, row.fund.groupKey)
+      ElMessage.success(`加仓成功！份额: ${newNum.toFixed(2)}，成本: ${newCost.toFixed(4)}`)
+    } else {
+      // 减仓
+      const newNum = row.fund.num - positionShares.value
+      if (newNum <= 0) {
+        ElMessage.warning('减仓后份额必须大于0')
+        return
+      }
+      await fundService.updateFund(row.code, newNum, row.fund.cost, row.fund.groupKey)
+      ElMessage.success(`减仓成功！剩余份额: ${newNum.toFixed(2)}`)
+    }
     await fundService.refreshAllFunds()
-    ElMessage.success('已更新份额')
-    tooltipVisible.value = false
+    showPositionDialog.value = false
   } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error(e?.message || '操作失败')
+    ElMessage.error(e?.message || '操作失败')
+  } finally {
+    submitting.value = false
   }
 }
 
@@ -760,28 +899,8 @@ function onTooltipEdit() {
 }
 
 async function onTooltipSetGroup() {
-  const row = tooltipRow.value
-  if (!row) return
-  try {
-    const { value } = await ElMessageBox.prompt(
-      '输入分组名称（须已存在）或与下拉一致',
-      '设置分组',
-      {
-        inputPlaceholder: groupList.value.map(g => g.name).join(' / ') || '无分组'
-      }
-    )
-    const name = String(value).trim()
-    const hit = groupList.value.find(g => g.name === name)
-    if (!hit) {
-      ElMessage.warning('未找到该分组，请先在分组区新建')
-      return
-    }
-    await fundService.moveFundToGroup(row.code, hit.key)
-    ElMessage.success('已更新分组')
-    tooltipVisible.value = false
-  } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error(e?.message || '失败')
-  }
+  tooltipVisible.value = false
+  showGroupManageDialog.value = true
 }
 
 function onTooltipDelete() {
@@ -1039,6 +1158,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Override layout-content to not scroll — el-table manages its own scroll */
+:deep(.layout-content) {
+  overflow: hidden !important;
+}
+
 .account-summary {
   padding: 12px 16px;
   background: var(--bg-card);
@@ -1054,9 +1178,14 @@ onUnmounted(() => {
 .stat-item-main .stat-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 12px;
   color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.stat-label-spacer {
+  flex: 1;
 }
 
 .stat-item-main .stat-value-large {
@@ -1122,11 +1251,11 @@ onUnmounted(() => {
 .group-tags-container {
   flex: 1;
   display: flex;
-  gap: 0;
+  gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  padding: 8px 12px;
+  padding: 6px 12px;
 }
 
 .group-tags-container::-webkit-scrollbar {
@@ -1135,19 +1264,20 @@ onUnmounted(() => {
 
 .group-tag-item {
   flex-shrink: 0;
-  padding: 4px 12px;
+  padding: 3px 10px;
   font-size: 12px;
-  border-radius: 4px;
+  border-radius: 12px;
   cursor: pointer;
   color: var(--text-secondary);
   white-space: nowrap;
   transition: all 0.2s;
   user-select: none;
+  background: var(--bg-secondary);
 }
 
 .group-tag-item:hover {
-  background: var(--bg-secondary);
   color: var(--text-primary);
+  background: var(--border-color);
 }
 
 .group-tag-item.active {
@@ -1176,15 +1306,23 @@ onUnmounted(() => {
 }
 
 .fund-list-main {
-  padding: 0 12px 12px;
+  padding: 0;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  height: 100%;
 }
 
 .fund-toolbar {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
 }
 
 .fund-toolbar .search-box {
@@ -1243,7 +1381,8 @@ onUnmounted(() => {
 
 .fund-table-wrap {
   width: 100%;
-  border-radius: 8px;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1291,11 +1430,15 @@ onUnmounted(() => {
   gap: 4px;
   font-size: 13px;
   font-weight: 500;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   cursor: pointer;
   color: var(--text-primary);
+}
+
+.fund-name-row .fund-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fund-name-row:hover {
@@ -1390,10 +1533,6 @@ onUnmounted(() => {
     font-size: 20px;
   }
 
-  .fund-toolbar {
-    flex-wrap: wrap;
-  }
-
   .fund-toolbar .search-box {
     flex: 1 1 100%;
   }
@@ -1401,5 +1540,104 @@ onUnmounted(() => {
   .fund-el-table {
     font-size: 12px;
   }
+}
+
+/* Position dialog */
+.position-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.position-fund-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.position-fund-info .fund-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.position-fund-info .fund-code {
+  color: var(--el-text-color-secondary);
+}
+
+.position-fund-info .fund-shares {
+  color: var(--el-text-color-secondary);
+  margin-left: auto;
+}
+
+.nav-history-section .section-label {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.nav-loading, .nav-empty {
+  text-align: center;
+  padding: 16px;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+
+.nav-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  transition: background 0.15s;
+}
+
+.nav-item:last-child {
+  border-bottom: none;
+}
+
+.nav-item:hover {
+  background: var(--el-fill-color-light);
+}
+
+.nav-item.selected {
+  background: var(--el-color-primary-light-9);
+  border-left: 3px solid var(--el-color-primary);
+}
+
+.nav-date {
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.nav-value {
+  color: var(--el-text-color-secondary);
+}
+
+.nav-change {
+  margin-left: auto;
+  font-weight: 500;
+}
+
+.calc-preview {
+  background: var(--el-fill-color-lighter);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
 }
 </style>

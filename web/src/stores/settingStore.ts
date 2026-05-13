@@ -40,8 +40,11 @@ const defaultSettings: Settings = {
     'estimatedChange',
     'holdingGainRate',
     'holdingGain',
+    'amountShares',
     'dailyChange',
-    'dailyGain'
+    'dailyGain',
+    'sector',
+    'cost'
   ],
   sortMethod: 'holdingGainRate_desc'
 }

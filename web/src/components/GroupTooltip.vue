@@ -139,7 +139,7 @@ function moneyClass(v: number) {
 .group-tooltip-overlay {
   position: fixed;
   inset: 0;
-  z-index: 3000;
+  z-index: 2000;
   background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;

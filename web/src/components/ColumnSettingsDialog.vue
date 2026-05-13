@@ -17,11 +17,13 @@
         :data-key="col.key"
         class="col-settings-item"
         :class="{ fixed: col.key === 'name' }"
+        @click="col.key !== 'name' && toggleVisible(index, !col.visible)"
       >
         <span class="drag-handle" :class="{ disabled: col.key === 'name' }">☰</span>
         <el-checkbox
           :model-value="col.visible"
           :disabled="col.key === 'name'"
+          @click.stop
           @update:model-value="toggleVisible(index, $event as boolean)"
         />
         <span class="col-label">{{ col.label }}</span>
@@ -31,13 +33,13 @@
             size="small"
             link
             :disabled="index <= 1"
-            @click="moveUp(index)"
+            @click.stop="moveUp(index)"
           >↑</el-button>
           <el-button
             size="small"
             link
             :disabled="index >= draft.length - 1"
-            @click="moveDown(index)"
+            @click.stop="moveDown(index)"
           >↓</el-button>
         </template>
       </li>
@@ -226,6 +228,8 @@ onBeforeUnmount(() => {
   margin-bottom: 6px;
   background: var(--el-bg-color);
   transition: background 0.2s;
+  cursor: pointer;
+  user-select: none;
 }
 
 .col-settings-item.fixed {

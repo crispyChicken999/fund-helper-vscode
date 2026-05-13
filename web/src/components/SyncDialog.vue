@@ -10,41 +10,20 @@
     <div class="sync-dialog-body">
       <!-- Box Name 显示 -->
       <div class="sync-section">
-        <div class="sync-label">当前 Box Name</div>
+        <div class="sync-label">Box Name</div>
         <div class="sync-box-name">
-          <el-input v-model="localBoxName" placeholder="box_xxxxxxxx" size="small" />
-          <el-button size="small" @click="applyBoxName">应用</el-button>
-          <el-button size="small" @click="regenerateBoxName">重新生成</el-button>
+          <code class="box-name-text">{{ localBoxName || '未设置' }}</code>
         </div>
       </div>
 
-      <!-- 操作按钮 -->
+      <!-- 扫码同步按钮（优先显示） -->
       <div class="sync-section">
-        <div class="sync-actions">
-          <el-button type="primary" size="small" :loading="uploading" @click="handleUpload">
-            上传配置
-          </el-button>
-          <el-button size="small" :loading="downloading" @click="handleDownload">
-            下载配置
-          </el-button>
-          <el-button size="small" type="danger" plain @click="handleClear">
-            清空远程
-          </el-button>
-        </div>
-      </div>
-
-      <!-- 二维码显示 -->
-      <div class="sync-section" v-if="qrDataUrl">
-        <div class="sync-label">扫码同步（内容为 Box Name）</div>
-        <div class="qr-container">
-          <img :src="qrDataUrl" alt="QR Code" class="qr-image" />
-        </div>
-        <div class="qr-hint">使用其他设备扫描此二维码可同步配置</div>
-      </div>
-
-      <!-- 扫码区域 -->
-      <div class="sync-section">
-        <el-button size="small" @click="toggleScanner">
+        <el-button
+          type="primary"
+          size="large"
+          class="scan-btn"
+          @click="toggleScanner"
+        >
           {{ scannerActive ? '关闭扫码' : '📷 扫码同步' }}
         </el-button>
         <div v-show="scannerActive" id="qr-reader" class="qr-scanner-container"></div>
@@ -52,18 +31,25 @@
           扫码结果：<strong>{{ scanResult }}</strong>
         </div>
       </div>
+
+      <!-- 二维码显示 -->
+      <div class="sync-section" v-if="qrDataUrl">
+        <div class="sync-label">我的二维码（供其他设备扫描）</div>
+        <div class="qr-container">
+          <img :src="qrDataUrl" alt="QR Code" class="qr-image" />
+        </div>
+        <div class="qr-hint">其他设备扫描此二维码可获取 Box Name 并同步配置</div>
+      </div>
     </div>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import QRCode from 'qrcode'
-import { useSettingStore, useSyncStore } from '@/stores'
+import { useSettingStore } from '@/stores'
 import { syncService } from '@/services'
-import { storageService } from '@/services/storageService'
-import { generateJsonboxName } from '@/utils/validate'
 
 const props = defineProps<{
   visible: boolean
@@ -75,12 +61,9 @@ const emit = defineEmits<{
 }>()
 
 const settingStore = useSettingStore()
-const syncStore = useSyncStore()
 
 const localBoxName = ref('')
 const qrDataUrl = ref('')
-const uploading = ref(false)
-const downloading = ref(false)
 const scannerActive = ref(false)
 const scanResult = ref('')
 
@@ -100,68 +83,6 @@ async function generateQR(boxName: string) {
     })
   } catch {
     qrDataUrl.value = ''
-  }
-}
-
-function applyBoxName() {
-  const name = localBoxName.value.trim()
-  if (!name) {
-    ElMessage.warning('请输入 Box Name')
-    return
-  }
-  settingStore.setJsonboxName(name)
-  generateQR(name)
-  ElMessage.success('Box Name 已更新')
-}
-
-function regenerateBoxName() {
-  const name = generateJsonboxName()
-  localBoxName.value = name
-  settingStore.setJsonboxName(name)
-  generateQR(name)
-  ElMessage.success('已重新生成 Box Name')
-}
-
-async function handleUpload() {
-  if (!settingStore.jsonboxName) {
-    ElMessage.warning('请先设置 Box Name')
-    return
-  }
-  uploading.value = true
-  try {
-    await syncService.syncToCloud()
-    ElMessage.success('配置已上传到云端')
-  } catch (e: any) {
-    ElMessage.error('上传失败: ' + (e.message || '未知错误'))
-  } finally {
-    uploading.value = false
-  }
-}
-
-async function handleDownload() {
-  if (!settingStore.jsonboxName) {
-    ElMessage.warning('请先设置 Box Name')
-    return
-  }
-  downloading.value = true
-  try {
-    await syncService.syncFromCloud()
-    ElMessage.success('配置已从云端下载')
-    emit('synced')
-  } catch (e: any) {
-    ElMessage.error('下载失败: ' + (e.message || '未知错误'))
-  } finally {
-    downloading.value = false
-  }
-}
-
-async function handleClear() {
-  try {
-    await ElMessageBox.confirm('确定清空远程配置？此操作不可恢复。', '确认', { type: 'warning' })
-    await syncService.resetBox()
-    ElMessage.success('远程配置已清空')
-  } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error(e?.message || '操作失败')
   }
 }
 
@@ -185,18 +106,25 @@ async function startScanner() {
     }, false)
 
     scannerInstance.render(
-      (decodedText: string) => {
+      async (decodedText: string) => {
         scanResult.value = decodedText
-        if (decodedText.startsWith('box_')) {
+        // Accept any valid box name (alphanumeric + underscore, 20+ chars)
+        if (/^[a-zA-Z0-9_]{20,}$/.test(decodedText)) {
           localBoxName.value = decodedText
           settingStore.setJsonboxName(decodedText)
           generateQR(decodedText)
           stopScanner()
           ElMessage.success(`已同步 Box Name: ${decodedText}`)
           // Auto download
-          handleDownload()
+          try {
+            await syncService.syncFromCloud()
+            ElMessage.success('配置已从云端下载')
+            emit('synced')
+          } catch (e: any) {
+            ElMessage.error('下载失败: ' + (e.message || ''))
+          }
         } else {
-          ElMessage.warning('无效的二维码内容，需要以 box_ 开头')
+          ElMessage.warning('无效的二维码内容')
         }
       },
       (_error: string) => {
@@ -237,7 +165,7 @@ watch(() => props.visible, async (val) => {
 .sync-dialog-body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .sync-section {
@@ -254,18 +182,22 @@ watch(() => props.visible, async (val) => {
 
 .sync-box-name {
   display: flex;
-  gap: 8px;
   align-items: center;
 }
 
-.sync-box-name .el-input {
-  flex: 1;
+.box-name-text {
+  font-size: 13px;
+  padding: 6px 12px;
+  background: var(--el-fill-color-lighter);
+  border-radius: 6px;
+  word-break: break-all;
+  color: var(--el-text-color-regular);
 }
 
-.sync-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.scan-btn {
+  width: 100%;
+  font-size: 16px;
+  height: 48px;
 }
 
 .qr-container {

@@ -1,4 +1,6 @@
-/** A 股市场时段简化判断（Asia/Shanghai） */
+/** A 股市场时段判断（Asia/Shanghai），含节假日检测 */
+
+import { isMarketClosed } from './holiday'
 
 export interface ChinaMarketStatus {
   isOpen: boolean
@@ -18,11 +20,12 @@ export function getChinaMarketStatus(now = new Date()): ChinaMarketStatus {
   const day = parts.find(p => p.type === 'day')?.value ?? '01'
   const todayDate = `${month}-${day}`
 
-  const wd = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Shanghai',
-    weekday: 'short'
-  }).format(now)
-  const isWeekend = wd === 'Sat' || wd === 'Sun'
+  // 使用节假日服务判断是否休市（含周末 + 法定节假日）
+  const closed = isMarketClosed(now)
+
+  if (closed) {
+    return { isOpen: false, isClosed: true, todayDate }
+  }
 
   const hm = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Shanghai',
@@ -34,11 +37,11 @@ export function getChinaMarketStatus(now = new Date()): ChinaMarketStatus {
   const minutes = hh * 60 + mm
   const s1 = minutes >= 9 * 60 + 30 && minutes <= 11 * 60 + 30
   const s2 = minutes >= 13 * 60 && minutes <= 15 * 60
-  const isOpen = !isWeekend && (s1 || s2)
+  const isOpen = s1 || s2
 
   return {
     isOpen,
-    isClosed: isWeekend,
+    isClosed: false,
     todayDate
   }
 }
