@@ -1,394 +1,633 @@
 <template>
-  <div class="market-view">
-    <el-container>
-      <!-- 顶部标题栏 -->
-      <el-header class="market-header">
-        <div class="header-content">
+  <MainLayout>
+    <template #header>
+      <div class="market-header">
+        <div class="header-top">
           <h2>行情中心</h2>
-          <div class="market-stats">
-            <span class="stat-item">
-              总计: <strong>{{ marketStats.total }}</strong>
-            </span>
-            <span class="stat-item positive">
-              上涨: <strong>{{ marketStats.rising }}</strong>
-            </span>
-            <span class="stat-item negative">
-              下跌: <strong>{{ marketStats.falling }}</strong>
-            </span>
+          <div class="header-actions">
+            <span class="update-hint">{{ updateHint }}</span>
+            <el-button size="small" :loading="refreshing" @click="handleRefresh">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
           </div>
         </div>
-      </el-header>
-
-      <!-- 分类筛选区 -->
-      <div class="category-tabs">
-        <el-scrollbar>
-          <div class="category-tabs-inner">
-            <el-tag
-              v-for="category in categories"
-              :key="category"
-              :type="selectedCategory === category ? 'primary' : 'info'"
-              class="category-tag"
-              @click="selectCategory(category)"
-            >
-              {{ category }}
-            </el-tag>
-          </div>
-        </el-scrollbar>
+        <!-- 主 Tab 栏 -->
+        <div class="main-tabs">
+          <el-scrollbar>
+            <div class="main-tabs-inner">
+              <span
+                v-for="tab in mainTabs"
+                :key="tab.key"
+                class="main-tab-item"
+                :class="{ active: activeMainTab === tab.key }"
+                @click="switchMainTab(tab.key)"
+              >
+                {{ tab.label }}
+              </span>
+            </div>
+          </el-scrollbar>
+        </div>
       </div>
+    </template>
 
-      <!-- 搜索区 -->
-      <div class="search-bar">
-        <el-input
-          v-model="searchQuery"
-          placeholder="搜索行情代码或名称"
-          clearable
-          @input="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-        <el-button @click="handleRefresh" :loading="loading">
-          <el-icon><Refresh /></el-icon>
-          <span>刷新</span>
-        </el-button>
-      </div>
+    <!-- Tab 内容区 -->
+    <div class="market-content" ref="contentRef">
+      <!-- 大盘资金 Tab -->
+      <div v-show="activeMainTab === 'market'" class="tab-panel">
+        <!-- 两市统计条 -->
+        <div v-if="marketStat" class="market-stat-bar">
+          <span>两市合计成交额：<strong>{{ marketStat.totalVolume.toFixed(2) }}</strong> 亿元</span>
+          <span class="stat-up">上涨：<strong>{{ marketStat.rising }}</strong></span>
+          <span class="stat-flat">平盘：<strong>{{ marketStat.flat }}</strong></span>
+          <span class="stat-down">下跌：<strong>{{ marketStat.falling }}</strong></span>
+        </div>
 
-      <!-- 行情列表区 -->
-      <el-main class="market-list-main" v-loading="loading">
-        <div v-if="displayMarkets.length > 0" class="market-list">
+        <!-- 大盘指数卡片 -->
+        <div class="index-cards">
           <div
-            v-for="market in displayMarkets"
-            :key="market.code"
-            class="market-item"
-            @click="handleMarketClick(market)"
+            v-for="card in indexCards"
+            :key="card.code"
+            class="index-card"
+            :class="cardBorderClass(card.changePercent)"
           >
-            <div class="market-info">
-              <div class="market-name">{{ market.name }}</div>
-              <div class="market-code">{{ market.code }}</div>
+            <div class="card-name">{{ card.name }}</div>
+            <div class="card-price">{{ card.price.toFixed(2) }}</div>
+            <div class="card-change" :class="changeColorClass(card.changePercent)">
+              {{ fmtPct(card.changePercent) }}
             </div>
-            <div class="market-data">
-              <div class="market-price">{{ formatPrice(market.price) }}</div>
-              <div class="market-change" :class="getChangeClass(market.changePercent)">
-                <span class="change-amount">{{ formatChange(market.changeAmount) }}</span>
-                <span class="change-percent">{{ formatPercent(market.changePercent) }}</span>
-              </div>
+            <div class="card-amount" :class="changeColorClass(card.changeAmount)">
+              {{ fmtChange(card.changeAmount) }}
             </div>
           </div>
         </div>
 
-        <el-empty v-else description="暂无行情数据" />
-
-        <!-- 最后更新时间 -->
-        <div v-if="lastUpdateTime" class="update-time">
-          最后更新: {{ formatUpdateTime(lastUpdateTime) }}
+        <!-- 全球指数子 Tab -->
+        <div class="sub-section">
+          <div class="sub-tabs">
+            <span
+              v-for="g in globalIndexGroups"
+              :key="g"
+              class="sub-tab-item"
+              :class="{ active: activeGlobalTab === g }"
+              @click="activeGlobalTab = g"
+            >
+              {{ g }}指数
+            </span>
+          </div>
+          <div class="index-images">
+            <div v-for="item in currentGlobalIndexItems" :key="item.nid" class="index-img-wrap">
+              <img :src="getIndexImageUrl(item.nid)" :alt="item.name" loading="lazy" />
+              <span class="img-label">{{ item.name }}</span>
+            </div>
+          </div>
         </div>
-      </el-main>
 
-      <!-- 底部导航 -->
-      <el-footer class="bottom-nav">
-        <el-menu mode="horizontal" :default-active="'/market'" router>
-          <el-menu-item index="/">
-            <el-icon><HomeFilled /></el-icon>
-            <span>首页</span>
-          </el-menu-item>
-          <el-menu-item index="/market">
-            <el-icon><TrendCharts /></el-icon>
-            <span>行情</span>
-          </el-menu-item>
-          <el-menu-item index="/settings">
-            <el-icon><Setting /></el-icon>
-            <span>设置</span>
-          </el-menu-item>
-        </el-menu>
-      </el-footer>
-    </el-container>
-  </div>
+        <!-- 资金流向折线图 -->
+        <div class="sub-section">
+          <h4>沪深资金流向</h4>
+          <div ref="flowChartRef" class="chart-container"></div>
+        </div>
+      </div>
+
+      <!-- 板块 Tab（行业/风格/概念/地域） -->
+      <div v-for="pt in plateTabs" :key="pt.key" v-show="activeMainTab === pt.key" class="tab-panel">
+        <div class="sub-tabs">
+          <span
+            v-for="rf in plateRankFields"
+            :key="rf.field"
+            class="sub-tab-item"
+            :class="{ active: activePlateRank[pt.key] === rf.field }"
+            @click="switchPlateRank(pt.key, rf.field)"
+          >
+            {{ rf.label }}
+          </span>
+        </div>
+        <div :ref="el => setPlateChartRef(pt.key, el as HTMLElement)" class="chart-container chart-plate"></div>
+      </div>
+    </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Search, Refresh, HomeFilled, TrendCharts, Setting } from '@element-plus/icons-vue'
-import { useMarketStore, useSettingStore } from '@/stores'
-import { marketService } from '@/services'
-import { formatRelativeTime } from '@/utils/format'
-import type { MarketInfo } from '@/types'
+import { ref, computed, reactive, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { Refresh } from '@element-plus/icons-vue'
+import MainLayout from '@/layouts/MainLayout.vue'
+import {
+  fetchIndexCards,
+  fetchMarketStat,
+  fetchFlowLine,
+  fetchPlateData,
+  getIndexImageUrl,
+  GLOBAL_INDEX_GROUPS,
+  type IndexCardData,
+  type MarketStatData,
+  type PlateRankField
+} from '@/api/market'
+import { loadEcharts } from '@/utils/echarts'
 
-const marketStore = useMarketStore()
-const settingStore = useSettingStore()
+// ==================== 常量 ====================
 
-// 状态
-const loading = ref(false)
-const searchQuery = ref('')
+const mainTabs = [
+  { key: 'market', label: '大盘资金' },
+  { key: 'industry', label: '行业板块' },
+  { key: 'style', label: '风格板块' },
+  { key: 'concept', label: '概念板块' },
+  { key: 'region', label: '地域板块' }
+]
 
-// 计算属性
-const categories = computed(() => marketStore.getCategories())
-const selectedCategory = computed(() => marketStore.selectedCategory)
-const lastUpdateTime = computed(() => marketStore.lastUpdateTime)
+const plateTabs = mainTabs.filter(t => t.key !== 'market')
 
-const displayMarkets = computed(() => {
-  let markets = marketStore.filteredMarkets
-  
-  // 按涨跌幅排序（降序）
-  return markets.sort((a, b) => b.changePercent - a.changePercent)
+const plateRankFields: { field: PlateRankField; label: string }[] = [
+  { field: 'f62', label: '今日排行' },
+  { field: 'f164', label: '5日排行' },
+  { field: 'f174', label: '10日排行' }
+]
+
+const globalIndexGroups = Object.keys(GLOBAL_INDEX_GROUPS)
+
+// ==================== 状态 ====================
+
+const activeMainTab = ref('market')
+const activeGlobalTab = ref('A股')
+const refreshing = ref(false)
+const contentRef = ref<HTMLElement | null>(null)
+
+const indexCards = ref<IndexCardData[]>([])
+const marketStat = ref<MarketStatData | null>(null)
+
+const loadedTabs = new Set<string>()
+const activePlateRank = reactive<Record<string, PlateRankField>>({
+  industry: 'f62',
+  style: 'f62',
+  concept: 'f62',
+  region: 'f62'
 })
 
-const marketStats = computed(() => marketService.getMarketStats())
+// ECharts
+const flowChartRef = ref<HTMLElement | null>(null)
+let flowChartInstance: any = null
+const plateChartRefs: Record<string, HTMLElement | null> = {}
+const plateChartInstances: Record<string, any> = {}
 
-// 方法
-const selectCategory = async (category: string) => {
-  marketStore.selectCategory(category)
-  
-  // 如果该分类没有数据，则刷新
-  const markets = marketStore.marketsByCategory(category)
-  if (markets.length === 0) {
-    await handleRefresh()
+// Auto-refresh
+let refreshTimer: ReturnType<typeof setTimeout> | null = null
+const countdown = ref(0)
+let countdownInterval: ReturnType<typeof setInterval> | null = null
+
+// ==================== 计算属性 ====================
+
+const currentGlobalIndexItems = computed(() =>
+  GLOBAL_INDEX_GROUPS[activeGlobalTab.value] ?? []
+)
+
+const updateHint = computed(() => {
+  if (countdown.value > 0) return `${countdown.value}s 后刷新`
+  return ''
+})
+
+// ==================== 方法 ====================
+
+function setPlateChartRef(key: string, el: HTMLElement | null) {
+  plateChartRefs[key] = el
+}
+
+function cardBorderClass(pct: number) {
+  if (pct > 0) return 'border-up'
+  if (pct < 0) return 'border-down'
+  return 'border-flat'
+}
+
+function changeColorClass(v: number) {
+  if (v > 0) return 'color-up'
+  if (v < 0) return 'color-down'
+  return 'color-flat'
+}
+
+function fmtPct(v: number) {
+  return `${v > 0 ? '+' : ''}${v.toFixed(2)}%`
+}
+
+function fmtChange(v: number) {
+  return `${v > 0 ? '+' : ''}${v.toFixed(2)}`
+}
+
+// --- 数据加载 ---
+
+async function loadMarketTab() {
+  const [cards, stat, flowData] = await Promise.all([
+    fetchIndexCards(),
+    fetchMarketStat(),
+    fetchFlowLine()
+  ])
+  indexCards.value = cards
+  marketStat.value = stat
+  await renderFlowChart(flowData)
+}
+
+async function loadPlateTab(tab: string) {
+  const field = activePlateRank[tab] ?? 'f62'
+  const data = await fetchPlateData(tab, field)
+  await renderPlateChart(tab, data)
+}
+
+async function loadTabOnce(tab: string) {
+  if (loadedTabs.has(tab)) return
+  loadedTabs.add(tab)
+  if (tab === 'market') {
+    await loadMarketTab()
+  } else {
+    await loadPlateTab(tab)
   }
 }
 
-const handleSearch = () => {
-  marketStore.setSearchQuery(searchQuery.value)
+function switchMainTab(tab: string) {
+  activeMainTab.value = tab
+  loadTabOnce(tab)
 }
 
-const handleRefresh = async () => {
-  loading.value = true
+async function switchPlateRank(tab: string, field: PlateRankField) {
+  activePlateRank[tab] = field
+  const data = await fetchPlateData(tab, field)
+  await renderPlateChart(tab, data)
+}
+
+async function handleRefresh() {
+  refreshing.value = true
   try {
-    await marketService.refreshByCategory(selectedCategory.value)
-    ElMessage.success('刷新成功')
-  } catch (error: any) {
-    ElMessage.error('刷新失败: ' + error.message)
+    loadedTabs.clear()
+    await loadTabOnce(activeMainTab.value)
   } finally {
-    loading.value = false
+    refreshing.value = false
   }
 }
 
-const handleMarketClick = (market: MarketInfo) => {
-  // 可以跳转到行情详情页（待实现）
-  ElMessage.info(`${market.name} 详情功能开发中`)
+// --- ECharts 渲染 ---
+
+async function renderFlowChart(data: { time: string; main: number; superLarge: number; large: number; medium: number; small: number }[]) {
+  const echarts = await loadEcharts()
+  if (!flowChartRef.value) return
+
+  if (!flowChartInstance) {
+    flowChartInstance = echarts.init(flowChartRef.value)
+  }
+
+  const times = data.map(d => d.time.split(' ').pop() ?? d.time)
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      formatter(params: any[]) {
+        let html = `<div style="font-size:12px">${params[0]?.axisValue}<br/>`
+        params.forEach((p: any) => {
+          const color = p.value >= 0 ? 'var(--color-up)' : 'var(--color-down)'
+          html += `<span style="color:${color}">${p.seriesName}: ${p.value.toFixed(2)} 亿</span><br/>`
+        })
+        return html + '</div>'
+      }
+    },
+    legend: {
+      data: ['主力', '超大单', '大单', '中单', '小单'],
+      bottom: 0,
+      textStyle: { fontSize: 11 }
+    },
+    grid: { left: 50, right: 16, top: 12, bottom: 40 },
+    xAxis: {
+      type: 'category',
+      data: times,
+      axisLabel: { fontSize: 10 }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { fontSize: 10, formatter: '{value}亿' }
+    },
+    series: [
+      { name: '主力', type: 'line', data: data.map(d => parseFloat(d.main.toFixed(2))), smooth: true, lineStyle: { width: 2 }, symbol: 'none', color: '#3b82f6' },
+      { name: '超大单', type: 'line', data: data.map(d => parseFloat(d.superLarge.toFixed(2))), smooth: true, lineStyle: { width: 1.5 }, symbol: 'none', color: '#ef4444' },
+      { name: '大单', type: 'line', data: data.map(d => parseFloat(d.large.toFixed(2))), smooth: true, lineStyle: { width: 1.5 }, symbol: 'none', color: '#06b6d4' },
+      { name: '中单', type: 'line', data: data.map(d => parseFloat(d.medium.toFixed(2))), smooth: true, lineStyle: { width: 1.5 }, symbol: 'none', color: '#22c55e' },
+      { name: '小单', type: 'line', data: data.map(d => parseFloat(d.small.toFixed(2))), smooth: true, lineStyle: { width: 1.5 }, symbol: 'none', color: '#f97316' }
+    ]
+  }
+  flowChartInstance.setOption(option, true)
 }
 
-const formatPrice = (price: number): string => {
-  return price.toFixed(2)
+async function renderPlateChart(tab: string, data: { name: string; value: number }[]) {
+  const echarts = await loadEcharts()
+  await nextTick()
+  const el = plateChartRefs[tab]
+  if (!el) return
+
+  if (!plateChartInstances[tab]) {
+    plateChartInstances[tab] = echarts.init(el)
+  }
+
+  const names = data.map(d => d.name.split('').join('\n'))
+  const values = data.map(d => parseFloat(d.value.toFixed(2)))
+  const colors = values.map(v => (v >= 0 ? '#ef4444' : '#22c55e'))
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      formatter(params: any[]) {
+        const p = params[0]
+        if (!p) return ''
+        const name = data[p.dataIndex]?.name ?? ''
+        const color = p.value >= 0 ? '#ef4444' : '#22c55e'
+        return `<span style="color:${color}">${name}: ${p.value} 亿</span>`
+      }
+    },
+    grid: { left: 50, right: 16, top: 12, bottom: 60 },
+    xAxis: {
+      type: 'category',
+      data: names,
+      axisLabel: { fontSize: 9, interval: 0 }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { fontSize: 10, formatter: '{value}亿' }
+    },
+    dataZoom: [
+      { type: 'slider', start: 0, end: Math.min(100, (30 / Math.max(data.length, 1)) * 100), bottom: 4, height: 18 },
+      { type: 'inside' }
+    ],
+    series: [{
+      type: 'bar',
+      data: values.map((v, i) => ({ value: v, itemStyle: { color: colors[i] } }))
+    }]
+  }
+  plateChartInstances[tab].setOption(option, true)
 }
 
-const formatChange = (change: number): string => {
-  const sign = change > 0 ? '+' : ''
-  return `${sign}${change.toFixed(2)}`
+// --- 自动刷新 ---
+
+function setupAutoRefresh() {
+  clearAutoRefresh()
+  scheduleNext()
 }
 
-const formatPercent = (percent: number): string => {
-  const sign = percent > 0 ? '+' : ''
-  return `${sign}${percent.toFixed(2)}%`
+function scheduleNext() {
+  const now = new Date()
+  const delay = (60 - now.getSeconds()) * 1000 - now.getMilliseconds()
+  countdown.value = Math.ceil(delay / 1000)
+
+  // 倒计时
+  countdownInterval = setInterval(() => {
+    countdown.value = Math.max(0, countdown.value - 1)
+  }, 1000)
+
+  refreshTimer = setTimeout(async () => {
+    if (countdownInterval) clearInterval(countdownInterval)
+    const h = new Date().getHours()
+    const d = new Date().getDay()
+    if (d >= 1 && d <= 5 && h >= 9 && h < 15) {
+      loadedTabs.clear()
+      await loadTabOnce(activeMainTab.value)
+    }
+    scheduleNext()
+  }, delay)
 }
 
-const getChangeClass = (changePercent: number): string => {
-  if (settingStore.grayscaleMode) return ''
-  return changePercent > 0 ? 'positive' : changePercent < 0 ? 'negative' : ''
+function clearAutoRefresh() {
+  if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null }
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null }
 }
 
-const formatUpdateTime = (timestamp: number): string => {
-  return formatRelativeTime(timestamp)
+// --- ResizeObserver ---
+
+let resizeObserver: ResizeObserver | null = null
+
+function setupResize() {
+  resizeObserver = new ResizeObserver(() => {
+    flowChartInstance?.resize()
+    Object.values(plateChartInstances).forEach((c: any) => c?.resize())
+  })
+  if (contentRef.value) resizeObserver.observe(contentRef.value)
 }
 
-// 生命周期
+// ==================== 生命周期 ====================
+
 onMounted(async () => {
-  // 初始化行情数据
-  loading.value = true
-  try {
-    await marketService.initialize()
-    
-    // 启动自动刷新（60秒）
-    marketService.startAutoRefresh(60)
-  } catch (error) {
-    console.error('初始化行情失败:', error)
-  } finally {
-    loading.value = false
-  }
+  await loadTabOnce('market')
+  setupAutoRefresh()
+  setupResize()
 })
 
 onUnmounted(() => {
-  // 停止自动刷新
-  marketService.stopAutoRefresh()
+  clearAutoRefresh()
+  resizeObserver?.disconnect()
+  flowChartInstance?.dispose()
+  Object.values(plateChartInstances).forEach((c: any) => c?.dispose())
 })
 </script>
 
 <style scoped>
-.market-view {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
 .market-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px;
-}
-
-.header-content h2 {
-  margin: 0 0 10px 0;
-  font-size: 24px;
-}
-
-.market-stats {
-  display: flex;
-  gap: 20px;
-  font-size: 14px;
-}
-
-.stat-item {
-  opacity: 0.9;
-}
-
-.stat-item strong {
-  font-size: 16px;
-  margin-left: 4px;
-}
-
-.category-tabs {
-  padding: 10px;
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color);
 }
 
-.category-tabs-inner {
+.header-top {
   display: flex;
-  gap: 10px;
   align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 0;
 }
 
-.category-tag {
+.header-top h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.update-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.main-tabs {
+  padding: 10px 16px 0;
+}
+
+.main-tabs-inner {
+  display: flex;
+  gap: 4px;
+}
+
+.main-tab-item {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 16px;
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
-  font-size: 14px;
-  padding: 8px 16px;
+  color: var(--el-text-color-regular);
+  transition: all 0.2s;
 }
 
-.search-bar {
-  padding: 10px;
-  display: flex;
-  gap: 10px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color);
+.main-tab-item:hover {
+  background: var(--el-fill-color-light);
 }
 
-.search-bar .el-input {
-  flex: 1;
+.main-tab-item.active {
+  background: var(--el-color-primary);
+  color: #fff;
 }
 
-.market-list-main {
-  flex: 1;
-  overflow: auto;
-  padding: 10px;
+/* Tab 内容 */
+.market-content {
+  padding: 12px 16px;
 }
 
-.market-list {
+.tab-panel {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+/* 两市统计条 */
+.market-stat-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  padding: 10px 12px;
+  background: var(--el-fill-color-lighter);
+  border-radius: 8px;
+}
+
+.stat-up { color: var(--color-up); }
+.stat-down { color: var(--color-down); }
+.stat-flat { color: var(--color-flat); }
+
+/* 指数卡片 */
+.index-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
 }
 
-.market-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color);
+.index-card {
+  padding: 12px;
   border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
+  border: 1px solid var(--el-border-color);
+  border-left: 4px solid var(--el-border-color);
+  background: var(--el-bg-color);
 }
 
-.market-item:hover {
-  border-color: var(--el-color-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
+.index-card.border-up { border-left-color: var(--color-up); }
+.index-card.border-down { border-left-color: var(--color-down); }
+.index-card.border-flat { border-left-color: var(--color-flat); }
 
-.market-info {
-  flex: 1;
-}
-
-.market-name {
-  font-size: 16px;
-  font-weight: 500;
+.card-name {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
   margin-bottom: 4px;
 }
 
-.market-code {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
-.market-data {
-  text-align: right;
-}
-
-.market-price {
+.card-price {
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
   margin-bottom: 4px;
 }
 
-.market-change {
+.card-change, .card-amount {
+  font-size: 13px;
+}
+
+.color-up { color: var(--color-up); }
+.color-down { color: var(--color-down); }
+.color-flat { color: var(--color-flat); }
+
+/* 子 Tab */
+.sub-section {
+  margin-top: 4px;
+}
+
+.sub-section h4 {
+  margin: 0 0 8px;
   font-size: 14px;
+  font-weight: 500;
+}
+
+.sub-tabs {
   display: flex;
-  gap: 8px;
-  justify-content: flex-end;
+  gap: 4px;
+  margin-bottom: 10px;
 }
 
-.positive {
-  color: #67c23a;
-}
-
-.negative {
-  color: #f56c6c;
-}
-
-.update-time {
-  text-align: center;
-  padding: 20px;
+.sub-tab-item {
+  padding: 4px 12px;
   font-size: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--el-text-color-secondary);
+  background: var(--el-fill-color-lighter);
+  transition: all 0.2s;
+}
+
+.sub-tab-item.active {
+  background: var(--el-color-primary-light-8);
+  color: var(--el-color-primary);
+  font-weight: 500;
+}
+
+/* 全球指数图片 */
+.index-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.index-img-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.index-img-wrap img {
+  width: 90px;
+  height: 106px;
+  border-radius: 6px;
+  border: 1px solid var(--el-border-color);
+  transition: box-shadow 0.2s;
+}
+
+.index-img-wrap img:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.img-label {
+  font-size: 11px;
   color: var(--el-text-color-secondary);
 }
 
-.bottom-nav {
-  height: 60px;
-  padding: 0;
-  border-top: 1px solid var(--el-border-color);
+/* 图表容器 */
+.chart-container {
+  width: 100%;
+  height: 280px;
 }
 
-.bottom-nav :deep(.el-menu) {
-  border: none;
-}
-
-.bottom-nav :deep(.el-menu-item) {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: 12px;
+.chart-plate {
+  height: 300px;
 }
 
 @media (max-width: 768px) {
-  .market-header h2 {
-    font-size: 20px;
+  .index-cards {
+    grid-template-columns: repeat(2, 1fr);
   }
-  
-  .market-stats {
-    flex-wrap: wrap;
-    gap: 10px;
+
+  .market-stat-bar {
+    font-size: 12px;
+    gap: 8px;
   }
-  
-  .market-name {
-    font-size: 14px;
-  }
-  
-  .market-price {
+
+  .card-price {
     font-size: 16px;
   }
 }

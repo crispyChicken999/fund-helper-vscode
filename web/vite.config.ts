@@ -12,6 +12,24 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    open: true
+    open: true,
+    proxy: {
+      '/api-proxy/bkzj': {
+        target: 'https://data.eastmoney.com',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/api-proxy\/bkzj/, '/dataapi/bkzj')
+      },
+      '/api-proxy/tiantian': {
+        target: 'https://dgs.tiantianfunds.com',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/api-proxy\/tiantian/, '')
+      },
+      '/api-proxy/eastfund': {
+        target: 'https://api.fund.eastmoney.com',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/api-proxy\/eastfund/, ''),
+        headers: { Referer: 'https://fundf10.eastmoney.com/' }
+      }
+    }
   }
 })

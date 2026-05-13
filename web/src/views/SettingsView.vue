@@ -1,27 +1,22 @@
 <template>
-  <div class="settings-view">
-    <el-container>
-      <el-header>
+  <MainLayout>
+    <template #header>
+      <el-header class="settings-page-header">
         <h2>设置</h2>
       </el-header>
+    </template>
 
-      <el-main>
+    <div class="settings-main">
         <el-form label-width="120px">
           <el-divider content-position="left">显示设置</el-divider>
           
           <el-form-item label="隐私模式">
-            <el-switch
-              v-model="privacyMode"
-              @change="handlePrivacyModeChange"
-            />
+            <el-switch v-model="privacyMode" @change="handlePrivacyModeChange" />
             <div class="form-item-tip">开启后隐藏所有数值</div>
           </el-form-item>
 
           <el-form-item label="灰色模式">
-            <el-switch
-              v-model="grayscaleMode"
-              @change="handleGrayscaleModeChange"
-            />
+            <el-switch v-model="grayscaleMode" @change="handleGrayscaleModeChange" />
             <div class="form-item-tip">移除所有色彩，仅保留黑白灰</div>
           </el-form-item>
 
@@ -42,17 +37,42 @@
             </el-select>
           </el-form-item>
 
+          <el-divider content-position="left">列表配置</el-divider>
+
+          <el-form-item label="可见列">
+            <el-checkbox-group v-model="visibleColumns" @change="handleVisibleColumnsChange">
+              <el-checkbox
+                v-for="col in allColumns"
+                :key="col.key"
+                :label="col.key"
+                :disabled="col.key === 'name'"
+              >
+                {{ col.label }}
+              </el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+
+          <el-form-item label="列顺序">
+            <div class="form-item-tip" style="margin-bottom:8px">拖拽 ☰ 调整列顺序（名称列固定首位）</div>
+            <ul ref="columnSortRef" class="column-sort-list">
+              <li v-for="col in columnOrderDraft" :key="col" :data-key="col" class="column-sort-item">
+                <span class="drag-handle">☰</span>
+                <span>{{ columnLabel(col) }}</span>
+              </li>
+            </ul>
+          </el-form-item>
+
           <el-divider content-position="left">数据同步</el-divider>
           
-          <el-form-item label="JSONBox名称">
+          <el-form-item label="Box Name">
             <el-input
               v-model="jsonboxName"
               placeholder="20-64字符"
               @blur="handleJsonboxNameChange"
             >
               <template #append>
-                <el-button 
-                  :icon="Connection" 
+                <el-button
+                  :icon="Connection"
                   @click="handleTestConnection"
                   :loading="testingConnection"
                 >
@@ -60,76 +80,53 @@
                 </el-button>
               </template>
             </el-input>
-            <div class="form-item-tip">用于云端数据同步</div>
-          </el-form-item>
-
-          <el-form-item label="同步状态">
-            <div class="sync-status">
-              <el-tag 
-                :type="syncStatusType" 
-                :icon="syncStatusIcon"
-              >
-                {{ syncStatusText }}
-              </el-tag>
-              <span v-if="lastSyncTime" class="sync-time">
-                最后同步: {{ formatRelativeTime(lastSyncTime) }}
-              </span>
-            </div>
-            <div v-if="syncError" class="sync-error">
-              <el-alert type="error" :closable="false">
-                {{ syncError }}
-              </el-alert>
-            </div>
+            <div class="form-item-tip">用于与 VSCode 版本同步数据</div>
           </el-form-item>
 
           <el-form-item label="同步操作">
-            <el-space>
-              <el-button 
-                type="primary" 
+            <el-space wrap>
+              <el-button
+                type="primary"
                 :icon="Upload"
                 @click="handleSyncToCloud"
                 :loading="isSyncing"
                 :disabled="!jsonboxName"
               >
-                上传到云端
+                上传云端
               </el-button>
-              <el-button 
+              <el-button
                 :icon="Download"
                 @click="handleSyncFromCloud"
                 :loading="isSyncing"
                 :disabled="!jsonboxName"
               >
-                从云端下载
-              </el-button>
-              <el-button 
-                :icon="Refresh"
-                @click="handleFullSync"
-                :loading="isSyncing"
-                :disabled="!jsonboxName"
-              >
-                完整同步
+                下载云端
               </el-button>
             </el-space>
           </el-form-item>
 
-          <el-form-item label="危险操作">
-            <el-button 
-              type="danger" 
-              :icon="Delete"
-              @click="handleResetBox"
-              :disabled="!jsonboxName"
-              plain
-            >
-              重置云端数据
-            </el-button>
-            <div class="form-item-tip">清空云端所有数据，不可恢复</div>
+          <el-divider content-position="left">数据管理</el-divider>
+
+          <el-form-item label="导入导出">
+            <el-space wrap>
+              <el-button :icon="Download" @click="handleImportJson">
+                导入 JSON
+              </el-button>
+              <el-button :icon="Upload" @click="handleExportJson">
+                导出 JSON
+              </el-button>
+            </el-space>
+            <div class="form-item-tip">支持导入 VSCode 版导出的 JSON 文件</div>
           </el-form-item>
 
-          <el-divider content-position="left">列表配置</el-divider>
-
-          <el-form-item label="可见列">
-            <el-button @click="showColumnSettings = true">
-              配置列显示
+          <el-form-item label="危险操作">
+            <el-button
+              type="danger"
+              :icon="Delete"
+              @click="handleClearAll"
+              plain
+            >
+              清空本地数据
             </el-button>
           </el-form-item>
 
@@ -140,337 +137,355 @@
           </el-form-item>
 
           <el-form-item label="数据来源">
-            <span>天天基金</span>
+            <span>天天基金 / 东方财富</span>
           </el-form-item>
         </el-form>
-      </el-main>
+    </div>
 
-      <el-footer class="bottom-nav">
-        <el-menu mode="horizontal" :default-active="'/settings'" router>
-          <el-menu-item index="/">首页</el-menu-item>
-          <el-menu-item index="/market">行情</el-menu-item>
-          <el-menu-item index="/settings">设置</el-menu-item>
-        </el-menu>
-      </el-footer>
-    </el-container>
-
-    <!-- 数据冲突对话框 -->
-    <el-dialog
-      v-model="showConflictDialog"
-      title="数据冲突"
-      width="90%"
-      :close-on-click-modal="false"
-    >
-      <el-alert type="warning" :closable="false" style="margin-bottom: 20px;">
-        检测到本地数据与云端数据不一致，请选择使用哪个版本的数据
-      </el-alert>
-      
-      <el-descriptions :column="1" border>
-        <el-descriptions-item label="本地版本">
-          {{ dataConflict?.localVersion }}
-        </el-descriptions-item>
-        <el-descriptions-item label="云端版本">
-          {{ dataConflict?.cloudVersion }}
-        </el-descriptions-item>
-        <el-descriptions-item label="冲突时间">
-          {{ dataConflict ? formatDateTime(dataConflict.timestamp) : '' }}
-        </el-descriptions-item>
-      </el-descriptions>
-
-      <template #footer>
-        <el-space>
-          <el-button @click="handleResolveConflict('cloud')">
-            使用云端版本
-          </el-button>
-          <el-button type="primary" @click="handleResolveConflict('local')">
-            使用本地版本
-          </el-button>
-        </el-space>
-      </template>
-    </el-dialog>
-
-    <!-- 列配置对话框 -->
-    <el-dialog
-      v-model="showColumnSettings"
-      title="列显示配置"
-      width="90%"
-    >
-      <el-checkbox-group v-model="visibleColumns">
-        <el-checkbox 
-          v-for="col in allColumns" 
-          :key="col.key"
-          :label="col.key"
-          :disabled="col.key === 'name'"
-        >
-          {{ col.label }}
-        </el-checkbox>
-      </el-checkbox-group>
-
-      <template #footer>
-        <el-space>
-          <el-button @click="showColumnSettings = false">取消</el-button>
-          <el-button type="primary" @click="handleSaveColumnSettings">
-            保存
-          </el-button>
-        </el-space>
-      </template>
-    </el-dialog>
-  </div>
+    <!-- 隐藏的文件输入 -->
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept=".json"
+      style="display:none"
+      @change="onFileSelected"
+    />
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import MainLayout from '@/layouts/MainLayout.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Connection, 
-  Upload, 
-  Download, 
-  Refresh, 
-  Delete,
-  CircleCheck,
-  CircleClose,
-  Loading
-} from '@element-plus/icons-vue'
-import { useSettingStore, useSyncStore } from '@/stores'
+import { Connection, Upload, Download, Delete } from '@element-plus/icons-vue'
+import Sortable from 'sortablejs'
+import { useSettingStore, useFundStore, useGroupStore, useSyncStore } from '@/stores'
 import { syncService } from '@/services'
-import { formatRelativeTime, formatDateTime } from '@/utils/format'
+import { storageService } from '@/services/storageService'
+import { formatRelativeTime } from '@/utils/format'
 
 const settingStore = useSettingStore()
+const fundStore = useFundStore()
+const groupStore = useGroupStore()
 const syncStore = useSyncStore()
 
-// 响应式数据
+// ==================== 响应式数据 ====================
+
 const privacyMode = ref(false)
 const grayscaleMode = ref(false)
 const theme = ref<'light' | 'dark'>('light')
 const refreshInterval = ref(20)
 const jsonboxName = ref('')
 const testingConnection = ref(false)
-const showConflictDialog = ref(false)
-const showColumnSettings = ref(false)
 const visibleColumns = ref<string[]>([])
+const columnOrderDraft = ref<string[]>([])
 
-// 所有可用列
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const columnSortRef = ref<HTMLElement | null>(null)
+let columnSortable: Sortable | null = null
+
 const allColumns = [
   { key: 'name', label: '基金名称' },
-  { key: 'estimatedGain', label: '预计收益' },
-  { key: 'estimatedChange', label: '预计涨幅' },
-  { key: 'holdingGainRate', label: '持有收益率' },
+  { key: 'estimatedGain', label: '估算收益' },
+  { key: 'estimatedChange', label: '估算涨幅' },
+  { key: 'holdingGainRate', label: '总收益率' },
   { key: 'holdingGain', label: '持有收益' },
-  { key: 'amountShares', label: '持有份额' },
-  { key: 'dailyChange', label: '日涨幅' },
-  { key: 'dailyGain', label: '日收益' },
-  { key: 'sector', label: '所属分类' },
-  { key: 'cost', label: '成本价' }
+  { key: 'amountShares', label: '金额/份额' },
+  { key: 'dailyChange', label: '当日涨幅' },
+  { key: 'dailyGain', label: '当日收益' },
+  { key: 'sector', label: '关联板块' },
+  { key: 'cost', label: '成本/最新' }
 ]
 
-// 计算属性
+// ==================== 计算属性 ====================
+
 const isSyncing = computed(() => syncStore.isSyncing)
-const lastSyncTime = computed(() => syncStore.lastSyncTime)
-const syncError = computed(() => syncStore.syncError)
-const dataConflict = computed(() => syncStore.dataConflict)
 
-const syncStatusType = computed(() => {
-  switch (syncStore.syncStatus) {
-    case 'success':
-      return 'success'
-    case 'error':
-      return 'danger'
-    case 'syncing':
-      return 'info'
-    default:
-      return 'info'
-  }
-})
+// ==================== 初始化 ====================
 
-const syncStatusIcon = computed(() => {
-  switch (syncStore.syncStatus) {
-    case 'success':
-      return CircleCheck
-    case 'error':
-      return CircleClose
-    case 'syncing':
-      return Loading
-    default:
-      return undefined
-  }
-})
-
-const syncStatusText = computed(() => {
-  switch (syncStore.syncStatus) {
-    case 'success':
-      return '同步成功'
-    case 'error':
-      return '同步失败'
-    case 'syncing':
-      return '同步中...'
-    default:
-      return '未同步'
-  }
-})
-
-// 初始化
-onMounted(() => {
+onMounted(async () => {
   privacyMode.value = settingStore.privacyMode
   grayscaleMode.value = settingStore.grayscaleMode
   theme.value = settingStore.theme
   refreshInterval.value = settingStore.refreshInterval
   jsonboxName.value = settingStore.jsonboxName
-  visibleColumns.value = settingStore.settings.visibleColumns
-  
-  // 检查是否有数据冲突
-  if (syncStore.hasConflict) {
-    showConflictDialog.value = true
-  }
+  visibleColumns.value = [...settingStore.visibleColumns]
+  columnOrderDraft.value = settingStore.columnOrder.filter(k => k !== 'name')
+
+  await nextTick()
+  initColumnSortable()
 })
 
-// 处理函数
-const handlePrivacyModeChange = async (value: boolean) => {
+onUnmounted(() => {
+  columnSortable?.destroy()
+})
+
+// ==================== 列排序 Sortable ====================
+
+function initColumnSortable() {
+  if (!columnSortRef.value) return
+  columnSortable = Sortable.create(columnSortRef.value, {
+    handle: '.drag-handle',
+    animation: 200,
+    ghostClass: 'sortable-ghost',
+    onEnd(evt) {
+      const { oldIndex, newIndex } = evt
+      if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
+      const item = columnOrderDraft.value.splice(oldIndex, 1)[0]!
+      columnOrderDraft.value.splice(newIndex, 0, item)
+      // 保存列顺序
+      settingStore.setColumnOrder(['name', ...columnOrderDraft.value])
+      storageService.saveSettings(settingStore.getSettings())
+    }
+  })
+}
+
+function columnLabel(key: string): string {
+  return allColumns.find(c => c.key === key)?.label ?? key
+}
+
+// ==================== 显示设置 ====================
+
+async function handlePrivacyModeChange(value: boolean) {
   await settingStore.setPrivacyMode(value)
-  ElMessage.success('隐私模式已' + (value ? '开启' : '关闭'))
+  storageService.saveSettings(settingStore.getSettings())
 }
 
-const handleGrayscaleModeChange = async (value: boolean) => {
+async function handleGrayscaleModeChange(value: boolean) {
   await settingStore.setGrayscaleMode(value)
-  ElMessage.success('灰色模式已' + (value ? '开启' : '关闭'))
+  document.documentElement.dataset.grayscale = String(value)
+  storageService.saveSettings(settingStore.getSettings())
 }
 
-const handleThemeChange = async (value: 'light' | 'dark') => {
+async function handleThemeChange(value: 'light' | 'dark') {
   await settingStore.setTheme(value)
-  ElMessage.success('主题已切换')
+  document.documentElement.dataset.theme = value
+  storageService.saveSettings(settingStore.getSettings())
 }
 
-const handleRefreshIntervalChange = async (value: number) => {
+async function handleRefreshIntervalChange(value: number) {
   await settingStore.setRefreshInterval(value)
-  ElMessage.success('刷新间隔已更新')
+  storageService.saveSettings(settingStore.getSettings())
 }
 
-const handleJsonboxNameChange = async () => {
+function handleVisibleColumnsChange(cols: string[]) {
+  settingStore.setVisibleColumns(cols)
+  storageService.saveSettings(settingStore.getSettings())
+}
+
+// ==================== 数据同步 ====================
+
+async function handleJsonboxNameChange() {
   if (jsonboxName.value) {
     await settingStore.setJsonboxName(jsonboxName.value)
-    ElMessage.success('JSONBox名称已更新')
   }
 }
 
-// 测试连接
-const handleTestConnection = async () => {
+async function handleTestConnection() {
   if (!jsonboxName.value) {
-    ElMessage.warning('请先输入JSONBox名称')
+    ElMessage.warning('请先输入 Box Name')
     return
   }
-  
   testingConnection.value = true
   try {
-    const result = await syncService.testConnection()
-    if (result) {
-      ElMessage.success('连接成功')
-    } else {
-      ElMessage.error('连接失败')
-    }
-  } catch (error: any) {
-    ElMessage.error('连接失败: ' + error.message)
+    const ok = await syncService.testConnection()
+    ElMessage[ok ? 'success' : 'error'](ok ? '连接成功' : '连接失败')
+  } catch (e: any) {
+    ElMessage.error('连接失败: ' + e.message)
   } finally {
     testingConnection.value = false
   }
 }
 
-// 上传到云端
-const handleSyncToCloud = async () => {
+async function handleSyncToCloud() {
   try {
     await syncService.syncToCloud()
-    ElMessage.success('数据已上传到云端')
-  } catch (error: any) {
-    ElMessage.error('上传失败: ' + error.message)
+    ElMessage.success('已上传到云端')
+  } catch (e: any) {
+    ElMessage.error('上传失败: ' + e.message)
   }
 }
 
-// 从云端下载
-const handleSyncFromCloud = async () => {
+async function handleSyncFromCloud() {
   try {
     await syncService.syncFromCloud()
-    
-    // 检查是否有冲突
-    if (syncStore.hasConflict) {
-      showConflictDialog.value = true
-    } else {
-      ElMessage.success('数据已从云端下载')
-    }
-  } catch (error: any) {
-    ElMessage.error('下载失败: ' + error.message)
+    ElMessage.success('已从云端下载')
+  } catch (e: any) {
+    ElMessage.error('下载失败: ' + e.message)
   }
 }
 
-// 完整同步
-const handleFullSync = async () => {
-  try {
-    await syncService.fullSync()
-    
-    // 检查是否有冲突
-    if (syncStore.hasConflict) {
-      showConflictDialog.value = true
-    } else {
-      ElMessage.success('同步完成')
-    }
-  } catch (error: any) {
-    ElMessage.error('同步失败: ' + error.message)
-  }
+// ==================== JSON 导入导出 ====================
+
+function handleImportJson() {
+  fileInputRef.value?.click()
 }
 
-// 重置云端数据
-const handleResetBox = async () => {
+async function onFileSelected(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  input.value = '' // reset
+
   try {
-    await ElMessageBox.confirm(
-      '此操作将清空云端所有数据，不可恢复。是否继续？',
-      '警告',
+    const text = await file.text()
+    const raw = JSON.parse(text)
+    const payload = normalizeImportData(raw)
+
+    const fundCount = payload.funds?.length ?? 0
+    const groupCount = payload.groups ? Object.keys(payload.groups).length : 0
+
+    const action = await ElMessageBox.confirm(
+      `检测到 ${fundCount} 个基金，${groupCount} 个分组。\n选择「覆盖」将清空当前数据后导入，选择「合并」仅追加不存在的基金。`,
+      '导入确认',
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
+        distinguishCancelAndClose: true,
+        confirmButtonText: '覆盖导入',
+        cancelButtonText: '合并导入'
       }
-    )
-    
-    await syncService.resetBox()
-    ElMessage.success('云端数据已重置')
-  } catch (error: any) {
-    if (error !== 'cancel') {
-      ElMessage.error('重置失败: ' + error.message)
+    ).then(() => 'overwrite' as const).catch((action) => {
+      if (action === 'cancel') return 'merge' as const
+      return null
+    })
+
+    if (!action) return
+
+    if (action === 'overwrite') {
+      fundStore.clearFunds()
+      groupStore.clearGroups()
     }
+
+    // 导入基金
+    if (Array.isArray(payload.funds)) {
+      for (const f of payload.funds) {
+        if (!f.code) continue
+        const exists = fundStore.getFund(f.code)
+        if (!exists) {
+          fundStore.funds.push({ code: f.code, num: f.num || 0, cost: f.cost || 0, groupKey: f.groupKey })
+        }
+      }
+    }
+
+    // 导入分组
+    if (payload.groups && typeof payload.groups === 'object' && !Array.isArray(payload.groups)) {
+      groupStore.initGroupsFromObject(payload.groups, payload.groupOrder || [])
+    }
+
+    // 持久化
+    storageService.saveFunds(fundStore.funds)
+    const exported = groupStore.exportGroupsToObject()
+    storageService.saveGroups(exported.groups, exported.groupOrder)
+
+    ElMessage.success(`导入完成（${action === 'overwrite' ? '覆盖' : '合并'}模式）`)
+  } catch (e: any) {
+    if (e?.message) ElMessage.error('导入失败: ' + e.message)
   }
 }
 
-// 解决冲突
-const handleResolveConflict = async (strategy: 'local' | 'cloud') => {
-  try {
-    await syncService.resolveConflict(strategy)
-    showConflictDialog.value = false
-    ElMessage.success(`已使用${strategy === 'local' ? '本地' : '云端'}版本`)
-  } catch (error: any) {
-    ElMessage.error('解决冲突失败: ' + error.message)
+function normalizeImportData(raw: any): any {
+  // 兼容旧格式：直接是 funds 数组
+  if (Array.isArray(raw)) {
+    return { funds: raw, groups: {}, groupOrder: [], settings: {} }
   }
+  return raw
 }
 
-// 保存列配置
-const handleSaveColumnSettings = async () => {
-  try {
-    await settingStore.setVisibleColumns(visibleColumns.value)
-    showColumnSettings.value = false
-    ElMessage.success('列配置已保存')
-  } catch (error: any) {
-    ElMessage.error('保存失败: ' + error.message)
+function handleExportJson() {
+  const payload = {
+    funds: fundStore.funds.map(f => ({ code: f.code, num: f.num, cost: f.cost, groupKey: f.groupKey })),
+    groups: groupStore.exportGroupsToObject().groups,
+    groupOrder: groupStore.exportGroupsToObject().groupOrder,
+    settings: settingStore.getSettings(),
+    version: 1,
+    lastModified: Date.now(),
+    clientId: 'web'
   }
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  const d = new Date()
+  a.download = `fund-helper-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+  ElMessage.success('已导出')
+}
+
+// ==================== 清空数据 ====================
+
+async function handleClearAll() {
+  try {
+    await ElMessageBox.confirm('此操作将清空本地所有基金和分组数据，不可恢复。', '确认清空', { type: 'warning' })
+    fundStore.clearFunds()
+    groupStore.clearGroups()
+    storageService.saveFunds([])
+    storageService.saveGroups({}, [])
+    ElMessage.success('已清空')
+  } catch { /* cancel */ }
 }
 </script>
 
 <style scoped>
-.settings-view {
-  height: 100vh;
+.settings-page-header {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.settings-page-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.settings-main {
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .form-item-tip {
   font-size: 12px;
   color: var(--el-text-color-secondary);
   margin-top: 4px;
+}
+
+.column-sort-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.column-sort-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  background: var(--el-bg-color);
+  font-size: 13px;
+}
+
+.column-sort-item .drag-handle {
+  cursor: grab;
+  color: var(--el-text-color-secondary);
+  user-select: none;
+}
+
+.column-sort-item .drag-handle:active {
+  cursor: grabbing;
+}
+
+:deep(.sortable-ghost) {
+  opacity: 0.4;
+  background: var(--el-color-primary-light-9);
+}
+
+:deep(.el-checkbox) {
+  display: block;
+  margin: 6px 0;
 }
 
 .sync-status {
@@ -482,20 +497,5 @@ const handleSaveColumnSettings = async () => {
 .sync-time {
   font-size: 12px;
   color: var(--el-text-color-secondary);
-}
-
-.sync-error {
-  margin-top: 8px;
-}
-
-.bottom-nav {
-  height: 60px;
-  padding: 0;
-  border-top: 1px solid var(--el-border-color);
-}
-
-:deep(.el-checkbox) {
-  display: block;
-  margin: 8px 0;
 }
 </style>

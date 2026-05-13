@@ -1,10 +1,186 @@
-// 行情接口封装
-
-// import jsonp from 'jsonp'
-
 /**
- * 行情数据接口
+ * 行情中心 API — 对齐 VSCode 版 marketWebview.ts
+ * 使用 push2.eastmoney.com（允许跨域）和 data.eastmoney.com（需 Vite proxy）
  */
+
+// ==================== 类型定义 ====================
+
+export interface IndexCardData {
+  code: string
+  name: string
+  price: number
+  changePercent: number
+  changeAmount: number
+}
+
+export interface MarketStatData {
+  totalVolume: number   // 两市合计成交额（亿元）
+  rising: number        // 上涨家数
+  falling: number       // 下跌家数
+  flat: number          // 平盘家数
+}
+
+export interface FlowLinePoint {
+  time: string
+  main: number       // 主力净流入（亿元）
+  superLarge: number // 超大单
+  large: number      // 大单
+  medium: number     // 中单
+  small: number      // 小单
+}
+
+export interface PlateItem {
+  name: string
+  value: number  // 净流入（亿元）
+}
+
+// ==================== 大盘指数 ====================
+
+const INDEX_SECIDS = '1.000001,1.000300,0.399001,0.399006'
+
+export async function fetchIndexCards(): Promise<IndexCardData[]> {
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f13,f14&secids=${INDEX_SECIDS}&_=${Date.now()}`
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return []
+    const data = await res.json()
+    const items: IndexCardData[] = (data?.data?.diff ?? []).map((d: any) => ({
+      code: `${d.f13}.${d.f12}`,
+      name: d.f14,
+      price: d.f2,
+      changePercent: d.f3,
+      changeAmount: d.f4
+    }))
+    return items
+  } catch {
+    return []
+  }
+}
+
+// ==================== 两市统计 ====================
+
+export async function fetchMarketStat(): Promise<MarketStatData | null> {
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&secids=1.000001,0.399001&fields=f1,f2,f3,f4,f6,f12,f13,f104,f105,f106&_=${Date.now()}`
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return null
+    const data = await res.json()
+    const diff = data?.data?.diff ?? []
+    if (diff.length < 2) return null
+    const sh = diff[0]
+    const sz = diff[1]
+    return {
+      totalVolume: ((sh.f6 || 0) + (sz.f6 || 0)) / 1e8,
+      rising: (sh.f104 || 0) + (sz.f104 || 0),
+      falling: (sh.f105 || 0) + (sz.f105 || 0),
+      flat: (sh.f106 || 0) + (sz.f106 || 0)
+    }
+  } catch {
+    return null
+  }
+}
+
+// ==================== 资金流向折线图 ====================
+
+export async function fetchFlowLine(): Promise<FlowLinePoint[]> {
+  const url = `https://push2.eastmoney.com/api/qt/stock/fflow/kline/get?lmt=0&klt=1&secid=1.000001&secid2=0.399001&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63&_=${Date.now()}`
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return []
+    const data = await res.json()
+    const klines: string[] = data?.data?.klines ?? []
+    return klines.map(line => {
+      const parts = line.split(',')
+      return {
+        time: parts[0] ?? '',
+        main: parseFloat(parts[1] ?? '0') / 1e8,
+        superLarge: parseFloat(parts[2] ?? '0') / 1e8,
+        large: parseFloat(parts[3] ?? '0') / 1e8,
+        medium: parseFloat(parts[4] ?? '0') / 1e8,
+        small: parseFloat(parts[5] ?? '0') / 1e8
+      }
+    })
+  } catch {
+    return []
+  }
+}
+
+// ==================== 板块资金流向（需 Vite proxy） ====================
+
+export type PlateRankField = 'f62' | 'f164' | 'f174'
+
+const PLATE_CODES: Record<string, string> = {
+  industry: 'm:90+s:4',
+  style: 'm:90+e:4',
+  concept: 'm:90+t:3',
+  region: 'm:90+t:1'
+}
+
+export function getPlateCode(tab: string): string {
+  return PLATE_CODES[tab] ?? PLATE_CODES.industry!
+}
+
+export async function fetchPlateData(
+  plateTab: string,
+  rankField: PlateRankField = 'f62'
+): Promise<PlateItem[]> {
+  const code = getPlateCode(plateTab)
+  const url = `/api-proxy/bkzj/getbkzj?key=${rankField}&code=${encodeURIComponent(code)}`
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) })
+    if (!res.ok) return []
+    const data = await res.json()
+    const list: any[] = data?.data ?? []
+    return list.map(item => ({
+      name: item.f14 ?? item.name ?? '',
+      value: (item[rankField] ?? 0) / 1e8
+    }))
+  } catch {
+    return []
+  }
+}
+
+// ==================== 全球指数图片 ====================
+
+export interface IndexImageItem {
+  name: string
+  nid: string
+}
+
+export const GLOBAL_INDEX_GROUPS: Record<string, IndexImageItem[]> = {
+  A股: [
+    { name: '上证指数', nid: '1.000001' },
+    { name: '沪深300', nid: '1.000300' },
+    { name: '深证成指', nid: '0.399001' },
+    { name: '科创50', nid: '1.000688' },
+    { name: '创业板指', nid: '0.399006' },
+    { name: '中小100', nid: '0.399005' },
+    { name: '黄金9999', nid: '1.518880' }
+  ],
+  港股: [
+    { name: '恒生指数', nid: '116.HSI' },
+    { name: '恒生科技', nid: '116.HSTECH' }
+  ],
+  美股: [
+    { name: '道琼斯', nid: '105.DJIA' },
+    { name: '纳斯达克', nid: '105.NDX' },
+    { name: '纳斯达克100', nid: '105.NDAQ' },
+    { name: '标普500', nid: '105.SPX' },
+    { name: 'COMEX黄金', nid: '101.GC00Y' }
+  ],
+  亚太: [
+    { name: '日经225', nid: '119.N225' },
+    { name: '越南胡志明', nid: '128.VNINDEX' },
+    { name: '印度孟买', nid: '134.BSE' }
+  ]
+}
+
+export function getIndexImageUrl(nid: string): string {
+  return `https://webquotepic.eastmoney.com/GetPic.aspx?imageType=WAPINDEX2&nid=${nid}&rnd=${Date.now()}`
+}
+
+// ==================== 兼容旧接口（保留导出避免其他文件报错） ====================
+
 export interface MarketData {
   code: string
   name: string
@@ -14,146 +190,18 @@ export interface MarketData {
   category: string
 }
 
-/**
- * 预定义的行情代码
- */
-export const MARKET_CODES = {
-  // A股指数
-  A_STOCK: {
-    'sh000001': '上证指数',
-    'sz399001': '深证成指',
-    'sz399006': '创业板指',
-    'sz399300': '沪深300',
-    'sh000016': '上证50',
-    'sz399905': '中证500',
-    'bj899050': '北证50'
-  },
-  
-  // H股指数
-  H_STOCK: {
-    'hk_HSI': '恒生指数',
-    'hk_HSCEI': '国企指数',
-    'hk_HSTECH': '恒生科技'
-  },
-  
-  // 美股指数
-  US_STOCK: {
-    'us_DJI': '道琼斯',
-    'us_SPX': '标普500',
-    'us_IXIC': '纳斯达克'
-  },
-  
-  // 其他指数
-  OTHER: {
-    'gb_FTSE': '富时100',
-    'de_DAX': '德国DAX',
-    'jp_N225': '日经225'
-  }
-}
-
-/**
- * 获取行情数据（使用fundgz接口）
- * 注意：fundgz主要提供基金数据，这里模拟行情数据
- */
-export function fetchMarketData(code: string, name: string, category: string): Promise<MarketData> {
-  return new Promise((resolve, _reject) => {
-    // 由于fundgz接口主要用于基金，这里使用模拟数据
-    // 实际项目中应该使用专门的行情接口
-    
-    // 模拟延迟
-    setTimeout(() => {
-      // 生成模拟数据
-      const basePrice = 3000 + Math.random() * 1000
-      const changePercent = (Math.random() - 0.5) * 4 // -2% 到 +2%
-      const changeAmount = basePrice * (changePercent / 100)
-      
-      resolve({
-        code,
-        name,
-        price: parseFloat(basePrice.toFixed(2)),
-        changePercent: parseFloat(changePercent.toFixed(2)),
-        changeAmount: parseFloat(changeAmount.toFixed(2)),
-        category
-      })
-    }, 100 + Math.random() * 200)
-  })
-}
-
-/**
- * 批量获取行情数据
- */
-export async function fetchMultipleMarketData(
-  codes: Record<string, string>,
-  category: string
-): Promise<MarketData[]> {
-  const promises = Object.entries(codes).map(([code, name]) =>
-    fetchMarketData(code, name, category)
-      .catch(error => {
-        console.error(`获取行情${code}失败:`, error)
-        return null
-      })
-  )
-  
-  const results = await Promise.all(promises)
-  return results.filter(Boolean) as MarketData[]
-}
-
-/**
- * 获取A股行情
- */
-export function fetchAStockMarkets(): Promise<MarketData[]> {
-  return fetchMultipleMarketData(MARKET_CODES.A_STOCK, 'A股')
-}
-
-/**
- * 获取H股行情
- */
-export function fetchHStockMarkets(): Promise<MarketData[]> {
-  return fetchMultipleMarketData(MARKET_CODES.H_STOCK, 'H股')
-}
-
-/**
- * 获取美股行情
- */
-export function fetchUSStockMarkets(): Promise<MarketData[]> {
-  return fetchMultipleMarketData(MARKET_CODES.US_STOCK, '美股')
-}
-
-/**
- * 获取其他行情
- */
-export function fetchOtherMarkets(): Promise<MarketData[]> {
-  return fetchMultipleMarketData(MARKET_CODES.OTHER, '其他')
-}
-
-/**
- * 获取所有行情
- */
 export async function fetchAllMarkets(): Promise<MarketData[]> {
-  const [aStock, hStock, usStock, other] = await Promise.all([
-    fetchAStockMarkets(),
-    fetchHStockMarkets(),
-    fetchUSStockMarkets(),
-    fetchOtherMarkets()
-  ])
-  
-  return [...aStock, ...hStock, ...usStock, ...other]
+  const cards = await fetchIndexCards()
+  return cards.map(c => ({
+    code: c.code,
+    name: c.name,
+    price: c.price,
+    changePercent: c.changePercent,
+    changeAmount: c.changeAmount,
+    category: 'A股'
+  }))
 }
 
-/**
- * 根据分类获取行情
- */
-export function fetchMarketsByCategory(category: string): Promise<MarketData[]> {
-  switch (category) {
-    case 'A股':
-      return fetchAStockMarkets()
-    case 'H股':
-      return fetchHStockMarkets()
-    case '美股':
-      return fetchUSStockMarkets()
-    case '其他':
-      return fetchOtherMarkets()
-    default:
-      return Promise.resolve([])
-  }
+export async function fetchMarketsByCategory(_category: string): Promise<MarketData[]> {
+  return fetchAllMarkets()
 }

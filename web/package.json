@@ -14,11 +14,13 @@
     "element-plus": "^2.14.0",
     "jsonp": "^0.2.1",
     "pinia": "^3.0.4",
+    "sortablejs": "^1.15.7",
     "vue": "^3.5.32",
     "vue-router": "^5.0.6"
   },
   "devDependencies": {
     "@types/node": "^24.12.2",
+    "@types/sortablejs": "^1.15.9",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",
     "typescript": "~6.0.2",

@@ -112,6 +112,24 @@ class GroupService {
   }
 
   /**
+   * 同步基金分组 membership（group.fundCodes 与 Fund.groupKey）
+   */
+  async syncFundGroupMembership(
+    fundCode: string,
+    previousGroupKey: string | undefined,
+    nextGroupKey: string | undefined
+  ): Promise<void> {
+    const groupStore = useGroupStore()
+    if (previousGroupKey && previousGroupKey !== nextGroupKey) {
+      await groupStore.removeFundFromGroup(fundCode, previousGroupKey)
+    }
+    if (nextGroupKey && nextGroupKey !== previousGroupKey) {
+      await groupStore.addFundToGroup(fundCode, nextGroupKey)
+    }
+    this.saveGroups()
+  }
+
+  /**
    * 获取分组的基金数量
    */
   getGroupFundCount(groupKey: string): number {

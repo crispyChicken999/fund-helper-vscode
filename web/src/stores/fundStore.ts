@@ -3,16 +3,16 @@
 import { defineStore } from 'pinia'
 import type { Fund, FundInfo, FundView, SortConfig } from '@/types'
 import {
-  calculateHoldingGain,
-  calculateHoldingGainRate,
-  calculateDailyGain,
-  calculateEstimatedGain,
-  calculateEstimatedChange,
   calculateTotalAsset,
   calculateTotalHoldingGain,
-  calculateTotalDailyGain,
   calculateAverageGainRate
 } from '@/utils/calc'
+import { normalizeFundInfo } from '@/utils/fundInfoNormalize'
+import {
+  buildFundRowDisplay,
+  calculateSmartDailyGain
+} from '@/utils/fundDisplay'
+import { getChinaMarketStatus } from '@/utils/marketChina'
 
 interface FundStoreState {
   // 数据
@@ -53,35 +53,52 @@ export const useFundStore = defineStore('fund', {
     getFundView: (state) => (code: string): FundView | undefined => {
       const fund = state.funds.find(f => f.code === code)
       if (!fund) return undefined
-      
-      const detail = state.fundDetails.get(code)
-      if (!detail) return fund as FundView
-      
+
+      const raw = state.fundDetails.get(code)
+      const info = normalizeFundInfo(raw, code)
+      if (!info) return { ...fund, name: fund.code } as FundView
+
+      const market = getChinaMarketStatus()
+      const row = buildFundRowDisplay(fund, info, market)
+
       return {
         ...fund,
-        ...detail,
-        dailyGain: calculateDailyGain(fund, detail.changeAmount),
-        holdingGain: calculateHoldingGain(fund, detail.currentPrice),
-        holdingGainRate: calculateHoldingGainRate(fund, detail.currentPrice),
-        estimatedGain: calculateEstimatedGain(fund, detail.currentPrice),
-        estimatedChange: calculateEstimatedChange(fund, detail.currentPrice)
+        ...info,
+        name: row.name,
+        sector: row.relateTheme,
+        relateTheme: row.relateTheme,
+        currentPrice: row.dwjz,
+        changePercent: row.navChgRt,
+        changeAmount: fund.num ? row.dailyGain / fund.num : 0,
+        dailyGain: row.dailyGain,
+        holdingGain: row.holdingGain,
+        holdingGainRate: row.holdingGainRate,
+        estimatedGain: row.estimatedGain,
+        estimatedChange: row.gszzl
       }
     },
 
-    // 获取所有基金视图
     getAllFundViews(): FundView[] {
       return this.funds.map(fund => {
-        const detail = this.fundDetails.get(fund.code)
-        if (!detail) return fund as FundView
-        
+        const raw = this.fundDetails.get(fund.code)
+        const info = normalizeFundInfo(raw, fund.code)
+        if (!info) return { ...fund, name: fund.code } as FundView
+        const market = getChinaMarketStatus()
+        const row = buildFundRowDisplay(fund, info, market)
         return {
           ...fund,
-          ...detail,
-          dailyGain: calculateDailyGain(fund, detail.changeAmount),
-          holdingGain: calculateHoldingGain(fund, detail.currentPrice),
-          holdingGainRate: calculateHoldingGainRate(fund, detail.currentPrice),
-          estimatedGain: calculateEstimatedGain(fund, detail.currentPrice),
-          estimatedChange: calculateEstimatedChange(fund, detail.currentPrice)
+          ...info,
+          name: row.name,
+          sector: row.relateTheme,
+          relateTheme: row.relateTheme,
+          currentPrice: row.dwjz,
+          changePercent: row.navChgRt,
+          changeAmount: fund.num ? row.dailyGain / fund.num : 0,
+          dailyGain: row.dailyGain,
+          holdingGain: row.holdingGain,
+          holdingGainRate: row.holdingGainRate,
+          estimatedGain: row.estimatedGain,
+          estimatedChange: row.gszzl
         }
       })
     },
@@ -96,9 +113,14 @@ export const useFundStore = defineStore('fund', {
       return calculateTotalHoldingGain(this.funds, this.fundDetails)
     },
 
-    // 日收益总和
     getTotalDailyGain(): number {
-      return calculateTotalDailyGain(this.funds, this.fundDetails)
+      const market = getChinaMarketStatus()
+      return this.funds.reduce((sum, fund) => {
+        const raw = this.fundDetails.get(fund.code)
+        const info = normalizeFundInfo(raw, fund.code)
+        if (!info) return sum
+        return sum + calculateSmartDailyGain(fund, info, market)
+      }, 0)
     },
 
     // 平均收益率
@@ -159,14 +181,12 @@ export const useFundStore = defineStore('fund', {
     // 搜索基金
     searchFunds(query: string): Fund[] {
       if (!query) return this.funds
-      
+
       const lowerQuery = query.toLowerCase()
       return this.funds.filter(fund => {
         const detail = this.fundDetails.get(fund.code)
-        return (
-          fund.code.includes(lowerQuery) ||
-          detail?.name.toLowerCase().includes(lowerQuery)
-        )
+        const name = detail?.name?.toLowerCase() ?? ''
+        return fund.code.includes(lowerQuery) || name.includes(lowerQuery)
       })
     },
 
@@ -199,6 +219,24 @@ export const useFundStore = defineStore('fund', {
     clearFunds() {
       this.funds = []
       this.fundDetails.clear()
+    },
+
+    /** 按代码顺序重排持仓（用于「全部」下拖拽排序） */
+    reorderFunds(orderedCodes: string[]) {
+      const map = new Map(this.funds.map(f => [f.code, f]))
+      const next: Fund[] = []
+      const seen = new Set<string>()
+      for (const c of orderedCodes) {
+        const f = map.get(c)
+        if (f) {
+          next.push(f)
+          seen.add(c)
+        }
+      }
+      for (const f of this.funds) {
+        if (!seen.has(f.code)) next.push(f)
+      }
+      this.funds = next
     },
 
     // 设置排序配置

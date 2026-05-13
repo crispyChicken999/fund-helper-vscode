@@ -273,6 +273,53 @@ code {
   }
 }
 
+/* Fund Helper — Phase 0 design tokens（涨跌色：A 股习惯涨红跌绿） */
+:root {
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-up: #ef4444;
+  --color-down: #22c55e;
+  --color-flat: #9ca3af;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+}
+
+[data-theme='dark'] {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a2035;
+  --bg-card-hover: #1e2a45;
+  --text-primary: #e2e8f0;
+  --text-secondary: #718096;
+  --border-color: #2d3748;
+}
+
+[data-grayscale='true'] {
+  --color-up: var(--text-primary);
+  --color-down: var(--text-primary);
+}
+
+/* 深色模式玻璃拟态 */
+[data-theme='dark'] .glass-card {
+  background: rgba(26, 32, 53, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(99, 179, 237, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* 全局字体 */
+body {
+  font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 .ticks {
   position: relative;
   width: 100%;

@@ -1,6 +1,7 @@
 // Vue Router 配置
 
 import { createRouter, createWebHistory } from 'vue-router'
+import { initApp } from '@/appInit'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,8 +38,12 @@ const router = createRouter({
   ]
 })
 
-// 路由守卫 - 设置页面标题
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
+  try {
+    await initApp()
+  } catch (e) {
+    console.error('应用初始化失败:', e)
+  }
   if (to.meta.title) {
     document.title = `${to.meta.title} - 基金助手`
   }

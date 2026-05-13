@@ -10,34 +10,58 @@ export interface Fund {
   groupKey?: string         // 所属分组键
 }
 
-// 基金详情信息（从接口获取）
+// 基金详情信息（接口合并结果，对齐 VSCode fundModel.FundInfo）
 export interface FundInfo {
-  code: string              // 基金代码
-  name: string              // 基金名称
-  currentPrice: number      // 当前净值
-  changePercent: number     // 日涨跌幅 (%)
-  changeAmount: number      // 日涨跌额
-  sector?: string           // 行业分类
-  type?: string             // 基金类型
-  company?: string          // 基金公司
-  establishDate?: string    // 成立日期
-  manager?: string          // 基金经理
-  
-  // 计算字段（前端生成）
-  dailyGain?: number        // 日收益
-  holdingGain?: number      // 持有收益
-  holdingGainRate?: number  // 持有收益率 (%)
-  estimatedGain?: number    // 预计收益
-  estimatedChange?: number  // 预计涨幅 (%)
-}
+  code: string
+  name: string
+  /** 单位净值（上一交易日） */
+  netValue: number
+  /** 估算净值（盘中）；QDII 等可能为 null */
+  estimatedValue: number | null
+  /** 估算涨跌幅 % */
+  changePercent: number
+  updateTime: string
+  /** 净值日期 YYYY-MM-DD */
+  netValueDate: string
+  isRealValue: boolean
+  /** 实际净值涨跌幅 %（上一交易日） */
+  navChgRt: number
+  shares: number
+  cost: number
+  /** 关联板块（天天基金） */
+  relateTheme?: string
 
-// 基金的计算视图（包含所有字段）
-export interface FundView extends Fund {
-  name?: string
+  /** @deprecated 兼容旧缓存，等同 netValue */
   currentPrice?: number
-  changePercent?: number
+  /** @deprecated */
   changeAmount?: number
   sector?: string
+  type?: string
+  company?: string
+  establishDate?: string
+  manager?: string
+  dailyGain?: number
+  holdingGain?: number
+  holdingGainRate?: number
+  estimatedGain?: number
+  estimatedChange?: number
+}
+
+// 基金的计算视图（列表 / 详情）
+export interface FundView extends Fund {
+  name?: string
+  netValue?: number
+  estimatedValue?: number | null
+  changePercent?: number
+  navChgRt?: number
+  updateTime?: string
+  netValueDate?: string
+  isRealValue?: boolean
+  relateTheme?: string
+  sector?: string
+  groupName?: string
+  currentPrice?: number
+  changeAmount?: number
   dailyGain?: number
   holdingGain?: number
   holdingGainRate?: number

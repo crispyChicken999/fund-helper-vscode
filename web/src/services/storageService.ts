@@ -12,6 +12,44 @@ const STORAGE_KEYS = {
   FUND_DETAILS_CACHE: 'fund_helper_fund_details_cache'
 }
 
+export const FUND_HELPER_BOX_NAME_KEY = 'fund_helper_box_name'
+
+const ID_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
+
+function randomId(length: number): string {
+  const bytes = new Uint8Array(length)
+  crypto.getRandomValues(bytes)
+  let out = ''
+  for (let i = 0; i < length; i++) {
+    out += ID_CHARS[bytes[i]! % ID_CHARS.length]
+  }
+  return out
+}
+
+/**
+ * 保证本地存在 JSONBox 名称：优先读 fund_helper_box_name；无则迁移旧 settings 或生成 fh_ + 随机串。
+ */
+export function ensureBoxName(): string {
+  let name = localStorage.getItem(FUND_HELPER_BOX_NAME_KEY)
+  if (!name) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS)
+      const parsed = raw ? (JSON.parse(raw) as { jsonboxName?: string }) : null
+      const legacy = parsed?.jsonboxName
+      if (legacy && /^[a-zA-Z0-9_-]{20,64}$/.test(legacy)) {
+        name = legacy
+      }
+    } catch {
+      /* ignore */
+    }
+    if (!name) {
+      name = `fh_${randomId(21)}`
+    }
+    localStorage.setItem(FUND_HELPER_BOX_NAME_KEY, name)
+  }
+  return name
+}
+
 /**
  * 本地存储服务
  */

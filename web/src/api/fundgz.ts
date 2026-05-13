@@ -101,9 +101,9 @@ function loadFundgzJsonp(code: string): Promise<FundgzRawData> {
 }
 
 /**
- * fundgz接口返回的原始数据格式
+ * fundgz 接口返回的原始数据格式（JSONP）
  */
-interface FundgzRawData {
+export interface FundgzRawData {
   fundcode: string      // 基金代码
   name: string          // 基金名称
   jzrq: string          // 净值日期
@@ -111,6 +111,19 @@ interface FundgzRawData {
   gsz: string           // 估算净值
   gszzl: string         // 估算涨跌百分比
   gztime: string        // 估值时间
+}
+
+/**
+ * 通过 JSONP 拉取 fundgz 原始对象（空响应/超时返回 null，供与 MNFInfo 合并）
+ */
+export async function fetchFundgzRawViaJsonp(code: string): Promise<FundgzRawData | null> {
+  try {
+    const data = await loadFundgzJsonp(code)
+    if (!data?.fundcode) return null
+    return data
+  } catch {
+    return null
+  }
 }
 
 /**
