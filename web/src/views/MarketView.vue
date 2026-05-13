@@ -109,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import {
@@ -243,6 +243,11 @@ async function loadTabOnce(tab: string) {
 function switchMainTab(tab: string) {
   activeMainTab.value = tab
   loadTabOnce(tab)
+  // Resize charts after tab switch (DOM visibility change)
+  nextTick(() => {
+    flowChartInstance?.resize()
+    Object.values(plateChartInstances).forEach((c: any) => c?.resize())
+  })
 }
 
 async function switchPlateRank(tab: string, field: PlateRankField) {
@@ -314,7 +319,14 @@ async function renderPlateChart(tab: string, data: { name: string; value: number
   const echarts = await loadEcharts()
   await nextTick()
   const el = plateChartRefs[tab]
-  if (!el) return
+  if (!el || !data.length) return
+
+  // Ensure the container is visible and has dimensions
+  if (el.offsetWidth === 0 || el.offsetHeight === 0) {
+    // Retry after a short delay (tab might still be transitioning)
+    setTimeout(() => renderPlateChart(tab, data), 100)
+    return
+  }
 
   if (!plateChartInstances[tab]) {
     plateChartInstances[tab] = echarts.init(el)
@@ -332,18 +344,21 @@ async function renderPlateChart(tab: string, data: { name: string; value: number
         if (!p) return ''
         const name = data[p.dataIndex]?.name ?? ''
         const color = p.value >= 0 ? '#ef4444' : '#22c55e'
-        return `<span style="color:${color}">${name}: ${p.value} 亿</span>`
+        const sign = p.value >= 0 ? '+' : ''
+        return `${name}<br/>净流入: <span style="color:${color};font-weight:600;">${sign}${p.value.toFixed(2)}</span> 亿`
       }
     },
-    grid: { left: 50, right: 16, top: 12, bottom: 60 },
+    grid: { left: 50, right: 20, top: 20, bottom: 60 },
     xAxis: {
       type: 'category',
       data: names,
-      axisLabel: { fontSize: 9, interval: 0 }
+      axisLabel: { fontSize: 9, interval: 0, color: 'var(--text-secondary)' },
+      axisLine: { lineStyle: { color: 'var(--border-color)' } }
     },
     yAxis: {
       type: 'value',
-      axisLabel: { fontSize: 10, formatter: '{value}亿' }
+      axisLabel: { fontSize: 10, formatter: '{value}亿', color: 'var(--text-secondary)' },
+      splitLine: { lineStyle: { color: 'var(--border-color)', type: 'dashed' } }
     },
     dataZoom: [
       { type: 'slider', start: 0, end: Math.min(100, (30 / Math.max(data.length, 1)) * 100), bottom: 4, height: 18 },
@@ -351,7 +366,8 @@ async function renderPlateChart(tab: string, data: { name: string; value: number
     ],
     series: [{
       type: 'bar',
-      data: values.map((v, i) => ({ value: v, itemStyle: { color: colors[i] } }))
+      data: values.map((v, i) => ({ value: v, itemStyle: { color: colors[i] } })),
+      barMaxWidth: 30
     }]
   }
   plateChartInstances[tab].setOption(option, true)
@@ -435,6 +451,8 @@ onUnmounted(() => {
 .header-top h2 {
   margin: 0;
   font-size: 18px;
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .header-actions {
@@ -611,10 +629,12 @@ onUnmounted(() => {
 .chart-container {
   width: 100%;
   height: 280px;
+  min-height: 280px;
 }
 
 .chart-plate {
-  height: 300px;
+  height: 320px;
+  min-height: 320px;
 }
 
 @media (max-width: 768px) {

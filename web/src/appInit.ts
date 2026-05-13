@@ -17,6 +17,9 @@ export async function initApp(): Promise<void> {
       await syncService.initialize()
       storageService.saveSettings(settingStore.getSettings())
 
+      // Apply grayscale mode to DOM
+      document.documentElement.dataset.grayscale = String(settingStore.grayscaleMode)
+
       const interval = settingStore.refreshInterval
       if (interval > 0) {
         await fundService.refreshAllFunds().catch(console.error)

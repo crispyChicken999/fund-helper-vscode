@@ -1,0 +1,2678 @@
+<html
+  lang="zh-CN"
+  style="
+    --vscode-font-family:
+      &quot;Segoe WPC&quot;, &quot;Segoe UI&quot;, sans-serif;
+    --vscode-font-weight: normal;
+    --vscode-font-size: 13px;
+    --vscode-editor-font-family: Consolas, &quot;Courier New&quot;, monospace;
+    --vscode-editor-font-weight: normal;
+    --vscode-editor-font-size: 14px;
+    --text-link-decoration: none;
+    --vscode-foreground: #cccccc;
+    --vscode-strongForeground: #ffffff;
+    --vscode-disabledForeground: rgba(204, 204, 204, 0.5);
+    --vscode-errorForeground: #f48771;
+    --vscode-descriptionForeground: rgba(204, 204, 204, 0.7);
+    --vscode-icon-foreground: #c5c5c5;
+    --vscode-focusBorder: #007fd4;
+    --vscode-textLink-foreground: #3794ff;
+    --vscode-textLink-activeForeground: #3794ff;
+    --vscode-textSeparator-foreground: rgba(255, 255, 255, 0.18);
+    --vscode-textPreformat-foreground: #d7ba7d;
+    --vscode-textPreformat-background: rgba(255, 255, 255, 0.1);
+    --vscode-textBlockQuote-background: #222222;
+    --vscode-textBlockQuote-border: rgba(0, 122, 204, 0.5);
+    --vscode-textCodeBlock-background: rgba(10, 10, 10, 0.4);
+    --vscode-sash-hoverBorder: #007fd4;
+    --vscode-badge-background: #4d4d4d;
+    --vscode-badge-foreground: #ffffff;
+    --vscode-activityWarningBadge-foreground: #ffffff;
+    --vscode-activityWarningBadge-background: #b27c00;
+    --vscode-activityErrorBadge-foreground: #000000;
+    --vscode-activityErrorBadge-background: #f14c4c;
+    --vscode-scrollbar-shadow: #000000;
+    --vscode-scrollbarSlider-background: rgba(121, 121, 121, 0.4);
+    --vscode-scrollbarSlider-hoverBackground: rgba(100, 100, 100, 0.7);
+    --vscode-scrollbarSlider-activeBackground: rgba(191, 191, 191, 0.4);
+    --vscode-progressBar-background: #0e70c0;
+    --vscode-chart-line: #236b8e;
+    --vscode-chart-axis: rgba(191, 191, 191, 0.4);
+    --vscode-chart-guide: rgba(191, 191, 191, 0.2);
+    --vscode-editor-background: #1e1e1e;
+    --vscode-editor-foreground: #d4d4d4;
+    --vscode-editorStickyScroll-background: #1e1e1e;
+    --vscode-editorStickyScrollGutter-background: #1e1e1e;
+    --vscode-editorStickyScrollHover-background: #2a2d2e;
+    --vscode-editorStickyScroll-shadow: #000000;
+    --vscode-editorWidget-background: #252526;
+    --vscode-editorWidget-foreground: #cccccc;
+    --vscode-editorWidget-border: rgba(204, 204, 204, 0.2);
+    --vscode-editorError-foreground: #f14c4c;
+    --vscode-editorWarning-foreground: #cca700;
+    --vscode-editorInfo-foreground: #59a4f9;
+    --vscode-editorHint-foreground: rgba(238, 238, 238, 0.7);
+    --vscode-editorLink-activeForeground: #4e94ce;
+    --vscode-editor-selectionBackground: #264f78;
+    --vscode-editor-inactiveSelectionBackground: #3a3d41;
+    --vscode-editor-selectionHighlightBackground: rgba(173, 214, 255, 0.15);
+    --vscode-editor-compositionBorder: #ffffff;
+    --vscode-editor-findMatchBackground: #515c6a;
+    --vscode-editor-findMatchHighlightBackground: rgba(234, 92, 0, 0.33);
+    --vscode-editor-findRangeHighlightBackground: rgba(58, 61, 65, 0.4);
+    --vscode-editor-hoverHighlightBackground: rgba(38, 79, 120, 0.25);
+    --vscode-editorHoverWidget-background: #252526;
+    --vscode-editorHoverWidget-foreground: #cccccc;
+    --vscode-editorHoverWidget-border: rgba(204, 204, 204, 0.2);
+    --vscode-editorHoverWidget-statusBarBackground: #2c2c2d;
+    --vscode-editorInlayHint-foreground: #969696;
+    --vscode-editorInlayHint-background: rgba(77, 77, 77, 0.1);
+    --vscode-editorInlayHint-typeForeground: #969696;
+    --vscode-editorInlayHint-typeBackground: rgba(77, 77, 77, 0.1);
+    --vscode-editorInlayHint-parameterForeground: #969696;
+    --vscode-editorInlayHint-parameterBackground: rgba(77, 77, 77, 0.1);
+    --vscode-editorLightBulb-foreground: #ffcc00;
+    --vscode-editorLightBulbAutoFix-foreground: #75beff;
+    --vscode-editorLightBulbAi-foreground: #ffcc00;
+    --vscode-editor-snippetTabstopHighlightBackground: rgba(124, 124, 124, 0.3);
+    --vscode-editor-snippetFinalTabstopHighlightBorder: #525252;
+    --vscode-diffEditor-insertedTextBackground: rgba(156, 204, 44, 0.2);
+    --vscode-diffEditor-removedTextBackground: rgba(255, 0, 0, 0.2);
+    --vscode-diffEditor-insertedLineBackground: rgba(155, 185, 85, 0.2);
+    --vscode-diffEditor-removedLineBackground: rgba(255, 0, 0, 0.2);
+    --vscode-diffEditor-diagonalFill: rgba(204, 204, 204, 0.2);
+    --vscode-diffEditor-unchangedRegionBackground: #252526;
+    --vscode-diffEditor-unchangedRegionForeground: #cccccc;
+    --vscode-diffEditor-unchangedCodeBackground: rgba(116, 116, 116, 0.16);
+    --vscode-widget-shadow: rgba(0, 0, 0, 0.36);
+    --vscode-widget-border: #303031;
+    --vscode-toolbar-hoverBackground: rgba(90, 93, 94, 0.31);
+    --vscode-toolbar-activeBackground: rgba(99, 102, 103, 0.31);
+    --vscode-breadcrumb-foreground: rgba(204, 204, 204, 0.8);
+    --vscode-breadcrumb-background: #1e1e1e;
+    --vscode-breadcrumb-focusForeground: #e0e0e0;
+    --vscode-breadcrumb-activeSelectionForeground: #e0e0e0;
+    --vscode-breadcrumbPicker-background: #252526;
+    --vscode-merge-currentHeaderBackground: rgba(64, 200, 174, 0.5);
+    --vscode-merge-currentContentBackground: rgba(64, 200, 174, 0.2);
+    --vscode-merge-incomingHeaderBackground: rgba(64, 166, 255, 0.5);
+    --vscode-merge-incomingContentBackground: rgba(64, 166, 255, 0.2);
+    --vscode-merge-commonHeaderBackground: rgba(96, 96, 96, 0.4);
+    --vscode-merge-commonContentBackground: rgba(96, 96, 96, 0.16);
+    --vscode-editorOverviewRuler-currentContentForeground: rgba(
+      64,
+      200,
+      174,
+      0.5
+    );
+    --vscode-editorOverviewRuler-incomingContentForeground: rgba(
+      64,
+      166,
+      255,
+      0.5
+    );
+    --vscode-editorOverviewRuler-commonContentForeground: rgba(96, 96, 96, 0.4);
+    --vscode-editorOverviewRuler-findMatchForeground: rgba(209, 134, 22, 0.49);
+    --vscode-editorOverviewRuler-selectionHighlightForeground: rgba(
+      160,
+      160,
+      160,
+      0.8
+    );
+    --vscode-problemsErrorIcon-foreground: #f14c4c;
+    --vscode-problemsWarningIcon-foreground: #cca700;
+    --vscode-problemsInfoIcon-foreground: #59a4f9;
+    --vscode-minimap-findMatchHighlight: rgba(234, 92, 0, 0.33);
+    --vscode-minimap-selectionOccurrenceHighlight: rgba(173, 214, 255, 0.15);
+    --vscode-minimap-selectionHighlight: #264f78;
+    --vscode-minimap-infoHighlight: #59a4f9;
+    --vscode-minimap-warningHighlight: #cca700;
+    --vscode-minimap-errorHighlight: rgba(255, 18, 18, 0.7);
+    --vscode-minimap-foregroundOpacity: #000000;
+    --vscode-minimapSlider-background: rgba(121, 121, 121, 0.2);
+    --vscode-minimapSlider-hoverBackground: rgba(100, 100, 100, 0.35);
+    --vscode-minimapSlider-activeBackground: rgba(191, 191, 191, 0.2);
+    --vscode-charts-foreground: #cccccc;
+    --vscode-charts-lines: rgba(204, 204, 204, 0.5);
+    --vscode-charts-red: #f14c4c;
+    --vscode-charts-blue: #59a4f9;
+    --vscode-charts-yellow: #cca700;
+    --vscode-charts-orange: rgba(234, 92, 0, 0.33);
+    --vscode-charts-green: #89d185;
+    --vscode-charts-purple: #b180d7;
+    --vscode-list-focusOutline: #007fd4;
+    --vscode-list-activeSelectionBackground: #04395e;
+    --vscode-list-activeSelectionForeground: #ffffff;
+    --vscode-list-activeSelectionIconForeground: #ffffff;
+    --vscode-list-inactiveSelectionBackground: #37373d;
+    --vscode-list-hoverBackground: #2a2d2e;
+    --vscode-list-dropBackground: #383b3d;
+    --vscode-list-dropBetweenBackground: #c5c5c5;
+    --vscode-list-highlightForeground: #2aaaff;
+    --vscode-list-focusHighlightForeground: #2aaaff;
+    --vscode-list-invalidItemForeground: #b89500;
+    --vscode-list-errorForeground: #f88070;
+    --vscode-list-warningForeground: #cca700;
+    --vscode-listFilterWidget-background: #252526;
+    --vscode-listFilterWidget-outline: rgba(0, 0, 0, 0);
+    --vscode-listFilterWidget-noMatchesOutline: #be1100;
+    --vscode-listFilterWidget-shadow: rgba(0, 0, 0, 0.36);
+    --vscode-list-filterMatchBackground: rgba(234, 92, 0, 0.33);
+    --vscode-list-deemphasizedForeground: #8c8c8c;
+    --vscode-tree-indentGuidesStroke: #585858;
+    --vscode-tree-inactiveIndentGuidesStroke: rgba(88, 88, 88, 0.4);
+    --vscode-tree-tableColumnsBorder: rgba(204, 204, 204, 0.13);
+    --vscode-tree-tableOddRowsBackground: rgba(204, 204, 204, 0.04);
+    --vscode-editorActionList-background: #252526;
+    --vscode-editorActionList-foreground: #cccccc;
+    --vscode-editorActionList-focusForeground: #ffffff;
+    --vscode-editorActionList-focusBackground: #04395e;
+    --vscode-input-background: #3c3c3c;
+    --vscode-input-foreground: #cccccc;
+    --vscode-inputOption-activeBorder: #007acc;
+    --vscode-inputOption-hoverBackground: rgba(90, 93, 94, 0.5);
+    --vscode-inputOption-activeBackground: rgba(0, 127, 212, 0.4);
+    --vscode-inputOption-activeForeground: #ffffff;
+    --vscode-input-placeholderForeground: #a6a6a6;
+    --vscode-inputValidation-infoBackground: #063b49;
+    --vscode-inputValidation-infoBorder: #007acc;
+    --vscode-inputValidation-warningBackground: #352a05;
+    --vscode-inputValidation-warningBorder: #b89500;
+    --vscode-inputValidation-errorBackground: #5a1d1d;
+    --vscode-inputValidation-errorBorder: #be1100;
+    --vscode-dropdown-background: #3c3c3c;
+    --vscode-dropdown-foreground: #f0f0f0;
+    --vscode-dropdown-border: #3c3c3c;
+    --vscode-button-foreground: #ffffff;
+    --vscode-button-separator: rgba(255, 255, 255, 0.4);
+    --vscode-button-background: #0e639c;
+    --vscode-button-hoverBackground: #1177bb;
+    --vscode-button-secondaryForeground: #cccccc;
+    --vscode-button-secondaryBackground: #2a2d2e;
+    --vscode-button-secondaryHoverBackground: #333637;
+    --vscode-radio-activeForeground: #ffffff;
+    --vscode-radio-activeBackground: rgba(0, 127, 212, 0.4);
+    --vscode-radio-activeBorder: #007acc;
+    --vscode-radio-inactiveBorder: rgba(255, 255, 255, 0.2);
+    --vscode-radio-inactiveHoverBackground: rgba(90, 93, 94, 0.5);
+    --vscode-checkbox-background: #3c3c3c;
+    --vscode-checkbox-selectBackground: #252526;
+    --vscode-checkbox-foreground: #f0f0f0;
+    --vscode-checkbox-border: #6b6b6b;
+    --vscode-checkbox-selectBorder: #c5c5c5;
+    --vscode-checkbox-disabled\.background: #777777;
+    --vscode-checkbox-disabled\.foreground: #b4b4b4;
+    --vscode-keybindingLabel-background: rgba(128, 128, 128, 0.17);
+    --vscode-keybindingLabel-foreground: #cccccc;
+    --vscode-keybindingLabel-border: rgba(51, 51, 51, 0.6);
+    --vscode-keybindingLabel-bottomBorder: rgba(68, 68, 68, 0.6);
+    --vscode-menu-border: #454545;
+    --vscode-menu-foreground: #cccccc;
+    --vscode-menu-background: #252526;
+    --vscode-menu-selectionForeground: #ffffff;
+    --vscode-menu-selectionBackground: #0078d4;
+    --vscode-menu-separatorBackground: #454545;
+    --vscode-quickInput-background: #252526;
+    --vscode-quickInput-foreground: #cccccc;
+    --vscode-quickInputTitle-background: rgba(255, 255, 255, 0.1);
+    --vscode-pickerGroup-foreground: #3794ff;
+    --vscode-pickerGroup-border: #3f3f46;
+    --vscode-quickInputList-focusForeground: #ffffff;
+    --vscode-quickInputList-focusIconForeground: #ffffff;
+    --vscode-quickInputList-focusBackground: #04395e;
+    --vscode-quickInputList-focusHighlightForeground: #2aaaff;
+    --vscode-search-resultsInfoForeground: rgba(204, 204, 204, 0.65);
+    --vscode-searchEditor-findMatchBackground: rgba(234, 92, 0, 0.22);
+    --vscode-editor-lineHighlightBorder: #282828;
+    --vscode-editor-rangeHighlightBackground: rgba(255, 255, 255, 0.04);
+    --vscode-editor-symbolHighlightBackground: rgba(234, 92, 0, 0.33);
+    --vscode-editorCursor-foreground: #ffffff;
+    --vscode-editorMultiCursor-primary\.foreground: #ffffff;
+    --vscode-editorMultiCursor-secondary\.foreground: #ffffff;
+    --vscode-editorWhitespace-foreground: rgba(227, 228, 226, 0.16);
+    --vscode-editorLineNumber-foreground: #858585;
+    --vscode-editorIndentGuide-background: rgba(227, 228, 226, 0.16);
+    --vscode-editorIndentGuide-activeBackground: rgba(227, 228, 226, 0.16);
+    --vscode-editorIndentGuide-background1: #404040;
+    --vscode-editorIndentGuide-background2: rgba(0, 0, 0, 0);
+    --vscode-editorIndentGuide-background3: rgba(0, 0, 0, 0);
+    --vscode-editorIndentGuide-background4: rgba(0, 0, 0, 0);
+    --vscode-editorIndentGuide-background5: rgba(0, 0, 0, 0);
+    --vscode-editorIndentGuide-background6: rgba(0, 0, 0, 0);
+    --vscode-editorIndentGuide-activeBackground1: #707070;
+    --vscode-editorIndentGuide-activeBackground2: rgba(0, 0, 0, 0);
+    --vscode-editorIndentGuide-activeBackground3: rgba(0, 0, 0, 0);
+    --vscode-editorIndentGuide-activeBackground4: rgba(0, 0, 0, 0);
+    --vscode-editorIndentGuide-activeBackground5: rgba(0, 0, 0, 0);
+    --vscode-editorIndentGuide-activeBackground6: rgba(0, 0, 0, 0);
+    --vscode-editorActiveLineNumber-foreground: #c6c6c6;
+    --vscode-editorLineNumber-activeForeground: #c6c6c6;
+    --vscode-editorRuler-foreground: #5a5a5a;
+    --vscode-editorCodeLens-foreground: #999999;
+    --vscode-editorBracketMatch-background: rgba(0, 100, 0, 0.1);
+    --vscode-editorBracketMatch-border: #888888;
+    --vscode-editorOverviewRuler-border: rgba(127, 127, 127, 0.3);
+    --vscode-editorGutter-background: #1e1e1e;
+    --vscode-editorUnnecessaryCode-opacity: rgba(0, 0, 0, 0.67);
+    --vscode-editorGhostText-foreground: rgba(255, 255, 255, 0.34);
+    --vscode-editorOverviewRuler-rangeHighlightForeground: rgba(
+      0,
+      122,
+      204,
+      0.6
+    );
+    --vscode-editorOverviewRuler-errorForeground: rgba(255, 18, 18, 0.7);
+    --vscode-editorOverviewRuler-warningForeground: #cca700;
+    --vscode-editorOverviewRuler-infoForeground: #59a4f9;
+    --vscode-editorBracketHighlight-foreground1: #ffd700;
+    --vscode-editorBracketHighlight-foreground2: #da70d6;
+    --vscode-editorBracketHighlight-foreground3: #179fff;
+    --vscode-editorBracketHighlight-foreground4: rgba(0, 0, 0, 0);
+    --vscode-editorBracketHighlight-foreground5: rgba(0, 0, 0, 0);
+    --vscode-editorBracketHighlight-foreground6: rgba(0, 0, 0, 0);
+    --vscode-editorBracketHighlight-unexpectedBracket\.foreground: rgba(
+      255,
+      18,
+      18,
+      0.8
+    );
+    --vscode-editorBracketPairGuide-background1: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-background2: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-background3: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-background4: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-background5: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-background6: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-activeBackground1: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-activeBackground2: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-activeBackground3: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-activeBackground4: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-activeBackground5: rgba(0, 0, 0, 0);
+    --vscode-editorBracketPairGuide-activeBackground6: rgba(0, 0, 0, 0);
+    --vscode-editorUnicodeHighlight-border: #cca700;
+    --vscode-diffEditor-move\.border: rgba(139, 139, 139, 0.61);
+    --vscode-diffEditor-moveActive\.border: #ffa500;
+    --vscode-diffEditor-unchangedRegionShadow: #000000;
+    --vscode-editorOverviewRuler-bracketMatchForeground: #a0a0a0;
+    --vscode-actionBar-toggledBackground: #383a49;
+    --vscode-symbolIcon-arrayForeground: #cccccc;
+    --vscode-symbolIcon-booleanForeground: #cccccc;
+    --vscode-symbolIcon-classForeground: #ee9d28;
+    --vscode-symbolIcon-colorForeground: #cccccc;
+    --vscode-symbolIcon-constantForeground: #cccccc;
+    --vscode-symbolIcon-constructorForeground: #b180d7;
+    --vscode-symbolIcon-enumeratorForeground: #ee9d28;
+    --vscode-symbolIcon-enumeratorMemberForeground: #75beff;
+    --vscode-symbolIcon-eventForeground: #ee9d28;
+    --vscode-symbolIcon-fieldForeground: #75beff;
+    --vscode-symbolIcon-fileForeground: #cccccc;
+    --vscode-symbolIcon-folderForeground: #cccccc;
+    --vscode-symbolIcon-functionForeground: #b180d7;
+    --vscode-symbolIcon-interfaceForeground: #75beff;
+    --vscode-symbolIcon-keyForeground: #cccccc;
+    --vscode-symbolIcon-keywordForeground: #cccccc;
+    --vscode-symbolIcon-methodForeground: #b180d7;
+    --vscode-symbolIcon-moduleForeground: #cccccc;
+    --vscode-symbolIcon-namespaceForeground: #cccccc;
+    --vscode-symbolIcon-nullForeground: #cccccc;
+    --vscode-symbolIcon-numberForeground: #cccccc;
+    --vscode-symbolIcon-objectForeground: #cccccc;
+    --vscode-symbolIcon-operatorForeground: #cccccc;
+    --vscode-symbolIcon-packageForeground: #cccccc;
+    --vscode-symbolIcon-propertyForeground: #cccccc;
+    --vscode-symbolIcon-referenceForeground: #cccccc;
+    --vscode-symbolIcon-snippetForeground: #cccccc;
+    --vscode-symbolIcon-stringForeground: #cccccc;
+    --vscode-symbolIcon-structForeground: #cccccc;
+    --vscode-symbolIcon-textForeground: #cccccc;
+    --vscode-symbolIcon-typeParameterForeground: #cccccc;
+    --vscode-symbolIcon-unitForeground: #cccccc;
+    --vscode-symbolIcon-variableForeground: #75beff;
+    --vscode-peekViewTitle-background: #252526;
+    --vscode-peekViewTitleLabel-foreground: #ffffff;
+    --vscode-peekViewTitleDescription-foreground: rgba(204, 204, 204, 0.7);
+    --vscode-peekView-border: #59a4f9;
+    --vscode-peekViewResult-background: #252526;
+    --vscode-peekViewResult-lineForeground: #bbbbbb;
+    --vscode-peekViewResult-fileForeground: #ffffff;
+    --vscode-peekViewResult-selectionBackground: rgba(51, 153, 255, 0.2);
+    --vscode-peekViewResult-selectionForeground: #ffffff;
+    --vscode-peekViewEditor-background: #001f33;
+    --vscode-peekViewEditorGutter-background: #001f33;
+    --vscode-peekViewEditorStickyScroll-background: #001f33;
+    --vscode-peekViewEditorStickyScrollGutter-background: #001f33;
+    --vscode-peekViewResult-matchHighlightBackground: rgba(234, 92, 0, 0.3);
+    --vscode-peekViewEditor-matchHighlightBackground: rgba(255, 143, 0, 0.6);
+    --vscode-editorMarkerNavigationError-background: #f14c4c;
+    --vscode-editorMarkerNavigationError-headerBackground: rgba(
+      241,
+      76,
+      76,
+      0.1
+    );
+    --vscode-editorMarkerNavigationWarning-background: #cca700;
+    --vscode-editorMarkerNavigationWarning-headerBackground: rgba(
+      204,
+      167,
+      0,
+      0.1
+    );
+    --vscode-editorMarkerNavigationInfo-background: #59a4f9;
+    --vscode-editorMarkerNavigationInfo-headerBackground: rgba(
+      89,
+      164,
+      249,
+      0.1
+    );
+    --vscode-editorMarkerNavigation-background: #1e1e1e;
+    --vscode-editor-foldBackground: rgba(38, 79, 120, 0.3);
+    --vscode-editor-foldPlaceholderForeground: #808080;
+    --vscode-editorGutter-foldingControlForeground: #c5c5c5;
+    --vscode-editorSuggestWidget-background: #252526;
+    --vscode-editorSuggestWidget-border: rgba(204, 204, 204, 0.2);
+    --vscode-editorSuggestWidget-foreground: #d4d4d4;
+    --vscode-editorSuggestWidget-selectedForeground: #ffffff;
+    --vscode-editorSuggestWidget-selectedIconForeground: #ffffff;
+    --vscode-editorSuggestWidget-selectedBackground: #04395e;
+    --vscode-editorSuggestWidget-highlightForeground: #2aaaff;
+    --vscode-editorSuggestWidget-focusHighlightForeground: #2aaaff;
+    --vscode-editorSuggestWidgetStatus-foreground: rgba(212, 212, 212, 0.5);
+    --vscode-inlineEdit-originalBackground: rgba(255, 0, 0, 0.04);
+    --vscode-inlineEdit-modifiedBackground: rgba(156, 204, 44, 0.06);
+    --vscode-inlineEdit-originalChangedLineBackground: rgba(255, 0, 0, 0.16);
+    --vscode-inlineEdit-originalChangedTextBackground: rgba(255, 0, 0, 0.16);
+    --vscode-inlineEdit-modifiedChangedLineBackground: rgba(155, 185, 85, 0.14);
+    --vscode-inlineEdit-modifiedChangedTextBackground: rgba(156, 204, 44, 0.14);
+    --vscode-inlineEdit-gutterIndicator\.primaryForeground: #ffffff;
+    --vscode-inlineEdit-gutterIndicator\.primaryBorder: #0e639c;
+    --vscode-inlineEdit-gutterIndicator\.primaryBackground: rgba(
+      14,
+      99,
+      156,
+      0.4
+    );
+    --vscode-inlineEdit-gutterIndicator\.secondaryForeground: #cccccc;
+    --vscode-inlineEdit-gutterIndicator\.secondaryBorder: rgba(
+      204,
+      204,
+      204,
+      0.2
+    );
+    --vscode-inlineEdit-gutterIndicator\.secondaryBackground: #252526;
+    --vscode-inlineEdit-gutterIndicator\.successfulForeground: #ffffff;
+    --vscode-inlineEdit-gutterIndicator\.successfulBorder: #0e639c;
+    --vscode-inlineEdit-gutterIndicator\.successfulBackground: #0e639c;
+    --vscode-inlineEdit-gutterIndicator\.background: rgba(45, 45, 45, 0.5);
+    --vscode-inlineEdit-originalBorder: rgba(255, 0, 0, 0.2);
+    --vscode-inlineEdit-modifiedBorder: rgba(156, 204, 44, 0.2);
+    --vscode-inlineEdit-tabWillAcceptModifiedBorder: rgba(156, 204, 44, 0.2);
+    --vscode-inlineEdit-tabWillAcceptOriginalBorder: rgba(255, 0, 0, 0.2);
+    --vscode-editor-linkedEditingBackground: rgba(255, 0, 0, 0.3);
+    --vscode-editor-wordHighlightBackground: rgba(87, 87, 87, 0.72);
+    --vscode-editor-wordHighlightStrongBackground: rgba(0, 73, 114, 0.72);
+    --vscode-editor-wordHighlightTextBackground: rgba(87, 87, 87, 0.72);
+    --vscode-editorOverviewRuler-wordHighlightForeground: rgba(
+      160,
+      160,
+      160,
+      0.8
+    );
+    --vscode-editorOverviewRuler-wordHighlightStrongForeground: rgba(
+      192,
+      160,
+      192,
+      0.8
+    );
+    --vscode-editorOverviewRuler-wordHighlightTextForeground: rgba(
+      160,
+      160,
+      160,
+      0.8
+    );
+    --vscode-editorHoverWidget-highlightForeground: #2aaaff;
+    --vscode-editor-placeholder\.foreground: rgba(255, 255, 255, 0.34);
+    --vscode-tab-activeBackground: #1e1e1e;
+    --vscode-tab-unfocusedActiveBackground: #1e1e1e;
+    --vscode-tab-inactiveBackground: #2d2d2d;
+    --vscode-tab-unfocusedInactiveBackground: #2d2d2d;
+    --vscode-tab-activeForeground: #ffffff;
+    --vscode-tab-inactiveForeground: rgba(255, 255, 255, 0.5);
+    --vscode-tab-unfocusedActiveForeground: rgba(255, 255, 255, 0.5);
+    --vscode-tab-unfocusedInactiveForeground: rgba(255, 255, 255, 0.25);
+    --vscode-tab-border: #252526;
+    --vscode-tab-lastPinnedBorder: rgba(204, 204, 204, 0.2);
+    --vscode-tab-selectedBackground: #222222;
+    --vscode-tab-selectedForeground: rgba(255, 255, 255, 0.63);
+    --vscode-tab-dragAndDropBorder: #ffffff;
+    --vscode-tab-activeModifiedBorder: #3399cc;
+    --vscode-tab-inactiveModifiedBorder: rgba(51, 153, 204, 0.5);
+    --vscode-tab-unfocusedActiveModifiedBorder: rgba(51, 153, 204, 0.5);
+    --vscode-tab-unfocusedInactiveModifiedBorder: rgba(51, 153, 204, 0.25);
+    --vscode-editorPane-background: #1e1e1e;
+    --vscode-editorGroupHeader-tabsBackground: #252526;
+    --vscode-editorGroupHeader-noTabsBackground: #1e1e1e;
+    --vscode-editorGroup-border: #444444;
+    --vscode-editorGroup-dropBackground: rgba(83, 89, 93, 0.5);
+    --vscode-editorGroup-dropIntoPromptForeground: #cccccc;
+    --vscode-editorGroup-dropIntoPromptBackground: #252526;
+    --vscode-sideBySideEditor-horizontalBorder: #444444;
+    --vscode-sideBySideEditor-verticalBorder: #444444;
+    --vscode-banner-background: #04395e;
+    --vscode-banner-foreground: #ffffff;
+    --vscode-banner-iconForeground: #59a4f9;
+    --vscode-statusBar-foreground: #ffffff;
+    --vscode-statusBar-noFolderForeground: #ffffff;
+    --vscode-statusBar-background: #007acc;
+    --vscode-statusBar-noFolderBackground: #68217a;
+    --vscode-statusBar-focusBorder: #ffffff;
+    --vscode-statusBarItem-activeBackground: rgba(255, 255, 255, 0.18);
+    --vscode-statusBarItem-focusBorder: #ffffff;
+    --vscode-statusBarItem-hoverBackground: rgba(255, 255, 255, 0.12);
+    --vscode-statusBarItem-hoverForeground: #ffffff;
+    --vscode-statusBarItem-compactHoverBackground: rgba(255, 255, 255, 0.12);
+    --vscode-statusBarItem-prominentForeground: #ffffff;
+    --vscode-statusBarItem-prominentBackground: rgba(0, 0, 0, 0.5);
+    --vscode-statusBarItem-prominentHoverForeground: #ffffff;
+    --vscode-statusBarItem-prominentHoverBackground: rgba(255, 255, 255, 0.12);
+    --vscode-statusBarItem-errorBackground: #c72e0f;
+    --vscode-statusBarItem-errorForeground: #ffffff;
+    --vscode-statusBarItem-errorHoverForeground: #ffffff;
+    --vscode-statusBarItem-errorHoverBackground: rgba(255, 255, 255, 0.12);
+    --vscode-statusBarItem-warningBackground: #7a6400;
+    --vscode-statusBarItem-warningForeground: #ffffff;
+    --vscode-statusBarItem-warningHoverForeground: #ffffff;
+    --vscode-statusBarItem-warningHoverBackground: rgba(255, 255, 255, 0.12);
+    --vscode-activityBar-background: #333333;
+    --vscode-activityBar-foreground: #ffffff;
+    --vscode-activityBar-inactiveForeground: rgba(255, 255, 255, 0.4);
+    --vscode-activityBar-activeBorder: #ffffff;
+    --vscode-activityBar-dropBorder: #ffffff;
+    --vscode-activityBarBadge-background: #007acc;
+    --vscode-activityBarBadge-foreground: #ffffff;
+    --vscode-activityBarTop-foreground: #e7e7e7;
+    --vscode-activityBarTop-activeBorder: #e7e7e7;
+    --vscode-activityBarTop-inactiveForeground: rgba(231, 231, 231, 0.6);
+    --vscode-activityBarTop-dropBorder: #e7e7e7;
+    --vscode-panel-background: #1e1e1e;
+    --vscode-panel-border: rgba(128, 128, 128, 0.35);
+    --vscode-panelTitle-activeForeground: #e7e7e7;
+    --vscode-panelTitle-inactiveForeground: rgba(231, 231, 231, 0.6);
+    --vscode-panelTitle-activeBorder: #e7e7e7;
+    --vscode-panelTitleBadge-background: #007acc;
+    --vscode-panelTitleBadge-foreground: #ffffff;
+    --vscode-panel-dropBorder: #e7e7e7;
+    --vscode-panelSection-dropBackground: rgba(83, 89, 93, 0.5);
+    --vscode-panelSectionHeader-background: rgba(128, 128, 128, 0.2);
+    --vscode-panelSection-border: rgba(128, 128, 128, 0.35);
+    --vscode-panelStickyScroll-background: #1e1e1e;
+    --vscode-panelStickyScroll-shadow: #000000;
+    --vscode-browser-border: #252526;
+    --vscode-profileBadge-background: #4d4d4d;
+    --vscode-profileBadge-foreground: #ffffff;
+    --vscode-statusBarItem-remoteBackground: #16825d;
+    --vscode-statusBarItem-remoteForeground: #ffffff;
+    --vscode-statusBarItem-remoteHoverForeground: #ffffff;
+    --vscode-statusBarItem-remoteHoverBackground: rgba(255, 255, 255, 0.12);
+    --vscode-statusBarItem-offlineBackground: #6c1717;
+    --vscode-statusBarItem-offlineForeground: #ffffff;
+    --vscode-statusBarItem-offlineHoverForeground: #ffffff;
+    --vscode-statusBarItem-offlineHoverBackground: rgba(255, 255, 255, 0.12);
+    --vscode-extensionBadge-remoteBackground: #007acc;
+    --vscode-extensionBadge-remoteForeground: #ffffff;
+    --vscode-sideBar-background: #252526;
+    --vscode-sideBarTitle-background: #252526;
+    --vscode-sideBarTitle-foreground: #bbbbbb;
+    --vscode-sideBar-dropBackground: rgba(83, 89, 93, 0.5);
+    --vscode-sideBarSectionHeader-background: rgba(0, 0, 0, 0);
+    --vscode-sideBarSectionHeader-border: rgba(204, 204, 204, 0.2);
+    --vscode-sideBarActivityBarTop-border: rgba(204, 204, 204, 0.2);
+    --vscode-sideBarStickyScroll-background: #252526;
+    --vscode-sideBarStickyScroll-shadow: #000000;
+    --vscode-titleBar-activeForeground: #cccccc;
+    --vscode-titleBar-inactiveForeground: rgba(204, 204, 204, 0.6);
+    --vscode-titleBar-activeBackground: #3c3c3c;
+    --vscode-titleBar-inactiveBackground: rgba(60, 60, 60, 0.6);
+    --vscode-menubar-selectionForeground: #cccccc;
+    --vscode-menubar-selectionBackground: rgba(90, 93, 94, 0.31);
+    --vscode-commandCenter-foreground: #cccccc;
+    --vscode-commandCenter-activeForeground: #cccccc;
+    --vscode-commandCenter-inactiveForeground: rgba(204, 204, 204, 0.6);
+    --vscode-commandCenter-background: rgba(255, 255, 255, 0.05);
+    --vscode-commandCenter-activeBackground: rgba(255, 255, 255, 0.08);
+    --vscode-commandCenter-border: rgba(204, 204, 204, 0.2);
+    --vscode-commandCenter-activeBorder: rgba(204, 204, 204, 0.3);
+    --vscode-commandCenter-inactiveBorder: rgba(204, 204, 204, 0.15);
+    --vscode-notificationCenter-border: #303031;
+    --vscode-notificationToast-border: #303031;
+    --vscode-notifications-foreground: #cccccc;
+    --vscode-notifications-background: #252526;
+    --vscode-notificationLink-foreground: #3794ff;
+    --vscode-notificationCenterHeader-background: #303031;
+    --vscode-notifications-border: #303031;
+    --vscode-notificationsErrorIcon-foreground: #f14c4c;
+    --vscode-notificationsWarningIcon-foreground: #cca700;
+    --vscode-notificationsInfoIcon-foreground: #59a4f9;
+    --vscode-agentSessionReadIndicator-foreground: rgba(204, 204, 204, 0.2);
+    --vscode-agentSessionSelectedBadge-border: rgba(255, 255, 255, 0.3);
+    --vscode-agentSessionSelectedUnfocusedBadge-border: rgba(
+      204,
+      204,
+      204,
+      0.3
+    );
+    --vscode-editorGutter-modifiedBackground: #1b81a8;
+    --vscode-editorGutter-modifiedSecondaryBackground: #0d4054;
+    --vscode-editorGutter-addedBackground: #487e02;
+    --vscode-editorGutter-addedSecondaryBackground: #243f01;
+    --vscode-editorGutter-deletedBackground: #f14c4c;
+    --vscode-editorGutter-deletedSecondaryBackground: #b00e0e;
+    --vscode-minimapGutter-modifiedBackground: #1b81a8;
+    --vscode-minimapGutter-addedBackground: #487e02;
+    --vscode-minimapGutter-deletedBackground: #f14c4c;
+    --vscode-editorOverviewRuler-modifiedForeground: rgba(27, 129, 168, 0.6);
+    --vscode-editorOverviewRuler-addedForeground: rgba(72, 126, 2, 0.6);
+    --vscode-editorOverviewRuler-deletedForeground: rgba(241, 76, 76, 0.6);
+    --vscode-editorGutter-itemGlyphForeground: #d4d4d4;
+    --vscode-editorGutter-itemBackground: #37373d;
+    --vscode-terminal-foreground: #cccccc;
+    --vscode-terminal-selectionBackground: #264f78;
+    --vscode-terminal-inactiveSelectionBackground: #3a3d41;
+    --vscode-terminalCommandDecoration-defaultBackground: rgba(
+      255,
+      255,
+      255,
+      0.25
+    );
+    --vscode-terminalCommandDecoration-successBackground: #1b81a8;
+    --vscode-terminalCommandDecoration-errorBackground: #f14c4c;
+    --vscode-terminalOverviewRuler-cursorForeground: rgba(160, 160, 160, 0.8);
+    --vscode-terminal-border: rgba(128, 128, 128, 0.35);
+    --vscode-terminalOverviewRuler-border: rgba(127, 127, 127, 0.3);
+    --vscode-terminal-findMatchBackground: #515c6a;
+    --vscode-terminal-hoverHighlightBackground: rgba(38, 79, 120, 0.13);
+    --vscode-terminal-findMatchHighlightBackground: rgba(234, 92, 0, 0.33);
+    --vscode-terminalOverviewRuler-findMatchForeground: rgba(
+      209,
+      134,
+      22,
+      0.49
+    );
+    --vscode-terminal-dropBackground: rgba(83, 89, 93, 0.5);
+    --vscode-terminal-initialHintForeground: rgba(255, 255, 255, 0.34);
+    --vscode-scmGraph-historyItemRefColor: #59a4f9;
+    --vscode-scmGraph-historyItemRemoteRefColor: #b180d7;
+    --vscode-scmGraph-historyItemBaseRefColor: #ea5c00;
+    --vscode-scmGraph-historyItemHoverDefaultLabelForeground: #cccccc;
+    --vscode-scmGraph-historyItemHoverDefaultLabelBackground: #4d4d4d;
+    --vscode-scmGraph-historyItemHoverLabelForeground: #1e1e1e;
+    --vscode-scmGraph-historyItemHoverAdditionsForeground: #81b88b;
+    --vscode-scmGraph-historyItemHoverDeletionsForeground: #c74e39;
+    --vscode-scmGraph-foreground1: #ffb000;
+    --vscode-scmGraph-foreground2: #dc267f;
+    --vscode-scmGraph-foreground3: #994f00;
+    --vscode-scmGraph-foreground4: #40b0a6;
+    --vscode-scmGraph-foreground5: #b66dff;
+    --vscode-commentsView-resolvedIcon: rgba(204, 204, 204, 0.5);
+    --vscode-commentsView-unresolvedIcon: #007fd4;
+    --vscode-editorCommentsWidget-replyInputBackground: #252526;
+    --vscode-editorCommentsWidget-resolvedBorder: rgba(204, 204, 204, 0.5);
+    --vscode-editorCommentsWidget-unresolvedBorder: #007fd4;
+    --vscode-editorCommentsWidget-rangeBackground: rgba(0, 127, 212, 0.1);
+    --vscode-editorCommentsWidget-rangeActiveBackground: rgba(0, 127, 212, 0.1);
+    --vscode-editorGutter-commentRangeForeground: #37373d;
+    --vscode-editorOverviewRuler-commentForeground: #37373d;
+    --vscode-editorOverviewRuler-commentUnresolvedForeground: #37373d;
+    --vscode-editorOverviewRuler-commentDraftForeground: #37373d;
+    --vscode-editorGutter-commentGlyphForeground: #d4d4d4;
+    --vscode-editorGutter-commentUnresolvedGlyphForeground: #d4d4d4;
+    --vscode-editorGutter-commentDraftGlyphForeground: #d4d4d4;
+    --vscode-agents-background: #1e1e1e;
+    --vscode-agentsPanel-background: #252526;
+    --vscode-agentsPanel-border: rgba(128, 128, 128, 0.35);
+    --vscode-agentsGradient-tintColor: #0e639c;
+    --vscode-agentFeedbackInputWidget-border: rgba(204, 204, 204, 0.2);
+    --vscode-agentsUpdateButton-downloadingBackground: rgba(14, 99, 156, 0.4);
+    --vscode-agentsUpdateButton-downloadedBackground: rgba(14, 99, 156, 0.7);
+    --vscode-agentsChatInput-background: #3c3c3c;
+    --vscode-agentsChatInput-foreground: #cccccc;
+    --vscode-agentsChatInput-focusBorder: #007fd4;
+    --vscode-agentsChatInput-placeholderForeground: #a6a6a6;
+    --vscode-agentsNewSessionButton-background: rgba(0, 0, 0, 0);
+    --vscode-agentsNewSessionButton-hoverBackground: rgba(90, 93, 94, 0.31);
+    --vscode-agentsBadge-background: #007acc;
+    --vscode-agentsBadge-foreground: #ffffff;
+    --vscode-agentsUnreadBadge-background: #007acc;
+    --vscode-agentsUnreadBadge-foreground: #ffffff;
+    --vscode-ports-iconRunningProcessForeground: #369432;
+    --vscode-settings-headerForeground: #e7e7e7;
+    --vscode-settings-settingsHeaderHoverForeground: rgba(231, 231, 231, 0.7);
+    --vscode-settings-modifiedItemIndicator: #0c7d9d;
+    --vscode-settings-headerBorder: rgba(128, 128, 128, 0.35);
+    --vscode-settings-sashBorder: rgba(128, 128, 128, 0.35);
+    --vscode-settings-dropdownBackground: #3c3c3c;
+    --vscode-settings-dropdownForeground: #f0f0f0;
+    --vscode-settings-dropdownBorder: #3c3c3c;
+    --vscode-settings-dropdownListBorder: rgba(204, 204, 204, 0.2);
+    --vscode-settings-checkboxBackground: #3c3c3c;
+    --vscode-settings-checkboxForeground: #f0f0f0;
+    --vscode-settings-checkboxBorder: #6b6b6b;
+    --vscode-settings-textInputBackground: #3c3c3c;
+    --vscode-settings-textInputForeground: #cccccc;
+    --vscode-settings-numberInputBackground: #3c3c3c;
+    --vscode-settings-numberInputForeground: #cccccc;
+    --vscode-settings-focusedRowBackground: rgba(42, 45, 46, 0.6);
+    --vscode-settings-rowHoverBackground: rgba(42, 45, 46, 0.3);
+    --vscode-settings-focusedRowBorder: #007fd4;
+    --vscode-keybindingTable-headerBackground: rgba(204, 204, 204, 0.04);
+    --vscode-keybindingTable-rowsBackground: rgba(204, 204, 204, 0.04);
+    --vscode-extensionButton-background: #2a2d2e;
+    --vscode-extensionButton-foreground: #cccccc;
+    --vscode-extensionButton-hoverBackground: #333637;
+    --vscode-extensionButton-separator: rgba(255, 255, 255, 0.4);
+    --vscode-extensionButton-prominentBackground: #0e639c;
+    --vscode-extensionButton-prominentForeground: #ffffff;
+    --vscode-extensionButton-prominentHoverBackground: #1177bb;
+    --vscode-debugToolBar-background: #333333;
+    --vscode-debugIcon-startForeground: #89d185;
+    --vscode-notebook-cellBorderColor: #37373d;
+    --vscode-notebook-focusedEditorBorder: #007fd4;
+    --vscode-notebookStatusSuccessIcon-foreground: #89d185;
+    --vscode-notebookEditorOverviewRuler-runningCellForeground: #89d185;
+    --vscode-notebookStatusErrorIcon-foreground: #f48771;
+    --vscode-notebookStatusRunningIcon-foreground: #cccccc;
+    --vscode-notebook-cellToolbarSeparator: rgba(128, 128, 128, 0.35);
+    --vscode-notebook-selectedCellBackground: #37373d;
+    --vscode-notebook-selectedCellBorder: #37373d;
+    --vscode-notebook-focusedCellBorder: #007fd4;
+    --vscode-notebook-inactiveFocusedCellBorder: #37373d;
+    --vscode-notebook-cellStatusBarItemHoverBackground: rgba(
+      255,
+      255,
+      255,
+      0.15
+    );
+    --vscode-notebook-cellInsertionIndicator: #007fd4;
+    --vscode-notebookScrollbarSlider-background: rgba(121, 121, 121, 0.4);
+    --vscode-notebookScrollbarSlider-hoverBackground: rgba(100, 100, 100, 0.7);
+    --vscode-notebookScrollbarSlider-activeBackground: rgba(191, 191, 191, 0.4);
+    --vscode-notebook-symbolHighlightBackground: rgba(255, 255, 255, 0.04);
+    --vscode-notebook-cellEditorBackground: #252526;
+    --vscode-notebook-editorBackground: #1e1e1e;
+    --vscode-inlineChat-foreground: #cccccc;
+    --vscode-inlineChat-background: #252526;
+    --vscode-inlineChat-border: rgba(204, 204, 204, 0.2);
+    --vscode-inlineChat-shadow: rgba(0, 0, 0, 0.36);
+    --vscode-inlineChatInput-border: rgba(204, 204, 204, 0.2);
+    --vscode-inlineChatInput-focusBorder: #007fd4;
+    --vscode-inlineChatInput-placeholderForeground: #a6a6a6;
+    --vscode-inlineChatInput-background: #3c3c3c;
+    --vscode-inlineChatDiff-inserted: rgba(156, 204, 44, 0.1);
+    --vscode-editorOverviewRuler-inlineChatInserted: rgba(156, 204, 44, 0.12);
+    --vscode-editorMinimap-inlineChatInserted: rgba(156, 204, 44, 0.12);
+    --vscode-inlineChatDiff-removed: rgba(255, 0, 0, 0.1);
+    --vscode-editorOverviewRuler-inlineChatRemoved: rgba(255, 0, 0, 0.12);
+    --vscode-agentStatusIndicator-background: rgba(255, 255, 255, 0.05);
+    --vscode-chat-requestBorder: rgba(255, 255, 255, 0.1);
+    --vscode-chat-requestBackground: rgba(30, 30, 30, 0.62);
+    --vscode-chat-slashCommandBackground: rgba(38, 71, 120, 0.4);
+    --vscode-chat-slashCommandForeground: #85b6ff;
+    --vscode-chat-avatarBackground: #1f1f1f;
+    --vscode-chat-avatarForeground: #cccccc;
+    --vscode-chat-editedFileForeground: #e2c08d;
+    --vscode-chat-requestCodeBorder: rgba(0, 73, 114, 0.72);
+    --vscode-chat-requestBubbleBackground: rgba(38, 79, 120, 0.3);
+    --vscode-chat-requestBubbleHoverBackground: rgba(38, 79, 120, 0.6);
+    --vscode-chat-checkpointSeparator: #585858;
+    --vscode-chat-linesAddedForeground: #54b054;
+    --vscode-chat-linesRemovedForeground: #fc6a6a;
+    --vscode-chat-thinkingShimmer: #ffffff;
+    --vscode-chat-inputWorkingBorderColor1: #0e639c;
+    --vscode-chat-inputWorkingBorderColor2: #07324e;
+    --vscode-chat-inputWorkingBorderColor3: #1595ea;
+    --vscode-extensionIcon-verifiedForeground: #3794ff;
+    --vscode-extensionIcon-starForeground: #ff8e00;
+    --vscode-extensionIcon-preReleaseForeground: #1d9271;
+    --vscode-extensionIcon-sponsorForeground: #d758b3;
+    --vscode-extensionIcon-privateForeground: rgba(255, 255, 255, 0.38);
+    --vscode-debugExceptionWidget-border: #a31515;
+    --vscode-debugExceptionWidget-background: #420b0d;
+    --vscode-editor-inlineValuesForeground: rgba(255, 255, 255, 0.5);
+    --vscode-editor-inlineValuesBackground: rgba(255, 200, 0, 0.2);
+    --vscode-debugIcon-breakpointForeground: #e51400;
+    --vscode-debugIcon-breakpointDisabledForeground: #848484;
+    --vscode-debugIcon-breakpointUnverifiedForeground: #848484;
+    --vscode-debugIcon-breakpointCurrentStackframeForeground: #ffcc00;
+    --vscode-debugIcon-breakpointStackframeForeground: #89d185;
+    --vscode-editor-stackFrameHighlightBackground: rgba(255, 255, 0, 0.2);
+    --vscode-editor-focusedStackFrameHighlightBackground: rgba(
+      122,
+      189,
+      122,
+      0.3
+    );
+    --vscode-multiDiffEditor-headerBackground: #262626;
+    --vscode-multiDiffEditor-background: #1e1e1e;
+    --vscode-multiDiffEditor-border: rgba(204, 204, 204, 0.2);
+    --vscode-minimap-chatEditHighlight: rgba(30, 30, 30, 0.6);
+    --vscode-aiCustomizationManagement-sashBorder: rgba(128, 128, 128, 0.35);
+    --vscode-mcpIcon-starForeground: #ff8e00;
+    --vscode-interactive-activeCodeBorder: #007acc;
+    --vscode-interactive-inactiveCodeBorder: #37373d;
+    --vscode-testing-iconFailed: #f88070;
+    --vscode-testing-iconErrored: #f88070;
+    --vscode-testing-iconPassed: #73c991;
+    --vscode-testing-runAction: #73c991;
+    --vscode-testing-iconQueued: #cca700;
+    --vscode-testing-iconUnset: #848484;
+    --vscode-testing-iconSkipped: #848484;
+    --vscode-testing-peekBorder: #f14c4c;
+    --vscode-testing-messagePeekBorder: #59a4f9;
+    --vscode-testing-peekHeaderBackground: rgba(241, 76, 76, 0.1);
+    --vscode-testing-messagePeekHeaderBackground: rgba(89, 164, 249, 0.1);
+    --vscode-testing-coveredBackground: rgba(156, 204, 44, 0.2);
+    --vscode-testing-coveredBorder: rgba(156, 204, 44, 0.15);
+    --vscode-testing-coveredGutterBackground: rgba(156, 204, 44, 0.12);
+    --vscode-testing-uncoveredBranchBackground: #781212;
+    --vscode-testing-uncoveredBackground: rgba(255, 0, 0, 0.2);
+    --vscode-testing-uncoveredBorder: rgba(255, 0, 0, 0.15);
+    --vscode-testing-uncoveredGutterBackground: rgba(255, 0, 0, 0.3);
+    --vscode-testing-coveredMinimapBackground: rgba(156, 204, 44, 0.12);
+    --vscode-testing-uncoveredMinimapBackground: rgba(255, 0, 0, 0.3);
+    --vscode-testing-coverCountBadgeBackground: #4d4d4d;
+    --vscode-testing-coverCountBadgeForeground: #ffffff;
+    --vscode-testing-message\.error\.badgeBackground: #f14c4c;
+    --vscode-testing-message\.error\.badgeBorder: #f14c4c;
+    --vscode-testing-message\.error\.badgeForeground: #000000;
+    --vscode-testing-message\.info\.decorationForeground: rgba(
+      212,
+      212,
+      212,
+      0.5
+    );
+    --vscode-testing-iconErrored\.retired: rgba(248, 128, 112, 0.7);
+    --vscode-testing-iconFailed\.retired: rgba(248, 128, 112, 0.7);
+    --vscode-testing-iconPassed\.retired: rgba(115, 201, 145, 0.7);
+    --vscode-testing-iconQueued\.retired: rgba(204, 167, 0, 0.7);
+    --vscode-testing-iconUnset\.retired: rgba(132, 132, 132, 0.7);
+    --vscode-testing-iconSkipped\.retired: rgba(132, 132, 132, 0.7);
+    --vscode-statusBar-debuggingBackground: #cc6633;
+    --vscode-statusBar-debuggingForeground: #ffffff;
+    --vscode-commandCenter-debuggingBackground: rgba(204, 102, 51, 0.26);
+    --vscode-debugTokenExpression-name: #c586c0;
+    --vscode-debugTokenExpression-type: #4a90e2;
+    --vscode-debugTokenExpression-value: rgba(204, 204, 204, 0.6);
+    --vscode-debugTokenExpression-string: #ce9178;
+    --vscode-debugTokenExpression-boolean: #4e94ce;
+    --vscode-debugTokenExpression-number: #b5cea8;
+    --vscode-debugTokenExpression-error: #f48771;
+    --vscode-debugView-exceptionLabelForeground: #cccccc;
+    --vscode-debugView-exceptionLabelBackground: #6c2022;
+    --vscode-debugView-stateLabelForeground: #cccccc;
+    --vscode-debugView-stateLabelBackground: rgba(136, 136, 136, 0.27);
+    --vscode-debugView-valueChangedHighlight: #569cd6;
+    --vscode-debugConsole-infoForeground: #59a4f9;
+    --vscode-debugConsole-warningForeground: #cca700;
+    --vscode-debugConsole-errorForeground: #f48771;
+    --vscode-debugConsole-sourceForeground: #cccccc;
+    --vscode-debugConsoleInputIcon-foreground: #cccccc;
+    --vscode-debugIcon-pauseForeground: #75beff;
+    --vscode-debugIcon-stopForeground: #f48771;
+    --vscode-debugIcon-disconnectForeground: #f48771;
+    --vscode-debugIcon-restartForeground: #89d185;
+    --vscode-debugIcon-stepOverForeground: #75beff;
+    --vscode-debugIcon-stepIntoForeground: #75beff;
+    --vscode-debugIcon-stepOutForeground: #75beff;
+    --vscode-debugIcon-continueForeground: #75beff;
+    --vscode-debugIcon-stepBackForeground: #75beff;
+    --vscode-mergeEditor-change\.background: rgba(155, 185, 85, 0.2);
+    --vscode-mergeEditor-change\.word\.background: rgba(156, 204, 44, 0.2);
+    --vscode-mergeEditor-changeBase\.background: #4b1818;
+    --vscode-mergeEditor-changeBase\.word\.background: #6f1313;
+    --vscode-mergeEditor-conflict\.unhandledUnfocused\.border: rgba(
+      255,
+      166,
+      0,
+      0.48
+    );
+    --vscode-mergeEditor-conflict\.unhandledFocused\.border: #ffa600;
+    --vscode-mergeEditor-conflict\.handledUnfocused\.border: rgba(
+      134,
+      134,
+      134,
+      0.29
+    );
+    --vscode-mergeEditor-conflict\.handledFocused\.border: rgba(
+      193,
+      193,
+      193,
+      0.8
+    );
+    --vscode-mergeEditor-conflict\.handled\.minimapOverViewRuler: rgba(
+      173,
+      172,
+      168,
+      0.93
+    );
+    --vscode-mergeEditor-conflict\.unhandled\.minimapOverViewRuler: #fcba03;
+    --vscode-mergeEditor-conflictingLines\.background: rgba(255, 234, 0, 0.28);
+    --vscode-mergeEditor-conflict\.input1\.background: rgba(64, 200, 174, 0.2);
+    --vscode-mergeEditor-conflict\.input2\.background: rgba(64, 166, 255, 0.2);
+    --vscode-terminal-ansiBlack: #000000;
+    --vscode-terminal-ansiRed: #cd3131;
+    --vscode-terminal-ansiGreen: #0dbc79;
+    --vscode-terminal-ansiYellow: #e5e510;
+    --vscode-terminal-ansiBlue: #2472c8;
+    --vscode-terminal-ansiMagenta: #bc3fbc;
+    --vscode-terminal-ansiCyan: #11a8cd;
+    --vscode-terminal-ansiWhite: #e5e5e5;
+    --vscode-terminal-ansiBrightBlack: #666666;
+    --vscode-terminal-ansiBrightRed: #f14c4c;
+    --vscode-terminal-ansiBrightGreen: #23d18b;
+    --vscode-terminal-ansiBrightYellow: #f5f543;
+    --vscode-terminal-ansiBrightBlue: #3b8eea;
+    --vscode-terminal-ansiBrightMagenta: #d670d6;
+    --vscode-terminal-ansiBrightCyan: #29b8db;
+    --vscode-terminal-ansiBrightWhite: #e5e5e5;
+    --vscode-simpleFindWidget-sashBorder: #454545;
+    --vscode-terminalStickyScrollHover-background: #2a2d2e;
+    --vscode-terminalCommandGuide-foreground: #37373d;
+    --vscode-terminalSymbolIcon-flagForeground: #ee9d28;
+    --vscode-terminalSymbolIcon-aliasForeground: #b180d7;
+    --vscode-terminalSymbolIcon-optionValueForeground: #75beff;
+    --vscode-terminalSymbolIcon-methodForeground: #b180d7;
+    --vscode-terminalSymbolIcon-argumentForeground: #75beff;
+    --vscode-terminalSymbolIcon-optionForeground: #ee9d28;
+    --vscode-terminalSymbolIcon-fileForeground: #cccccc;
+    --vscode-terminalSymbolIcon-folderForeground: #cccccc;
+    --vscode-terminalSymbolIcon-commitForeground: #cccccc;
+    --vscode-terminalSymbolIcon-branchForeground: #cccccc;
+    --vscode-terminalSymbolIcon-tagForeground: #cccccc;
+    --vscode-terminalSymbolIcon-stashForeground: #cccccc;
+    --vscode-terminalSymbolIcon-remoteForeground: #cccccc;
+    --vscode-terminalSymbolIcon-pullRequestForeground: #cccccc;
+    --vscode-terminalSymbolIcon-pullRequestDoneForeground: #cccccc;
+    --vscode-terminalSymbolIcon-symbolicLinkFileForeground: #cccccc;
+    --vscode-terminalSymbolIcon-symbolicLinkFolderForeground: #cccccc;
+    --vscode-terminalSymbolIcon-symbolText: #cccccc;
+    --vscode-markdownAlert-note\.foreground: #59a4f9;
+    --vscode-markdownAlert-tip\.foreground: #89d185;
+    --vscode-markdownAlert-important\.foreground: #b180d7;
+    --vscode-markdownAlert-warning\.foreground: #cca700;
+    --vscode-markdownAlert-caution\.foreground: #f14c4c;
+    --vscode-welcomePage-tileBackground: #252526;
+    --vscode-welcomePage-tileHoverBackground: #2c2c2d;
+    --vscode-welcomePage-tileBorder: rgba(255, 255, 255, 0.1);
+    --vscode-welcomePage-progress\.background: #3c3c3c;
+    --vscode-welcomePage-progress\.foreground: #3794ff;
+    --vscode-walkthrough-stepTitle\.foreground: #ffffff;
+    --vscode-walkThrough-embeddedEditorBackground: rgba(0, 0, 0, 0.4);
+    --vscode-profiles-sashBorder: rgba(128, 128, 128, 0.35);
+    --vscode-gitDecoration-addedResourceForeground: #81b88b;
+    --vscode-gitDecoration-modifiedResourceForeground: #e2c08d;
+    --vscode-gitDecoration-deletedResourceForeground: #c74e39;
+    --vscode-gitDecoration-renamedResourceForeground: #73c991;
+    --vscode-gitDecoration-untrackedResourceForeground: #73c991;
+    --vscode-gitDecoration-ignoredResourceForeground: #8c8c8c;
+    --vscode-gitDecoration-stageModifiedResourceForeground: #e2c08d;
+    --vscode-gitDecoration-stageDeletedResourceForeground: #c74e39;
+    --vscode-gitDecoration-conflictingResourceForeground: #e4676b;
+    --vscode-gitDecoration-submoduleResourceForeground: #8db9e2;
+    --vscode-git-blame\.editorDecorationForeground: #969696;
+    --vscode-markdown-extension\.editor\.codeSpan\.background: rgba(0, 0, 0, 0);
+    --vscode-markdown-extension\.editor\.codeSpan\.border: #264f78;
+    --vscode-markdown-extension\.editor\.formattingMark\.foreground: rgba(
+      227,
+      228,
+      226,
+      0.16
+    );
+    --vscode-markdown-extension\.editor\.trailingSpace\.background: rgba(
+      204,
+      204,
+      204,
+      0.2
+    );
+    --vscode-bodyFontSize: 13px;
+    --vscode-bodyFontSize-small: 12px;
+    --vscode-bodyFontSize-xSmall: 11px;
+    --vscode-codiconFontSize: 16px;
+    --vscode-cornerRadius-medium: 6px;
+    --vscode-cornerRadius-xSmall: 2px;
+    --vscode-cornerRadius-small: 4px;
+    --vscode-cornerRadius-large: 8px;
+    --vscode-cornerRadius-xLarge: 12px;
+    --vscode-cornerRadius-circle: 9999px;
+    --vscode-strokeThickness: 1px;
+    --vscode-editor-font-feature-settings:
+      &quot;liga&quot; off, &quot;calt&quot; off;
+  "
+>
+  <head>
+    <style id="_defaultStyles">
+      @layer vscode-default {
+        html {
+          scrollbar-color: var(--vscode-scrollbarSlider-background)
+            var(--vscode-editor-background);
+        }
+
+        body {
+          overscroll-behavior-x: none;
+          background-color: transparent;
+          color: var(--vscode-editor-foreground);
+          font-family: var(--vscode-font-family);
+          font-weight: var(--vscode-font-weight);
+          font-size: var(--vscode-font-size);
+          margin: 0;
+          padding: 0 20px;
+        }
+
+        img,
+        video {
+          max-width: 100%;
+          max-height: 100%;
+        }
+
+        a,
+        a code {
+          color: var(--vscode-textLink-foreground);
+        }
+
+        p > a {
+          text-decoration: var(--text-link-decoration);
+        }
+
+        a:hover {
+          color: var(--vscode-textLink-activeForeground);
+        }
+
+        a:focus,
+        input:focus,
+        select:focus,
+        textarea:focus {
+          outline: 1px solid -webkit-focus-ring-color;
+          outline-offset: -1px;
+        }
+
+        code {
+          font-family: var(--monaco-monospace-font);
+          color: var(--vscode-textPreformat-foreground);
+          background-color: var(--vscode-textPreformat-background);
+          padding: 1px 3px;
+          border-radius: 4px;
+        }
+
+        pre code {
+          padding: 0;
+        }
+
+        blockquote {
+          background: var(--vscode-textBlockQuote-background);
+          border-color: var(--vscode-textBlockQuote-border);
+        }
+
+        kbd {
+          background-color: var(--vscode-keybindingLabel-background);
+          color: var(--vscode-keybindingLabel-foreground);
+          border-style: solid;
+          border-width: 1px;
+          border-radius: 3px;
+          border-color: var(--vscode-keybindingLabel-border);
+          border-bottom-color: var(--vscode-keybindingLabel-bottomBorder);
+          box-shadow: inset 0 -1px 0 var(--vscode-widget-shadow);
+          vertical-align: middle;
+          padding: 1px 3px;
+        }
+
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        ::-webkit-scrollbar-corner {
+          background-color: var(--vscode-editor-background);
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background-color: var(--vscode-scrollbarSlider-background);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background-color: var(--vscode-scrollbarSlider-hoverBackground);
+        }
+        ::-webkit-scrollbar-thumb:active {
+          background-color: var(--vscode-scrollbarSlider-activeBackground);
+        }
+        ::highlight(find-highlight) {
+          background-color: var(--vscode-editor-findMatchHighlightBackground);
+        }
+        ::highlight(current-find-highlight) {
+          background-color: var(--vscode-editor-findMatchBackground);
+        }
+      }
+    </style>
+    <script id="_vscodeApiScript">
+      globalThis.acquireVsCodeApi = (function () {
+        const originalPostMessage = window.parent[
+          "__vscode_post_message__"
+        ].bind(window.parent);
+        const doPostMessage = (channel, data, transfer) => {
+          originalPostMessage(channel, data, transfer);
+        };
+
+        let acquired = false;
+
+        let state = undefined;
+
+        return () => {
+          if (acquired && !false) {
+            throw new Error(
+              "An instance of the VS Code API has already been acquired",
+            );
+          }
+          acquired = true;
+          return Object.freeze({
+            postMessage: function (message, transfer) {
+              doPostMessage("onmessage", { message, transfer }, transfer);
+            },
+            setState: function (newState) {
+              state = newState;
+              doPostMessage("do-update-state", JSON.stringify(newState));
+              return newState;
+            },
+            getState: function () {
+              return state;
+            },
+          });
+        };
+      })();
+      window.parent = window;
+      window.top = window;
+      window.frameElement = null;
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>易方达软件ETF联接C - 基金详情</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+      body {
+        font-family: var(--vscode-font-family), sans-serif;
+        color: var(--vscode-editor-foreground);
+        background-color: var(--vscode-editor-background);
+        padding: 16px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .header,
+      .tabs,
+      .tab-panel {
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+        box-sizing: border-box;
+      }
+      h1 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+      }
+      h2 {
+        margin-top: 0;
+        margin-bottom: 5px;
+        font-size: 1rem;
+        word-break: break-all;
+      }
+      h3 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        font-size: 1rem;
+        color: var(--vscode-editor-foreground);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--vscode-panel-border);
+        padding-bottom: 12px;
+        gap: 10px;
+      }
+      .refresh-btn {
+        padding: 4px 12px;
+        background: var(--vscode-button-secondaryBackground);
+        color: var(--vscode-button-secondaryForeground);
+        border: 1px solid var(--vscode-panel-border);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.82em;
+        font-family: inherit;
+        transition: background 0.2s;
+        white-space: nowrap;
+      }
+      .refresh-btn:hover {
+        background: var(--vscode-button-secondaryHoverBackground);
+      }
+      .tabs {
+        display: flex;
+        gap: 2px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        position: relative;
+        padding-bottom: 2px;
+      }
+      .tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .tabs::before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        width: max(100%, 530px);
+        height: 1px;
+        background: var(--vscode-panel-border);
+      }
+      .tab-btn {
+        padding: 6px 14px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--vscode-descriptionForeground);
+        cursor: pointer;
+        font-size: 0.82rem;
+        font-family: inherit;
+        transition: all 0.2s;
+        margin-bottom: -2px;
+        border-radius: 4px 4px 0 0;
+        white-space: nowrap;
+      }
+      .tab-btn:hover {
+        color: var(--vscode-editor-foreground);
+        background: var(--vscode-list-hoverBackground);
+      }
+      .tab-btn.active {
+        color: var(--vscode-editor-foreground);
+        border-bottom-color: var(--vscode-focusBorder);
+        font-weight: 600;
+        background: var(--vscode-list-hoverBackground);
+      }
+      .tab-panel {
+        display: none;
+        box-sizing: border-box;
+      }
+      .tab-panel.active {
+        display: block;
+      }
+      .card {
+        background-color: var(--vscode-editorWidget-background);
+        border: 1px solid var(--vscode-panel-border);
+        border-radius: 6px;
+        padding: 14px;
+        position: relative;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+      }
+      .chart-container {
+        width: 100%;
+        min-height: 300px;
+        margin-top: 10px;
+      }
+      .controls {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+      .btn-group button {
+        background-color: var(--vscode-button-secondaryBackground);
+        color: var(--vscode-button-secondaryForeground);
+        border: 1px solid var(--vscode-panel-border);
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        outline: none;
+        transition: all 0.2s;
+        white-space: nowrap;
+        font-size: 0.8em;
+      }
+      .btn-group button:hover {
+        background-color: var(--vscode-button-secondaryHoverBackground);
+      }
+      .btn-group button.active {
+        background-color: var(--vscode-button-background);
+        color: var(--vscode-button-foreground);
+        border-color: var(--vscode-button-background);
+      }
+
+      .loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 14px;
+        color: var(--vscode-descriptionForeground);
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+      }
+      .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 10px;
+        background: var(--vscode-editor-background);
+        border-radius: 6px;
+        border: 1px solid var(--vscode-panel-border);
+      }
+      .info-item:hover {
+        border-color: var(--vscode-focusBorder);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+      }
+      .info-label {
+        font-size: 0.85em;
+        color: var(--vscode-descriptionForeground);
+      }
+      .info-value {
+        font-size: 1.05em;
+        font-weight: 500;
+      }
+      .info-value.up {
+        color: #f56c6c;
+      }
+      .info-value.down {
+        color: #4eb61b;
+      }
+      @media (max-width: 800px) {
+        body {
+          padding: 12px;
+          gap: 12px;
+        }
+        .header {
+          gap: 8px;
+          padding-bottom: 10px;
+        }
+        h2 {
+          flex: 0 1 100%;
+          font-size: 0.95rem;
+        }
+        .refresh-btn {
+          padding: 4px 10px;
+          font-size: 0.75em;
+        }
+        .card {
+          padding: 12px;
+          border-radius: 6px;
+        }
+        .chart-container {
+          height: 250px;
+          margin-top: 8px;
+        }
+        h3 {
+          font-size: 0.95rem;
+          margin-bottom: 10px;
+        }
+        .info-grid {
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+          gap: 10px;
+        }
+        .info-item {
+          padding: 8px;
+          gap: 3px;
+        }
+        .info-label {
+          font-size: 0.75em;
+        }
+        .info-value {
+          font-size: 0.9em;
+        }
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 8px;
+        }
+        .btn-group {
+          gap: 4px;
+        }
+        .btn-group button {
+          padding: 5px 10px;
+          font-size: 0.75em;
+        }
+        .manager-card {
+          flex-direction: column;
+          gap: 12px;
+          padding: 12px;
+          align-items: center;
+          text-align: center;
+        }
+        .manager-avatar {
+          width: 70px;
+          height: 70px;
+          border-width: 2px;
+        }
+        .manager-details {
+          gap: 10px;
+          align-items: center;
+        }
+        .manager-name {
+          font-size: 1.05em;
+        }
+        .manager-tag {
+          font-size: 0.75em;
+          padding: 3px 10px;
+          margin-right: 4px;
+        }
+        .manager-stats {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px;
+          margin-top: 2px;
+        }
+        .manager-stat {
+          padding: 10px;
+        }
+        .manager-stat-label {
+          font-size: 0.75em;
+          margin-bottom: 4px;
+        }
+        .manager-stat-value {
+          font-size: 0.95em;
+        }
+        .manager-resume {
+          max-height: 120px;
+          font-size: 0.85em;
+          padding: 10px;
+        }
+        .theme-info {
+          gap: 8px;
+        }
+        .theme-tag {
+          padding: 8px 12px;
+          font-size: 0.8em;
+          gap: 6px;
+        }
+        .tab-btn {
+          padding: 5px 12px;
+          font-size: 0.75rem;
+        }
+      }
+      @media (max-width: 600px) {
+        body {
+          padding: 8px;
+          gap: 10px;
+        }
+        .header {
+          padding-bottom: 8px;
+          gap: 6px;
+        }
+        h1 {
+          font-size: 1rem;
+        }
+        h2 {
+          font-size: 0.85rem;
+        }
+        h3 {
+          font-size: 0.85rem;
+          margin-bottom: 8px;
+        }
+        .refresh-btn {
+          padding: 3px 8px;
+          font-size: 0.7em;
+        }
+        .card {
+          padding: 10px;
+          border-radius: 5px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+        .chart-container {
+          height: 200px;
+          margin-top: 6px;
+        }
+        .info-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px;
+        }
+        .info-item {
+          padding: 6px;
+          gap: 2px;
+        }
+        .info-label {
+          font-size: 0.7em;
+        }
+        .info-value {
+          font-size: 0.8em;
+        }
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 6px;
+        }
+        .btn-group {
+          gap: 3px;
+        }
+        .btn-group button {
+          padding: 4px 8px;
+          font-size: 0.65em;
+          flex: 1;
+        }
+        .tab-btn {
+          padding: 4px 8px;
+          font-size: 0.7rem;
+        }
+        .tabs::before {
+          width: max(100%, 300px);
+        }
+        .manager-card {
+          padding: 10px;
+          gap: 10px;
+        }
+        .manager-avatar {
+          width: 60px;
+          height: 60px;
+          border-width: 2px;
+        }
+        .manager-name {
+          font-size: 0.95em;
+        }
+        .manager-tag {
+          font-size: 0.65em;
+          padding: 2px 8px;
+          margin-right: 2px;
+        }
+        .manager-stats {
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+        }
+        .manager-stat {
+          padding: 8px;
+        }
+        .manager-stat-label {
+          font-size: 0.65em;
+        }
+        .manager-stat-value {
+          font-size: 0.85em;
+        }
+        .manager-resume {
+          max-height: 100px;
+          font-size: 0.75em;
+          line-height: 1.4;
+          padding: 8px;
+        }
+        .theme-info {
+          gap: 6px;
+        }
+        .theme-tag {
+          padding: 6px 10px;
+          font-size: 0.7em;
+          gap: 4px;
+        }
+        .theme-corr {
+          font-size: 0.7em;
+          padding: 2px 6px;
+        }
+      }
+
+      .manager-info {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .manager-card {
+        display: flex;
+        gap: 16px;
+        padding: 14px;
+        background: var(--vscode-editor-background);
+        border-radius: 8px;
+        border: 1px solid var(--vscode-panel-border);
+        transition: all 0.2s ease;
+      }
+      .manager-card:hover {
+        border-color: var(--vscode-focusBorder);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .manager-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: linear-gradient(
+          135deg,
+          var(--vscode-button-secondaryBackground) 0%,
+          var(--vscode-button-background) 100%
+        );
+        border: 3px solid var(--vscode-panel-border);
+        flex-shrink: 0;
+      }
+      .manager-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .manager-name {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: var(--vscode-editor-foreground);
+        margin-bottom: 4px;
+      }
+      .manager-tag {
+        display: inline-block;
+        padding: 4px 12px;
+        background: var(--vscode-button-secondaryBackground);
+        color: var(--vscode-button-secondaryForeground);
+        border-radius: 16px;
+        font-size: 0.85em;
+        margin-right: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      .manager-tag:hover {
+        background: var(--vscode-button-secondaryHoverBackground);
+      }
+      .manager-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-top: 4px;
+      }
+      .manager-stat {
+        text-align: center;
+        padding: 12px;
+        background: var(--vscode-editorWidget-background);
+        border-radius: 8px;
+        border: 1px solid var(--vscode-panel-border);
+        transition: all 0.2s ease;
+      }
+      .manager-stat:hover {
+        border-color: var(--vscode-focusBorder);
+        transform: translateY(-2px);
+      }
+      .manager-stat-label {
+        font-size: 0.85em;
+        color: var(--vscode-descriptionForeground);
+        margin-bottom: 6px;
+        font-weight: 500;
+      }
+      .manager-stat-value {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: var(--vscode-editor-foreground);
+      }
+      .manager-resume {
+        margin-top: 8px;
+        padding: 14px;
+        background: var(--vscode-editorWidget-background);
+        border-radius: 8px;
+        border: 1px solid var(--vscode-panel-border);
+        font-size: 0.9em;
+        line-height: 1.6;
+        color: var(--vscode-editor-foreground);
+        max-height: 150px;
+        overflow-y: auto;
+      }
+      .manager-resume::-webkit-scrollbar {
+        width: 6px;
+      }
+      .manager-resume::-webkit-scrollbar-thumb {
+        background: var(--vscode-scrollbarSlider-background);
+        border-radius: 3px;
+      }
+      .manager-resume::-webkit-scrollbar-thumb:hover {
+        background: var(--vscode-scrollbarSlider-hoverBackground);
+      }
+
+      .theme-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .theme-tag {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: var(--vscode-editor-background);
+        border-radius: 24px;
+        border: 1px solid var(--vscode-panel-border);
+        font-size: 0.9em;
+        transition: all 0.2s ease;
+        cursor: default;
+      }
+      .theme-tag:hover {
+        border-color: var(--vscode-focusBorder);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+      }
+      .theme-name {
+        font-weight: 600;
+        color: var(--vscode-editor-foreground);
+      }
+      .theme-corr {
+        font-size: 0.85em;
+        color: var(--vscode-descriptionForeground);
+        background: var(--vscode-button-secondaryBackground);
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body
+    role="document"
+    class="vscode-dark"
+    data-vscode-theme-kind="vscode-dark"
+    data-vscode-theme-name="深色+"
+    data-vscode-theme-id="Dark+"
+  >
+    <div class="header">
+      <div>
+        <h2>易方达软件ETF联接C (019062)</h2>
+        <div
+          style="font-size: 0.9em; color: var(--vscode-descriptionForeground)"
+        >
+          数据呈现与走势对比估算
+        </div>
+      </div>
+      <button id="refreshDetailBtn" class="refresh-btn" type="button">
+        刷新
+      </button>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="基金详情分区">
+      <button class="tab-btn active" type="button" data-tab="holding">
+        持仓信息
+      </button>
+      <button class="tab-btn" type="button" data-tab="overview">
+        基金概况
+      </button>
+      <button class="tab-btn" type="button" data-tab="manager">基金经理</button>
+      <button class="tab-btn" type="button" data-tab="theme">关联板块</button>
+      <button class="tab-btn" type="button" data-tab="historyNet">
+        历史净值
+      </button>
+      <button class="tab-btn" type="button" data-tab="historyYield">
+        累计收益
+      </button>
+    </div>
+
+    <!-- 持仓信息 -->
+    <section class="tab-panel card active" data-tab-panel="holding">
+      <h3>持仓信息</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">持仓份额</div>
+          <div class="info-value">18564.75</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">持仓成本</div>
+          <div class="info-value">1.1850</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">当前金额</div>
+          <div class="info-value">19075.28</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">最新净值</div>
+          <div class="info-value">1.0275</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">估算净值</div>
+          <div class="info-value up">1.0324</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">估算涨跌幅</div>
+          <div class="info-value up">+0.48%</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">持有收益</div>
+          <div class="info-value down">-2923.95</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">持有收益率</div>
+          <div class="info-value down">-13.29%</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">日收益（估）</div>
+          <div class="info-value up">+90.97</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">更新时间</div>
+          <div class="info-value">2026-05-13 13:50</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 基金概况 -->
+    <section class="tab-panel card" data-tab-panel="overview">
+      <h3>基金概况</h3>
+      <div id="loadingInfo" class="loading" style="display: none">
+        加载中...
+      </div>
+      <div id="infoGrid" class="info-grid" style="display: grid">
+        <div class="info-item">
+          <div class="info-label">基金类型</div>
+          <div class="info-value">指数型-股票</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">成立日期</div>
+          <div class="info-value">--</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">基金公司</div>
+          <div class="info-value">易方达基金</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">基金经理</div>
+          <div class="info-value">伍臣东</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">单位净值</div>
+          <div class="info-value">1.0275 (2026-05-12)</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">累计净值</div>
+          <div class="info-value">1.0275</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">基金规模</div>
+          <div class="info-value">4.69 亿</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">交易状态</div>
+          <div class="info-value">开放申购 / 开放赎回</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">近1周收益率</div>
+          <div class="info-value up">+3.74%</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">近1月收益率 (排名)</div>
+          <div class="info-value up">+6.14% (3012)</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">近3月收益率 (排名)</div>
+          <div class="info-value down">-9.42% (4700)</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">近6月收益率 (排名)</div>
+          <div class="info-value down">-3.61% (3752)</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">近1年收益率 (排名)</div>
+          <div class="info-value up">+3.18% (3429)</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">近3年收益率 (排名)</div>
+          <div class="info-value">0% (--)</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">近5年收益率 (排名)</div>
+          <div class="info-value">0% (--)</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">成立以来收益率</div>
+          <div class="info-value">0%</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 基金经理 -->
+    <section class="tab-panel card" data-tab-panel="manager">
+      <h3>基金经理</h3>
+      <div id="loadingManager" class="loading" style="display: none">
+        加载中...
+      </div>
+      <div id="managerInfo" class="manager-info" style="display: block">
+        <div class="manager-card">
+          <img
+            class="manager-avatar"
+            src="https://pdf.dfcfw.com/pdf/H8_30729496_1.JPG"
+            alt="伍臣东"
+            onerror="this.style.display = 'none'"
+          />
+          <div class="manager-details">
+            <div class="manager-name">伍臣东</div>
+            <div>
+              <span class="manager-tag">任职 2年7个月</span>
+              <span class="manager-tag">任职回报 +2.75%</span>
+            </div>
+            <div class="manager-stats">
+              <div class="manager-stat">
+                <div class="manager-stat-label">任职天数</div>
+                <div class="manager-stat-value">946天</div>
+              </div>
+              <div class="manager-stat">
+                <div class="manager-stat-label">年化收益</div>
+                <div class="manager-stat-value">-0.55%</div>
+              </div>
+            </div>
+            <div style="margin-top: 10px">
+              <strong>投资理念：</strong>暂无投资理念
+            </div>
+            <div class="manager-resume">
+              <strong>个人简历：</strong
+              >伍臣东先生:中国国籍,经济学硕士。曾任易方达基金管理有限公司研究支持专员。现任易方达基金管理有限公司指数研究员。2021年7月5日至2021年10月20日任易方达中证科创创业50交易型开放式指数证券投资基金的基金经理助理。2021年10月20日担任易方达中证科创创业50交易型开放式指数证券投资基金基金经理。2021年10月20日担任易方达中证科创创业50交易型开放式指数证券投资基金联接基金基金经理。2021年12月17日起任易方达中证500质量成长ETF的基金经理,2022年1月29日起担任易方达中证港股通医药卫生综合交易型开放式指数证券投资基金基金经理助理。2022年5月7日任易方达中证消费50交易型开放式指数证券投资基金的基金经理助理。2022年9月10日担任易方达纳斯达克100指数证券投资基金(LOF)的基金经理助理。2022年11月1日至2026年4月3日任易方达中证智能电动汽车交易型开放式指数证券投资基金基金经理。2022年11月1日至2026年4月3日任易方达中证创新药产业交易型开放式指数证券投资基金基金经理。2022年11月29日起担任易方达纳斯达克100指数证券投资基金(LOF)基金经理。2022年11月29日起担任易方达中证港股通医药卫生综合交易型开放式指数证券投资基金基金经理。现任易方达中证上海环交所碳中和ETF联接、易方达中证绿色电力ETF、易方达中证软件服务ETF、易方达中证绿色电力ETF联接发起式、易方达中证500质量成长ETF联接发起式、易方达中证软件服务ETF联接发起式基金经理。曾任易方达中证光伏产业交易型开放式指数证券投资基金发起式联接基金、易方达中证光伏产业交易型开放式指数证券投资基金基金经理。2023年11月14日至2026年4月3日任易方达中证创新药产业ETF联接发起式的基金经理,2023年9月16日担任易方达中证港股通医药卫生综合交易型开放式指数证券投资基金发起式联接基金、易方达纳斯达克100交易型开放式指数证券投资基金(QDII)、易方达上证科创板成长交易型开放式指数证券投资基金的基金经理助理。2024年1月26日起任易方达上证科创板成长交易型开放式指数证券投资基金发起式联接基金的基金经理助理。现任易方达中证稀土产业ETF的基金经理助理。曾任易方达中证A100交易型开放式指数证券投资基金的基金经理。2022年1月29日至2025年4月29日任易方达中证消费电子主题交易型开放式指数证券投资基金的基金经理助理。2024年1月26日至2025年4月29日任易方达中证A100交易型开放式指数证券投资基金发起式联接基金的基金经理助理。2025年11月29日任易方达伊塔乌巴西IBOVESPA交易型开放式指数证券投资基金(QDII)基金经理助理。2026年1月31日起任易方达中证细分有色金属产业主题指数发起式证券投资基金的基金经理助理。
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 关联板块 -->
+    <section class="tab-panel card" data-tab-panel="theme">
+      <h3>关联板块</h3>
+      <div id="loadingTheme" class="loading" style="display: none">
+        加载中...
+      </div>
+      <div id="themeInfo" class="theme-info" style="display: flex">
+        <div class="theme-tag">
+          <span class="theme-name">计算机</span>
+          <span class="theme-corr">相关性 96.3%</span>
+        </div>
+
+        <div class="theme-tag">
+          <span class="theme-name">国产软件</span>
+          <span class="theme-corr">相关性 96.5%</span>
+        </div>
+
+        <div class="theme-tag">
+          <span class="theme-name">TMT</span>
+          <span class="theme-corr">相关性 73.1%</span>
+        </div>
+
+        <div class="theme-tag">
+          <span class="theme-name">数据要素</span>
+          <span class="theme-corr">相关性 95.9%</span>
+        </div>
+
+        <div class="theme-tag">
+          <span class="theme-name">软件开发</span>
+          <span class="theme-corr">相关性 97.7%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 历史净值 -->
+    <section class="tab-panel card" data-tab-panel="historyNet">
+      <h3>历史净值</h3>
+      <div class="controls">
+        <div class="btn-group" id="rangeBtns2">
+          <button data-value="1w">近1周</button>
+          <button data-value="y" class="active">近1月</button>
+          <button data-value="3y">近3月</button>
+          <button data-value="6y">近6月</button>
+          <button data-value="n">近1年</button>
+          <button data-value="3n">近3年</button>
+          <button data-value="5n">近5年</button>
+        </div>
+      </div>
+      <div id="loading2" class="loading" style="display: none">加载中...</div>
+      <div
+        id="chart2"
+        class="chart-container"
+        _echarts_instance_="ec_1778651723813"
+        style="
+          user-select: none;
+          -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+          position: relative;
+        "
+      >
+        <div
+          style="
+            position: relative;
+            width: 100px;
+            height: 0px;
+            padding: 0px;
+            margin: 0px;
+            border-width: 0px;
+          "
+        >
+          <canvas
+            data-zr-dom-id="zr_0"
+            width="100"
+            height="0"
+            style="
+              position: absolute;
+              left: 0px;
+              top: 0px;
+              width: 100px;
+              height: 0px;
+              user-select: none;
+              -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+              padding: 0px;
+              margin: 0px;
+              border-width: 0px;
+            "
+          ></canvas>
+        </div>
+        <div class=""></div>
+      </div>
+    </section>
+
+    <!-- 累计收益率 -->
+    <section class="tab-panel card" data-tab-panel="historyYield">
+      <h3>累计收益</h3>
+      <div class="controls">
+        <div class="btn-group" id="rangeBtns3">
+          <button data-value="1w">近1周</button>
+          <button data-value="y" class="active">近1月</button>
+          <button data-value="3y">近3月</button>
+          <button data-value="6y">近6月</button>
+          <button data-value="n">近1年</button>
+          <button data-value="3n">近3年</button>
+          <button data-value="5n">近5年</button>
+        </div>
+      </div>
+      <div id="loading3" class="loading" style="display: none">加载中...</div>
+      <div
+        id="chart3"
+        class="chart-container"
+        _echarts_instance_="ec_1778651723814"
+        style="
+          user-select: none;
+          -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+          position: relative;
+        "
+      >
+        <div
+          style="
+            position: relative;
+            width: 100px;
+            height: 0px;
+            padding: 0px;
+            margin: 0px;
+            border-width: 0px;
+          "
+        >
+          <canvas
+            data-zr-dom-id="zr_0"
+            width="100"
+            height="0"
+            style="
+              position: absolute;
+              left: 0px;
+              top: 0px;
+              width: 100px;
+              height: 0px;
+              user-select: none;
+              -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+              padding: 0px;
+              margin: 0px;
+              border-width: 0px;
+            "
+          ></canvas>
+        </div>
+        <div class=""></div>
+      </div>
+    </section>
+
+    <script>
+      const fundCode = "019062";
+      const isDark = true;
+      const initialActiveTab = "holding";
+      const vscode = acquireVsCodeApi();
+      let activeTab = vscode.getState()?.activeTab || initialActiveTab;
+      let defaultTextColor = isDark ? "#cccccc" : "#333333";
+      let defaultGridColor = isDark ? "#444444" : "#dddddd";
+
+      // Utility: JSONP loader
+      function loadJSONP(url, callbackName) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          const fullUrl =
+            url + (url.includes("?") ? "&" : "?") + "callback=" + callbackName;
+          script.src = fullUrl;
+
+          window[callbackName] = function (data) {
+            resolve(data);
+            document.head.removeChild(script);
+            delete window[callbackName];
+          };
+
+          script.onerror = function () {
+            reject(new Error("JSONP failed"));
+            document.head.removeChild(script);
+            delete window[callbackName];
+          };
+
+          document.head.appendChild(script);
+        });
+      }
+
+      const chart2 = echarts.init(document.getElementById("chart2"));
+      const chart3 = echarts.init(document.getElementById("chart3"));
+
+      function syncTabState(tab) {
+        activeTab = tab;
+        vscode.setState({ activeTab });
+        document.querySelectorAll("[data-tab]").forEach((btn) => {
+          btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
+        });
+        document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
+          panel.classList.toggle(
+            "active",
+            panel.getAttribute("data-tab-panel") === tab,
+          );
+        });
+        requestAnimationFrame(() => {
+          if (tab === "historyNet") {
+            chart2.resize();
+          } else if (tab === "historyYield") {
+            chart3.resize();
+          }
+        });
+      }
+
+      document.querySelectorAll("[data-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tab = btn.getAttribute("data-tab");
+          if (tab) {
+            syncTabState(tab);
+          }
+        });
+      });
+
+      document
+        .getElementById("refreshDetailBtn")
+        .addEventListener("click", () => {
+          vscode.postMessage({ command: "refresh", activeTab });
+        });
+
+      window.addEventListener("resize", () => {
+        chart2.resize();
+        chart3.resize();
+      });
+
+      const getCommonOption = (title) => ({
+        tooltip: { trigger: "axis" },
+        legend: {
+          data: [],
+          textStyle: { color: defaultTextColor },
+        },
+        grid: { left: "2%", right: "2%", bottom: "2%", containLabel: true },
+        xAxis: {
+          type: "category",
+          boundaryGap: false,
+          data: [],
+          axisLabel: { color: defaultTextColor, rotate: 45, margin: 12 },
+          axisLine: { lineStyle: { color: defaultGridColor } },
+        },
+        yAxis: {
+          type: "value",
+          scale: true, // Auto scaling without strictly starting from 0, makes small fluctuations visible
+          axisLabel: { color: defaultTextColor },
+          splitLine: { lineStyle: { color: defaultGridColor, type: "dashed" } },
+        },
+        series: [],
+      });
+
+      // Current Ranges
+      let range2 = "y";
+      let range3 = "y";
+
+      // Button Click Binders
+      document.querySelectorAll("#rangeBtns2 button").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          document
+            .querySelectorAll("#rangeBtns2 button")
+            .forEach((b) => b.classList.remove("active"));
+          e.target.classList.add("active");
+          range2 = e.target.getAttribute("data-value");
+          fetchHistoryNetVal();
+        });
+      });
+
+      document.querySelectorAll("#rangeBtns3 button").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          document
+            .querySelectorAll("#rangeBtns3 button")
+            .forEach((b) => b.classList.remove("active"));
+          e.target.classList.add("active");
+          range3 = e.target.getAttribute("data-value");
+          fetchHistoryYield();
+        });
+      });
+
+      // 基金概况
+      function fetchFundInfo() {
+        document.getElementById("loadingInfo").style.display = "block";
+        document.getElementById("infoGrid").style.display = "none";
+        let url =
+          "https://fundmobapi.eastmoney.com/FundMApi/FundBaseTypeInformation.ashx?FCODE=019062&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=1778651723692";
+        let callbackName = "jsonpInfo_" + Date.now();
+
+        loadJSONP(url, callbackName)
+          .then((res) => {
+            document.getElementById("loadingInfo").style.display = "none";
+            if (!res || !res.Datas) return;
+            let data = res.Datas;
+
+            function formatMoney(val) {
+              if (!val) return "--";
+              if (val >= 100000000) return (val / 100000000).toFixed(2) + " 亿";
+              if (val >= 10000) return (val / 10000).toFixed(2) + " 万";
+              return val.toFixed(2);
+            }
+
+            function renderColor(val) {
+              if (!val) return "";
+              let num = parseFloat(val);
+              if (num > 0) return "up";
+              if (num < 0) return "down";
+              return "";
+            }
+
+            let html = `
+              <div class="info-item">
+                  <div class="info-label">基金类型</div>
+                  <div class="info-value">${data.FTYPE || "--"}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">成立日期</div>
+                  <div class="info-value">${data.ESTABDATE || "--"}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">基金公司</div>
+                  <div class="info-value">${data.JJGS || "--"}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">基金经理</div>
+                  <div class="info-value">${data.JJJL || "--"}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">单位净值</div>
+                  <div class="info-value">${data.DWJZ || "--"} (${data.FSRQ || "--"})</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">累计净值</div>
+                  <div class="info-value">${data.LJJZ || "--"}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">基金规模</div>
+                  <div class="info-value">${formatMoney(data.ENDNAV)}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">交易状态</div>
+                  <div class="info-value">${data.SGZT || "--"} / ${data.SHZT || "--"}</div>
+              </div>
+
+              <div class="info-item">
+                  <div class="info-label">近1周收益率</div>
+                  <div class="info-value ${renderColor(data.SYL_Z)}">${data.SYL_Z > 0 ? "+" : ""}${data.SYL_Z || "0"}%</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">近1月收益率 (排名)</div>
+                  <div class="info-value ${renderColor(data.SYL_Y)}">${data.SYL_Y > 0 ? "+" : ""}${data.SYL_Y || "0"}% (${data.RANKM || "--"})</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">近3月收益率 (排名)</div>
+                  <div class="info-value ${renderColor(data.SYL_3Y)}">${data.SYL_3Y > 0 ? "+" : ""}${data.SYL_3Y || "0"}% (${data.RANKQ || "--"})</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">近6月收益率 (排名)</div>
+                  <div class="info-value ${renderColor(data.SYL_6Y)}">${data.SYL_6Y > 0 ? "+" : ""}${data.SYL_6Y || "0"}% (${data.RANKHY || "--"})</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">近1年收益率 (排名)</div>
+                  <div class="info-value ${renderColor(data.SYL_1N)}">${data.SYL_1N > 0 ? "+" : ""}${data.SYL_1N || "0"}% (${data.RANKY || "--"})</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">近3年收益率 (排名)</div>
+                  <div class="info-value ${renderColor(data.SYL_3N)}">${data.SYL_3N > 0 ? "+" : ""}${data.SYL_3N || "0"}% (${data.RANK3N || "--"})</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">近5年收益率 (排名)</div>
+                  <div class="info-value ${renderColor(data.SYL_5N)}">${data.SYL_5N > 0 ? "+" : ""}${data.SYL_5N || "0"}% (${data.RANK5N || "--"})</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label">成立以来收益率</div>
+                  <div class="info-value ${renderColor(data.SYL_LN)}">${data.SYL_LN > 0 ? "+" : ""}${data.SYL_LN || "0"}%</div>
+              </div>
+          `;
+
+            document.getElementById("infoGrid").innerHTML = html;
+            document.getElementById("infoGrid").style.display = "grid";
+          })
+          .catch((e) => {
+            document.getElementById("loadingInfo").style.display = "none";
+          });
+      }
+
+      // 获取详细基金信息（包括基金经理和关联板块）
+      function fetchDetailedFundInfo() {
+        const url = "https://dgs.tiantianfunds.com/merge/m/api/jjxqy1_2";
+        const params = new URLSearchParams({
+          deviceid: "fd7dac76-c5e9-4723-8fe6-7b436b2b1443",
+          version: "9.9.9",
+          appVersion: "6.5.5",
+          product: "EFund",
+          plat: "Web",
+          uid: "",
+          fcode: fundCode,
+          ISRG: "0",
+          indexfields:
+            "_id,INDEXCODE,BKID,INDEXNAME,INDEXVALUA,NEWINDEXTEXCH,PEP100",
+          fields:
+            "BENCH,ESTDIFF,INDEXNAME,LINKZSB,INDEXCODE,NEWTEXCH,FTYPE,FCODE,BAGTYPE,RISKLEVEL,TTYPENAME,PTDT_FY,PTDT_TRY,PTDT_TWY,PTDT_Y,DWDT_FY,DWDT_TRY,DWDT_TWY,DWDT_Y,MBDT_FY,MBDT_TRY,MBDT_TWY,MBDT_Y,YDDT_FY,YDDT_TRY,YDDT_TWY,YDDT_Y,BFUNDTYPE,YMATCHCODEA,RLEVEL_SZ,RLEVEL_CX,ESTABDATE,JJGS,JJGSID,ENDNAV,FEGMRQ,SHORTNAME,TTYPE,TJDIN,FUNDEXCHG,LISTTEXCHMARK,FSRQ,ISSBDATE,ISSEDATE,FEATURE,DWJZ,LJJZ,MINRG,RZDF,PERIODNAME,SYL_1N,SYL_LN,SYL_Z,SOURCERATE,RATE,TSRQ,BTYPE,BUY,BENCHCODE,BENCH_CORR,TRKERROR,BENCHRATIO,NEWINDEXTEXCH,BESTDT_STRATEGY,BESTDT_Y,BESTDT_TWY,BESTDT_TRY,BESTDT_FY",
+          fundUniqueInfo_fIELDS:
+            "FCODE,STDDEV1,STDDEV_1NRANK,STDDEV_1NFSC,STDDEV3,STDDEV_3NRANK,STDDEV_3NFSC,STDDEV5,STDDEV_5NRANK,STDDEV_5NFSC,SHARP1,SHARP_1NRANK,SHARP_1NFSC,SHARP3,SHARP_3NRANK,SHARP_3NFSC,SHARP5,SHARP_5NRANK,SHARP_5NFSC,MAXRETRA1,MAXRETRA_1NRANK,MAXRETRA_1NFSC,MAXRETRA3,MAXRETRA_3NRANK,MAXRETRA_3NFSC,MAXRETRA5,MAXRETRA_5NRANK,MAXRETRA_5NFSC,TRKERROR1,TRKERROR_1NRANK,TRKERROR_1NFSC,TRKERROR3,TRKERROR_3NRANK,TRKERROR_3NFSC,TRKERROR5,TRKERROR_5NRANK,TRKERROR_5NFSC",
+          fundUniqueInfo_fLFIELDS:
+            "FCODE,BUSINESSTYPE,BUSINESSTEXT,BUSINESSCODE,BUSINESSSUBTYPE,MARK",
+          cfhFundFInfo_fields: "INVESTMENTIDEAR,INVESTMENTIDEARIMG",
+          relateThemeFields: "FCODE,SEC_CODE,SEC_NAME,CORR_1Y,OL2TOP",
+        });
+
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Origin: "https://h5.1234567.com.cn",
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+            Referer: "https://servicewechat.com/",
+          },
+          body: params.toString(),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data && data.data) {
+              // 处理基金经理信息
+              if (
+                data.data.FundManagerInformation &&
+                data.data.FundManagerInformation.currentManagerInfos
+              ) {
+                renderManagerInfo(
+                  data.data.FundManagerInformation.currentManagerInfos,
+                );
+              } else {
+                document.getElementById("loadingManager").style.display =
+                  "none";
+                document.getElementById("managerInfo").innerHTML =
+                  '<p style="text-align: center; color: var(--vscode-descriptionForeground);">暂无基金经理信息</p>';
+                document.getElementById("managerInfo").style.display = "flex";
+              }
+
+              // 处理关联板块信息
+              if (
+                data.data.fundRelateTheme &&
+                data.data.fundRelateTheme.length > 0
+              ) {
+                renderThemeInfo(data.data.fundRelateTheme);
+              } else {
+                document.getElementById("loadingTheme").style.display = "none";
+                document.getElementById("themeInfo").innerHTML =
+                  '<p style="text-align: center; color: var(--vscode-descriptionForeground);">暂无关联板块信息</p>';
+                document.getElementById("themeInfo").style.display = "flex";
+              }
+
+              // 更新基金概况中的近1周收益率（从详细接口获取）
+              if (data.data.baseInfo && data.data.baseInfo.length > 0) {
+                const baseInfo = data.data.baseInfo[0];
+                updateWeeklyReturn(baseInfo.SYL_Z);
+              }
+            }
+          })
+          .catch((error) => {
+            console.error("获取详细基金信息失败:", error);
+            document.getElementById("loadingManager").style.display = "none";
+            document.getElementById("loadingTheme").style.display = "none";
+            document.getElementById("managerInfo").innerHTML =
+              '<p style="text-align: center; color: var(--vscode-descriptionForeground);">加载失败</p>';
+            document.getElementById("themeInfo").innerHTML =
+              '<p style="text-align: center; color: var(--vscode-descriptionForeground);">加载失败</p>';
+            document.getElementById("managerInfo").style.display = "block";
+            document.getElementById("themeInfo").style.display = "flex";
+          });
+      }
+
+      // 渲染基金经理信息
+      function renderManagerInfo(managers) {
+        document.getElementById("loadingManager").style.display = "none";
+
+        let html = "";
+        managers.forEach((manager) => {
+          const sInfo = manager.SINFO || {};
+          const pInfo =
+            manager.PINFO && manager.PINFO.length > 0 ? manager.PINFO[0] : {};
+
+          const managerName = sInfo.MGRNAME || pInfo.MGRNAME || "--";
+          const totalDays = sInfo.TOTALDAYS || 0;
+          const penavGrowth = sInfo.PENAVGROWTH || 0;
+          const yieldSe = pInfo.YIELDSE || 0;
+          const resume = pInfo.RESUME || "暂无简历信息";
+          const avatar = pInfo.NEWPHOTOURL || "";
+          const investmentIdea = pInfo.INVESTMENTIDEAR || "暂无投资理念";
+
+          // 计算任职年限
+          const years = Math.floor(totalDays / 365);
+          const months = Math.floor((totalDays % 365) / 30);
+          const tenureText =
+            years > 0 ? `${years}年${months}个月` : `${months}个月`;
+
+          html += `
+              <div class="manager-card">
+                  <img class="manager-avatar" src="${avatar}" alt="${managerName}" onerror="this.style.display='none'">
+                  <div class="manager-details">
+                      <div class="manager-name">${managerName}</div>
+                      <div>
+                          <span class="manager-tag">任职 ${tenureText}</span>
+                          <span class="manager-tag">任职回报 ${penavGrowth > 0 ? "+" : ""}${penavGrowth.toFixed(2)}%</span>
+                      </div>
+                      <div class="manager-stats">
+                          <div class="manager-stat">
+                              <div class="manager-stat-label">任职天数</div>
+                              <div class="manager-stat-value">${totalDays}天</div>
+                          </div>
+                          <div class="manager-stat">
+                              <div class="manager-stat-label">年化收益</div>
+                              <div class="manager-stat-value">${yieldSe > 0 ? "+" : ""}${yieldSe.toFixed(2)}%</div>
+                          </div>
+                      </div>
+                      <div style="margin-top: 10px;">
+                          <strong>投资理念：</strong>${investmentIdea}
+                      </div>
+                      <div class="manager-resume">
+                          <strong>个人简历：</strong>${resume}
+                      </div>
+                  </div>
+              </div>
+          `;
+        });
+
+        document.getElementById("managerInfo").innerHTML = html;
+        document.getElementById("managerInfo").style.display = "block";
+      }
+
+      // 渲染关联板块信息
+      function renderThemeInfo(themes) {
+        document.getElementById("loadingTheme").style.display = "none";
+
+        let html = "";
+        themes.forEach((theme) => {
+          const secName = theme.SEC_NAME || "--";
+          const corr1Y = theme.CORR_1Y || 0;
+          const ol2Top = theme.OL2TOP || 0;
+
+          html += `
+              <div class="theme-tag">
+                  <span class="theme-name">${secName}</span>
+                  <span class="theme-corr">相关性 ${corr1Y.toFixed(1)}%</span>
+              </div>
+          `;
+        });
+
+        document.getElementById("themeInfo").innerHTML = html;
+        document.getElementById("themeInfo").style.display = "flex";
+      }
+
+      // 更新近1周收益率
+      function updateWeeklyReturn(sylZ) {
+        // 等待基金概况加载完成后更新
+        setTimeout(() => {
+          const weeklyElements = document.querySelectorAll(
+            ".info-grid .info-item",
+          );
+          weeklyElements.forEach((item) => {
+            const label = item.querySelector(".info-label");
+            if (label && label.textContent === "近1周收益率") {
+              const valueElement = item.querySelector(".info-value");
+              if (valueElement && sylZ !== undefined && sylZ !== null) {
+                const colorClass = sylZ > 0 ? "up" : sylZ < 0 ? "down" : "";
+                valueElement.className = `info-value ${colorClass}`;
+                valueElement.textContent = `${sylZ > 0 ? "+" : ""}${sylZ}%`;
+              }
+            }
+          });
+        }, 1000);
+      }
+
+      // 历史净值
+      function fetchHistoryNetVal() {
+        document.getElementById("loading2").style.display = "block";
+        let actualRange = range2 === "1w" ? "y" : range2;
+        let url =
+          "https://fundmobapi.eastmoney.com/FundMApi/FundNetDiagram.ashx?FCODE=019062&RANGE=" +
+          actualRange +
+          "&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&_=1778651723692";
+
+        let callbackName =
+          "jsonpCallback2_" +
+          new Date().getTime() +
+          Math.floor(Math.random() * 10000);
+
+        loadJSONP(url, callbackName)
+          .then((data) => {
+            document.getElementById("loading2").style.display = "none";
+            if (!data || !data.Datas || data.Datas.length === 0) {
+              chart2.clear();
+              chart2.setOption({
+                title: {
+                  text: "暂无净值数据",
+                  left: "center",
+                  top: "center",
+                  textStyle: {
+                    color: defaultTextColor,
+                    fontSize: 13,
+                    fontWeight: "normal",
+                  },
+                },
+              });
+              return;
+            }
+            let dataList = data.Datas;
+            if (range2 === "1w") {
+              dataList = dataList.slice(-5);
+              if (dataList.length === 0) {
+                chart2.clear();
+                chart2.setOption({
+                  title: {
+                    text: "暂无近一周数据",
+                    left: "center",
+                    top: "center",
+                    textStyle: {
+                      color: defaultTextColor,
+                      fontSize: 13,
+                      fontWeight: "normal",
+                    },
+                  },
+                });
+                return;
+              }
+            }
+            let dates = dataList.map((item) => item.FSRQ);
+            let dwjz = dataList.map((item) => +item.DWJZ);
+            let ljjz = dataList.map((item) => +item.LJJZ);
+            let jzzzl = dataList.map((item) => item.JZZZL);
+
+            let option = getCommonOption("历史净值");
+            option.legend.data = ["单位净值", "累计净值"];
+            option.xAxis.data = dates;
+
+            // Set more precise Y-axis label formatting to catch small nav value changes
+            option.yAxis.axisLabel.formatter = function (val) {
+              return val.toFixed(4); // Use 4 decimal degrees for accuracy
+            };
+
+            option.tooltip.formatter = function (params) {
+              let dataIndex = params[0].dataIndex;
+              let date = params[0].name;
+              let res = "时间: " + date + "<br/>";
+              params.forEach((p) => {
+                res +=
+                  p.marker +
+                  p.seriesName +
+                  ": " +
+                  Number(p.value).toFixed(4) +
+                  "<br/>";
+              });
+
+              let rate = jzzzl[dataIndex];
+              if (rate !== undefined && rate !== "" && rate !== null) {
+                let colorStr =
+                  Number(rate) > 0
+                    ? "#f56c6c"
+                    : Number(rate) < 0
+                      ? "#4eb61b"
+                      : defaultTextColor;
+                res +=
+                  '<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#909399;"></span>日增长率: <span style="color:' +
+                  colorStr +
+                  ';font-weight:bold;">' +
+                  rate +
+                  "%</span><br/>";
+              }
+              return res;
+            };
+            option.series = [
+              {
+                name: "单位净值",
+                type: "line",
+                data: dwjz,
+                showSymbol: false,
+                lineStyle: { color: "#409EFF" },
+              },
+              {
+                name: "累计净值",
+                type: "line",
+                data: ljjz,
+                showSymbol: false,
+                lineStyle: { color: "#E6A23C" },
+              },
+            ];
+            chart2.setOption(option);
+          })
+          .catch((e) => {
+            document.getElementById("loading2").style.display = "none";
+          });
+      }
+
+      // 历史累计收益率
+      function fetchHistoryYield() {
+        document.getElementById("loading3").style.display = "block";
+        let actualRange = range3 === "1w" ? "y" : range3;
+        let url =
+          "https://dataapi.1234567.com.cn/dataapi/fund/FundVPageAcc?INDEXCODE=000300&CODE=019062&FCODE=019062&RANGE=" +
+          actualRange +
+          "&deviceid=Wap&product=EFund";
+
+        fetch(url, {
+          headers: {
+            accept: "application/json, text/plain, */*",
+            "accept-language": "zh-CN,zh;q=0.9",
+          },
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            document.getElementById("loading3").style.display = "none";
+            if (
+              !data ||
+              data.errorCode !== 0 ||
+              !data.data ||
+              data.data.length === 0
+            ) {
+              chart3.clear();
+              chart3.setOption({
+                title: {
+                  text: "暂无累计收益数据",
+                  left: "center",
+                  top: "center",
+                  textStyle: {
+                    color: defaultTextColor,
+                    fontSize: 13,
+                    fontWeight: "normal",
+                  },
+                },
+              });
+              return;
+            }
+            let dataList = data.data;
+            if (range3 === "1w") {
+              dataList = dataList.slice(-5);
+              if (dataList.length === 0) {
+                chart3.clear();
+                chart3.setOption({
+                  title: {
+                    text: "暂无近一周数据",
+                    left: "center",
+                    top: "center",
+                    textStyle: {
+                      color: defaultTextColor,
+                      fontSize: 13,
+                      fontWeight: "normal",
+                    },
+                  },
+                });
+                return;
+              }
+            }
+            let dates = dataList.map((item) => item.pdate);
+            let yieldData = dataList.map((item) => +(item.yield || 0));
+            let indexYieldData = dataList.map(
+              (item) => +(item.indexYield || 0),
+            );
+            let fundTypeYieldData = dataList.map(
+              (item) => +(item.fundTypeYield || 0),
+            );
+
+            let option = getCommonOption("历史累计收益率");
+            option.legend.data = ["涨幅", "沪深300", "同类平均"];
+            option.xAxis.data = dates;
+            option.yAxis.axisLabel.formatter = "{value}%";
+            option.tooltip.formatter = function (params) {
+              let date = params[0].name;
+              let res = "时间: " + date + "<br/>";
+              params.forEach((p) => {
+                res +=
+                  p.marker +
+                  p.seriesName +
+                  ": " +
+                  Number(p.value).toFixed(2) +
+                  "%<br/>";
+              });
+              return res;
+            };
+            option.series = [
+              {
+                name: "涨幅",
+                type: "line",
+                data: yieldData,
+                showSymbol: false,
+                lineStyle: { color: "#F56C6C" },
+              },
+              {
+                name: "沪深300",
+                type: "line",
+                data: indexYieldData,
+                showSymbol: false,
+                lineStyle: { color: "#67C23A" },
+              },
+              {
+                name: "同类平均",
+                type: "line",
+                data: fundTypeYieldData,
+                showSymbol: false,
+                lineStyle: { color: "#E6A23C" },
+              },
+            ];
+            chart3.setOption(option);
+          })
+          .catch((e) => {
+            document.getElementById("loading3").style.display = "none";
+            console.error(e);
+          });
+      }
+
+      fetchFundInfo();
+      fetchDetailedFundInfo();
+      fetchHistoryNetVal();
+      fetchHistoryYield();
+      syncTabState(activeTab);
+    </script>
+  </body>
+</html>

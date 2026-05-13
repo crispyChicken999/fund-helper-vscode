@@ -4,11 +4,12 @@
 
 import type { Fund, FundInfo } from '@/types'
 import { fetchFundgzRawViaJsonp } from '@/api/fundgz'
+import { proxyFetch } from '@/api/proxy'
 
 async function fetchFundInvestmentPosition(code: string): Promise<any> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) }).catch(() => null)
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(10000) }).catch(() => null)
     if (!res?.ok) return null
     const data = await res.json().catch(() => null)
     return data?.Datas ?? null
@@ -76,7 +77,7 @@ export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, an
   const map = new Map<string, any>()
   if (!codes.length) return map
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=web&Fcodes=${codes.join(',')}`
-  const res = await fetch(url, { signal: AbortSignal.timeout(15000) }).catch(() => null)
+  const res = await proxyFetch(url, { signal: AbortSignal.timeout(15000) }).catch(() => null)
   if (!res?.ok) return map
   const data = await res.json().catch(() => null)
   const gztime = data?.Expansion?.GZTIME ?? ''
@@ -96,7 +97,7 @@ export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, an
 async function fetchFundFromMNFInfo(code: string): Promise<any | null> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=web&Fcodes=${code}`
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) }).catch(() => null)
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(10000) }).catch(() => null)
     if (!res?.ok) return null
     const data = await res.json().catch(() => null)
     if (!data?.Datas?.length) return null
@@ -296,7 +297,7 @@ export async function searchFund(keyword: string): Promise<{ code: string; name:
   }
 }
 
-const RELATE_THEME_URL = '/api-proxy/tiantian/merge/m/api/jjxqy1_2'
+const RELATE_THEME_URL = 'https://dgs.tiantianfunds.com/merge/m/api/jjxqy1_2'
 
 export async function fetchFundRelateTheme(fundCodes: string[]): Promise<Record<string, string>> {
   const result: Record<string, string> = {}
@@ -321,11 +322,10 @@ export async function fetchFundRelateTheme(fundCodes: string[]): Promise<Record<
   })
 
   try {
-    const res = await fetch(RELATE_THEME_URL, {
+    const res = await proxyFetch(RELATE_THEME_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Origin: 'https://h5.1234567.com.cn'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: params.toString(),
       signal: AbortSignal.timeout(12000)

@@ -10,30 +10,77 @@
           <el-button text type="primary" @click="$emit('close')">关闭</el-button>
         </header>
 
-        <section class="fund-tooltip-grid" v-if="row">
-          <div class="grid-row">
-            <span>估算净值</span><span>{{ fmt4(row.displayGsz) }}</span>
-            <span>估算涨幅</span><span :class="pctClass(row.gszzl)">{{ fmtPct(row.gszzl, row.shouldShowEstimated) }}</span>
-            <span>更新时间</span><span>{{ row.updateTime || '—' }}</span>
+        <section class="fund-tooltip-body" v-if="row">
+          <!-- 估算数据 -->
+          <div class="info-group">
+            <div class="info-row">
+              <span class="info-label">估算涨幅 ({{ row.estimatedDateLabel }})</span>
+              <span :class="estClass(row.gszzl)">{{ fmtPct(row.gszzl, row.shouldShowEstimated) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">估算收益 ({{ row.estimatedDateLabel }})</span>
+              <span :class="estClass(row.estimatedGain)">{{ fmtEst(row.estimatedGain, row.shouldShowEstimated) }}</span>
+            </div>
           </div>
-          <div class="grid-row">
-            <span>当日涨幅</span><span :class="pctClass(row.navChgRt)">{{ fmtPct(row.navChgRt, true) }}</span>
-            <span>当日收益</span><span :class="moneyClass(row.dailyGain)">{{ fmtMoney(row.dailyGain) }}</span>
-            <span>净值日期</span><span>{{ row.navDateLabel }}</span>
+
+          <!-- 当日数据 -->
+          <div class="info-group">
+            <div class="info-row">
+              <span class="info-label">当日涨幅 ({{ row.navDateLabel }})</span>
+              <span :class="pctClass(row.navChgRt)">{{ fmtPct(row.navChgRt, true) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">当日收益 ({{ row.navDateLabel }})</span>
+              <span :class="moneyClass(row.dailyGain)">{{ fmtMoney(row.dailyGain) }}</span>
+            </div>
           </div>
-          <div class="grid-row">
-            <span>持有收益</span><span :class="moneyClass(row.holdingGain)">{{ fmtMoney(row.holdingGain) }}</span>
-            <span>总收益率</span><span :class="pctClass(row.holdingGainRate)">{{ fmtPct(row.holdingGainRate, true) }}</span>
+
+          <!-- 持有收益 -->
+          <div class="info-group">
+            <div class="info-row">
+              <span class="info-label">持有收益</span>
+              <span :class="moneyClass(row.holdingGain)">{{ fmtMoney(row.holdingGain) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">总收益率</span>
+              <span :class="pctClass(row.holdingGainRate)">{{ fmtPct(row.holdingGainRate, true) }}</span>
+            </div>
           </div>
-          <div class="grid-row">
-            <span>金额</span><span>{{ fmtMoney(row.holdingAmount) }}</span>
-            <span>份额</span><span>{{ fmtShares(row.fund.num) }}</span>
+
+          <!-- 持仓信息 -->
+          <div class="info-group">
+            <div class="info-row">
+              <span class="info-label">持有金额</span>
+              <span>{{ fmtMoney(row.holdingAmount) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">持有份额</span>
+              <span>{{ fmtShares(row.fund.num) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">成本价</span>
+              <span>{{ fmt4(row.fund.cost) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">估算净值</span>
+              <span>{{ fmt4(row.displayGsz) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">单位净值</span>
+              <span>{{ fmt4(row.dwjz) }}</span>
+            </div>
           </div>
-          <div class="grid-row">
-            <span>成本/最新</span><span>{{ fmt4(row.fund.cost) }} / {{ fmt4(row.dwjz) }}</span>
-          </div>
-          <div class="theme-row">
-            <span>关联板块</span><span>{{ row.relateTheme }}</span>
+
+          <!-- 其他信息 -->
+          <div class="info-group">
+            <div class="info-row">
+              <span class="info-label">关联板块</span>
+              <span>{{ row.relateTheme || '—' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">更新时间</span>
+              <span>{{ row.fullUpdateTime || row.updateTime || '—' }}</span>
+            </div>
           </div>
         </section>
 
@@ -74,6 +121,11 @@ function fmtMoney(v: number) {
   return formatPrivacy(formatCurrency(v), props.privacyMode)
 }
 
+function fmtEst(v: number, show: boolean) {
+  if (!show) return '—'
+  return fmtMoney(v)
+}
+
 function fmt4(v: number) {
   return formatPrivacy(v.toFixed(4), props.privacyMode)
 }
@@ -98,6 +150,11 @@ function moneyClass(v: number) {
   if (v > 0) return 'positive'
   if (v < 0) return 'negative'
   return 'flat'
+}
+
+function estClass(v: number) {
+  if (!props.row?.shouldShowEstimated) return 'flat'
+  return pctClass(v)
 }
 </script>
 
@@ -143,36 +200,32 @@ function moneyClass(v: number) {
   margin-top: 4px;
 }
 
-.fund-tooltip-grid {
+.fund-tooltip-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
+}
+
+.info-group {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.info-group:last-child {
+  border-bottom: none;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
   font-size: 13px;
 }
 
-.grid-row {
-  display: grid;
-  grid-template-columns: 72px 1fr 72px 1fr 72px 1fr;
-  gap: 6px 8px;
-  align-items: center;
-}
-
-.grid-row span:nth-child(odd) {
+.info-label {
   color: var(--el-text-color-secondary);
   font-size: 12px;
-}
-
-.theme-row {
-  display: flex;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--el-border-color-lighter);
-}
-
-.theme-row span:first-child {
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  flex-shrink: 0;
 }
 
 .fund-tooltip-actions {
@@ -180,6 +233,8 @@ function moneyClass(v: number) {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--el-border-color-lighter);
 }
 
 .positive {
@@ -197,7 +252,7 @@ function moneyClass(v: number) {
     align-items: center;
   }
   .fund-tooltip-panel {
-    border-radius: 12px;
+    border-radius: 8px;
   }
 }
 </style>

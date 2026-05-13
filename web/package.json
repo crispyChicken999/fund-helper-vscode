@@ -12,14 +12,18 @@
     "@vueuse/core": "^14.3.0",
     "axios": "^1.16.0",
     "element-plus": "^2.14.0",
+    "html5-qrcode": "^2.3.8",
     "jsonp": "^0.2.1",
     "pinia": "^3.0.4",
+    "qrcode": "^1.5.4",
     "sortablejs": "^1.15.7",
     "vue": "^3.5.32",
     "vue-router": "^5.0.6"
   },
   "devDependencies": {
+    "@netlify/functions": "^5.2.0",
     "@types/node": "^24.12.2",
+    "@types/qrcode": "^1.5.6",
     "@types/sortablejs": "^1.15.9",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",

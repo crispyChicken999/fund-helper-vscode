@@ -39,27 +39,36 @@
 
           <el-divider content-position="left">列表配置</el-divider>
 
-          <el-form-item label="可见列">
-            <el-checkbox-group v-model="visibleColumns" @change="handleVisibleColumnsChange">
-              <el-checkbox
-                v-for="col in allColumns"
+          <el-form-item label="列配置">
+            <div class="form-item-tip" style="margin-bottom:8px">勾选显示，取消隐藏；拖动 ☰ 或点击箭头调整顺序</div>
+            <ul ref="columnSortRef" class="column-settings-list">
+              <li
+                v-for="(col, index) in columnOrderDraft"
                 :key="col.key"
-                :label="col.key"
-                :disabled="col.key === 'name'"
+                :data-key="col.key"
+                class="column-settings-item"
+                :class="{ fixed: col.key === 'name' }"
               >
-                {{ col.label }}
-              </el-checkbox>
-            </el-checkbox-group>
-          </el-form-item>
-
-          <el-form-item label="列顺序">
-            <div class="form-item-tip" style="margin-bottom:8px">拖拽 ☰ 调整列顺序（名称列固定首位）</div>
-            <ul ref="columnSortRef" class="column-sort-list">
-              <li v-for="col in columnOrderDraft" :key="col" :data-key="col" class="column-sort-item">
-                <span class="drag-handle">☰</span>
-                <span>{{ columnLabel(col) }}</span>
+                <span class="drag-handle" :class="{ disabled: col.key === 'name' }">☰</span>
+                <el-checkbox
+                  :model-value="col.visible"
+                  :disabled="col.key === 'name'"
+                  @update:model-value="toggleColVisible(index, $event as boolean)"
+                />
+                <span class="col-label">{{ col.label }}</span>
+                <template v-if="col.key === 'name'">
+                  <span class="col-fixed-tag">(固定)</span>
+                </template>
+                <template v-else>
+                  <el-button size="small" link :disabled="index <= 1" @click="moveColUp(index)">↑</el-button>
+                  <el-button size="small" link :disabled="index >= columnOrderDraft.length - 1" @click="moveColDown(index)">↓</el-button>
+                </template>
               </li>
             </ul>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <el-button @click="resetColumnSettings">恢复默认</el-button>
+              <el-button type="primary" @click="saveColumnSettings">保存</el-button>
+            </div>
           </el-form-item>
 
           <el-divider content-position="left">数据同步</el-divider>
@@ -67,7 +76,7 @@
           <el-form-item label="Box Name">
             <el-input
               v-model="jsonboxName"
-              placeholder="20-64字符"
+              placeholder="box_xxxxxxxx"
               @blur="handleJsonboxNameChange"
             >
               <template #append>
@@ -80,7 +89,7 @@
                 </el-button>
               </template>
             </el-input>
-            <div class="form-item-tip">用于与 VSCode 版本同步数据</div>
+            <div class="form-item-tip">用于与 VSCode 版本同步数据（box_ 开头）</div>
           </el-form-item>
 
           <el-form-item label="同步操作">
@@ -101,6 +110,9 @@
                 :disabled="!jsonboxName"
               >
                 下载云端
+              </el-button>
+              <el-button @click="showSyncDialog = true">
+                📱 扫码/二维码
               </el-button>
             </el-space>
           </el-form-item>
@@ -142,6 +154,9 @@
         </el-form>
     </div>
 
+    <!-- 同步对话框 -->
+    <SyncDialog v-model:visible="showSyncDialog" @synced="onSyncCompleted" />
+
     <!-- 隐藏的文件输入 -->
     <input
       ref="fileInputRef"
@@ -154,15 +169,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import MainLayout from '@/layouts/MainLayout.vue'
+import SyncDialog from '@/components/SyncDialog.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Connection, Upload, Download, Delete } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
 import { useSettingStore, useFundStore, useGroupStore, useSyncStore } from '@/stores'
 import { syncService } from '@/services'
 import { storageService } from '@/services/storageService'
-import { formatRelativeTime } from '@/utils/format'
 
 const settingStore = useSettingStore()
 const fundStore = useFundStore()
@@ -177,8 +192,9 @@ const theme = ref<'light' | 'dark'>('light')
 const refreshInterval = ref(20)
 const jsonboxName = ref('')
 const testingConnection = ref(false)
+const showSyncDialog = ref(false)
 const visibleColumns = ref<string[]>([])
-const columnOrderDraft = ref<string[]>([])
+const columnOrderDraft = ref<{ key: string; label: string; visible: boolean }[]>([])
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const columnSortRef = ref<HTMLElement | null>(null)
@@ -210,7 +226,7 @@ onMounted(async () => {
   refreshInterval.value = settingStore.refreshInterval
   jsonboxName.value = settingStore.jsonboxName
   visibleColumns.value = [...settingStore.visibleColumns]
-  columnOrderDraft.value = settingStore.columnOrder.filter(k => k !== 'name')
+  buildColumnDraft()
 
   await nextTick()
   initColumnSortable()
@@ -222,26 +238,86 @@ onUnmounted(() => {
 
 // ==================== 列排序 Sortable ====================
 
+function buildColumnDraft() {
+  const order = settingStore.columnOrder
+  const vis = new Set(settingStore.visibleColumns)
+  const seen = new Set<string>()
+  const result: { key: string; label: string; visible: boolean }[] = []
+
+  for (const key of order) {
+    const meta = allColumns.find(c => c.key === key)
+    if (meta) {
+      result.push({ key, label: meta.label, visible: key === 'name' || vis.has(key) })
+      seen.add(key)
+    }
+  }
+  for (const col of allColumns) {
+    if (!seen.has(col.key)) {
+      result.push({ key: col.key, label: col.label, visible: col.key === 'name' || vis.has(col.key) })
+    }
+  }
+  columnOrderDraft.value = result
+}
+
 function initColumnSortable() {
   if (!columnSortRef.value) return
   columnSortable = Sortable.create(columnSortRef.value, {
-    handle: '.drag-handle',
+    handle: '.drag-handle:not(.disabled)',
     animation: 200,
     ghostClass: 'sortable-ghost',
+    filter: '.fixed',
     onEnd(evt) {
       const { oldIndex, newIndex } = evt
       if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
+      if (newIndex === 0) {
+        // Revert: can't move to position 0 (name is fixed)
+        const item = columnOrderDraft.value.splice(newIndex, 1)[0]!
+        columnOrderDraft.value.splice(oldIndex, 0, item)
+        return
+      }
       const item = columnOrderDraft.value.splice(oldIndex, 1)[0]!
       columnOrderDraft.value.splice(newIndex, 0, item)
-      // 保存列顺序
-      settingStore.setColumnOrder(['name', ...columnOrderDraft.value])
-      storageService.saveSettings(settingStore.getSettings())
     }
   })
 }
 
-function columnLabel(key: string): string {
-  return allColumns.find(c => c.key === key)?.label ?? key
+function toggleColVisible(index: number, value: boolean) {
+  const item = columnOrderDraft.value[index]
+  if (item && item.key !== 'name') {
+    item.visible = value
+  }
+}
+
+function moveColUp(index: number) {
+  if (index <= 1) return
+  const arr = columnOrderDraft.value
+  const item = arr.splice(index, 1)[0]!
+  arr.splice(index - 1, 0, item)
+}
+
+function moveColDown(index: number) {
+  if (index >= columnOrderDraft.value.length - 1) return
+  const arr = columnOrderDraft.value
+  const item = arr.splice(index, 1)[0]!
+  arr.splice(index + 1, 0, item)
+}
+
+function resetColumnSettings() {
+  const defaultVisible = ['name', 'estimatedGain', 'estimatedChange', 'holdingGainRate', 'holdingGain', 'dailyChange', 'dailyGain']
+  columnOrderDraft.value = allColumns.map(col => ({
+    key: col.key,
+    label: col.label,
+    visible: defaultVisible.includes(col.key)
+  }))
+}
+
+function saveColumnSettings() {
+  const newOrder = columnOrderDraft.value.map(d => d.key)
+  const newVisible = columnOrderDraft.value.filter(d => d.visible).map(d => d.key)
+  settingStore.setColumnOrder(newOrder)
+  settingStore.setVisibleColumns(newVisible)
+  storageService.saveSettings(settingStore.getSettings())
+  ElMessage.success('列配置已保存')
 }
 
 // ==================== 显示设置 ====================
@@ -265,11 +341,6 @@ async function handleThemeChange(value: 'light' | 'dark') {
 
 async function handleRefreshIntervalChange(value: number) {
   await settingStore.setRefreshInterval(value)
-  storageService.saveSettings(settingStore.getSettings())
-}
-
-function handleVisibleColumnsChange(cols: string[]) {
-  settingStore.setVisibleColumns(cols)
   storageService.saveSettings(settingStore.getSettings())
 }
 
@@ -313,6 +384,15 @@ async function handleSyncFromCloud() {
   } catch (e: any) {
     ElMessage.error('下载失败: ' + e.message)
   }
+}
+
+function onSyncCompleted() {
+  // Refresh local state after sync
+  jsonboxName.value = settingStore.jsonboxName
+  privacyMode.value = settingStore.privacyMode
+  grayscaleMode.value = settingStore.grayscaleMode
+  refreshInterval.value = settingStore.refreshInterval
+  buildColumnDraft()
 }
 
 // ==================== JSON 导入导出 ====================
@@ -369,6 +449,47 @@ async function onFileSelected(e: Event) {
     // 导入分组
     if (payload.groups && typeof payload.groups === 'object' && !Array.isArray(payload.groups)) {
       groupStore.initGroupsFromObject(payload.groups, payload.groupOrder || [])
+      // Map fund groupKey based on imported groups
+      for (const [groupName, codes] of Object.entries(payload.groups as Record<string, string[]>)) {
+        const group = groupStore.getGroupList.find(g => g.name === groupName)
+        if (group) {
+          for (const code of codes) {
+            const fund = fundStore.getFund(code)
+            if (fund) fund.groupKey = group.key
+          }
+        }
+      }
+    }
+
+    // 导入列设置（VSCode 格式）
+    if (payload.columnSettings) {
+      if (payload.columnSettings.columnOrder) {
+        settingStore.setColumnOrder(payload.columnSettings.columnOrder)
+      }
+      if (payload.columnSettings.visibleColumns) {
+        settingStore.setVisibleColumns(payload.columnSettings.visibleColumns)
+      }
+    }
+
+    // 导入其他设置
+    if (payload.privacyMode !== undefined) {
+      settingStore.setPrivacyMode(payload.privacyMode)
+      privacyMode.value = payload.privacyMode
+    }
+    if (payload.grayscaleMode !== undefined) {
+      settingStore.setGrayscaleMode(payload.grayscaleMode)
+      grayscaleMode.value = payload.grayscaleMode
+      document.documentElement.dataset.grayscale = String(payload.grayscaleMode)
+    }
+    if (payload.refreshInterval !== undefined) {
+      settingStore.setRefreshInterval(payload.refreshInterval)
+      refreshInterval.value = payload.refreshInterval
+    }
+    if (payload.sortMethod && typeof payload.sortMethod === 'string') {
+      const parts = payload.sortMethod.split('_')
+      if (parts.length >= 2) {
+        fundStore.setSortConfig(parts[0]!, parts[1] as 'asc' | 'desc')
+      }
     }
 
     // 持久化
@@ -385,20 +506,40 @@ async function onFileSelected(e: Event) {
 function normalizeImportData(raw: any): any {
   // 兼容旧格式：直接是 funds 数组
   if (Array.isArray(raw)) {
-    return { funds: raw, groups: {}, groupOrder: [], settings: {} }
+    return { funds: raw, groups: {}, groupOrder: [], columnSettings: null }
   }
+
+  // Normalize funds: VSCode version uses string num/cost
+  if (Array.isArray(raw.funds)) {
+    raw.funds = raw.funds.map((f: any) => ({
+      code: f.code,
+      num: parseFloat(f.num) || 0,
+      cost: parseFloat(f.cost) || 0
+    }))
+  }
+
   return raw
 }
 
 function handleExportJson() {
   const payload = {
-    funds: fundStore.funds.map(f => ({ code: f.code, num: f.num, cost: f.cost, groupKey: f.groupKey })),
+    funds: fundStore.funds.map(f => ({
+      code: f.code,
+      num: String(f.num),
+      cost: String(f.cost)
+    })),
     groups: groupStore.exportGroupsToObject().groups,
-    groupOrder: groupStore.exportGroupsToObject().groupOrder,
-    settings: settingStore.getSettings(),
-    version: 1,
-    lastModified: Date.now(),
-    clientId: 'web'
+    groupOrder: groupStore.getGroupList.map(g => g.name),
+    columnSettings: {
+      columnOrder: settingStore.columnOrder,
+      visibleColumns: settingStore.visibleColumns
+    },
+    sortMethod: `${fundStore.sortConfig.field}_${fundStore.sortConfig.order}`,
+    refreshInterval: settingStore.refreshInterval,
+    hideStatusBar: false,
+    defaultViewMode: 'webview',
+    privacyMode: settingStore.privacyMode,
+    grayscaleMode: settingStore.grayscaleMode
   }
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
@@ -406,7 +547,7 @@ function handleExportJson() {
   const a = document.createElement('a')
   a.href = url
   const d = new Date()
-  a.download = `fund-helper-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`
+  a.download = `fund-helper-config-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`
   a.click()
   URL.revokeObjectURL(url)
   ElMessage.success('已导出')
@@ -436,6 +577,8 @@ async function handleClearAll() {
 .settings-page-header h2 {
   margin: 0;
   font-size: 18px;
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .settings-main {
@@ -449,43 +592,58 @@ async function handleClearAll() {
   margin-top: 4px;
 }
 
-.column-sort-list {
+.column-settings-list {
   list-style: none;
   padding: 0;
   margin: 0;
   width: 100%;
 }
 
-.column-sort-item {
+.column-settings-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 8px 12px;
   border: 1px solid var(--el-border-color);
   border-radius: 6px;
   margin-bottom: 6px;
   background: var(--el-bg-color);
   font-size: 13px;
+  transition: background 0.15s;
 }
 
-.column-sort-item .drag-handle {
+.column-settings-item.fixed {
+  background: var(--el-fill-color-light);
+}
+
+.column-settings-item .drag-handle {
   cursor: grab;
   color: var(--el-text-color-secondary);
   user-select: none;
+  font-size: 14px;
 }
 
-.column-sort-item .drag-handle:active {
+.column-settings-item .drag-handle.disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.column-settings-item .drag-handle:not(.disabled):active {
   cursor: grabbing;
+}
+
+.column-settings-item .col-label {
+  flex: 1;
+}
+
+.column-settings-item .col-fixed-tag {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
 }
 
 :deep(.sortable-ghost) {
   opacity: 0.4;
   background: var(--el-color-primary-light-9);
-}
-
-:deep(.el-checkbox) {
-  display: block;
-  margin: 6px 0;
 }
 
 .sync-status {

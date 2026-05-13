@@ -2,6 +2,8 @@
  * 基金详情页 API — 概况、经理、关联板块、历史净值
  */
 
+import { proxyFetch } from '@/api/proxy'
+
 // ==================== 类型定义 ====================
 
 export interface FundOverview {
@@ -46,7 +48,7 @@ export interface NetValueRecord {
 
 // ==================== 基金概况 & 经理 ====================
 
-const DETAIL_URL = '/api-proxy/tiantian/merge/m/api/jjxqy1_2'
+const DETAIL_URL = 'https://dgs.tiantianfunds.com/merge/m/api/jjxqy1_2'
 
 export async function fetchFundDetailInfo(code: string): Promise<{
   overview: FundOverview | null
@@ -70,11 +72,10 @@ export async function fetchFundDetailInfo(code: string): Promise<{
   })
 
   try {
-    const res = await fetch(DETAIL_URL, {
+    const res = await proxyFetch(DETAIL_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Origin: 'https://h5.1234567.com.cn'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: params.toString(),
       signal: AbortSignal.timeout(12000)
@@ -143,11 +144,10 @@ export async function fetchRelateThemes(code: string): Promise<RelateThemeItem[]
   })
 
   try {
-    const res = await fetch(DETAIL_URL, {
+    const res = await proxyFetch(DETAIL_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Origin: 'https://h5.1234567.com.cn'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: params.toString(),
       signal: AbortSignal.timeout(12000)
@@ -188,9 +188,9 @@ export async function fetchNetValueHistory(
   code: string,
   pageSize: number
 ): Promise<NetValueRecord[]> {
-  const url = `/api-proxy/eastfund/f10/lsjz?fundCode=${code}&pageIndex=1&pageSize=${pageSize}&startDate=&endDate=&_=${Date.now()}`
+  const url = `https://api.fund.eastmoney.com/f10/lsjz?fundCode=${code}&pageIndex=1&pageSize=${pageSize}&startDate=&endDate=&_=${Date.now()}`
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000) })
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(15000) })
     if (!res.ok) return []
     const data = await res.json()
     const list: any[] = data?.Data?.LSJZList ?? []
@@ -200,6 +200,124 @@ export async function fetchNetValueHistory(
       accNetValue: parseFloat(item.LJJZ) || 0,
       changePercent: parseFloat(item.JZZZL) || 0
     })).reverse() // API 返回倒序，翻转为正序
+  } catch {
+    return []
+  }
+}
+
+// ==================== 基金详情（FundMNDetail）====================
+
+export interface FundMNDetailData {
+  fundType: string
+  estabDate: string
+  company: string
+  managerName: string
+  nav: string
+  navDate: string
+  accNav: string
+  fundScale: string
+  buyStatus: string
+  sellStatus: string
+}
+
+export async function fetchFundMNDetail(code: string): Promise<FundMNDetailData | null> {
+  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNDetail?FCODE=${code}&deviceid=web&plat=Android&appType=ttjj&product=EFund&Version=1`
+  try {
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(10000) }).catch(() => null)
+    if (!res?.ok) return null
+    const data = await res.json().catch(() => null)
+    const d = data?.Datas ?? null
+    if (!d) return null
+    return {
+      fundType: d.FTYPE || '',
+      estabDate: d.ESTABDATE || '',
+      company: d.JJGS || '',
+      managerName: d.JJJL || '',
+      nav: d.DWJZ || '',
+      navDate: d.FSRQ || '',
+      accNav: d.LJJZ || '',
+      fundScale: d.ENDNAV || '',
+      buyStatus: d.SGZT || '',
+      sellStatus: d.SHZT || ''
+    }
+  } catch {
+    return null
+  }
+}
+
+// ==================== 阶段收益率（FundMNPeriodIncrease）====================
+
+export interface PeriodIncreaseData {
+  weekRate: string
+  monthRate: string
+  monthRank: string
+  threeMonthRate: string
+  threeMonthRank: string
+  sixMonthRate: string
+  sixMonthRank: string
+  yearRate: string
+  yearRank: string
+  threeYearRate: string
+  threeYearRank: string
+  fiveYearRate: string
+  fiveYearRank: string
+  sinceEstablishRate: string
+}
+
+export async function fetchPeriodIncrease(code: string): Promise<PeriodIncreaseData | null> {
+  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNPeriodIncrease?FCODE=${code}&deviceid=web&plat=Android&appType=ttjj&product=EFund&Version=1`
+  try {
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(10000) }).catch(() => null)
+    if (!res?.ok) return null
+    const data = await res.json().catch(() => null)
+    const d = data?.Datas ?? null
+    if (!d) return null
+    return {
+      weekRate: d.SYL_Z || '',
+      monthRate: d.SYL_Y || '',
+      monthRank: d.RANK_Y || '',
+      threeMonthRate: d.SYL_3Y || '',
+      threeMonthRank: d.RANK_3Y || '',
+      sixMonthRate: d.SYL_6Y || '',
+      sixMonthRank: d.RANK_6Y || '',
+      yearRate: d.SYL_1N || '',
+      yearRank: d.RANK_1N || '',
+      threeYearRate: d.SYL_3N || '',
+      threeYearRank: d.RANK_3N || '',
+      fiveYearRate: d.SYL_5N || '',
+      fiveYearRank: d.RANK_5N || '',
+      sinceEstablishRate: d.SYL_LN || ''
+    }
+  } catch {
+    return null
+  }
+}
+
+// ==================== 基金经理（FundMNManager）====================
+
+export interface FundManagerDetail {
+  name: string
+  startDate: string
+  totalDays: number
+  totalReturn: string
+  years: string
+  fundCount: number
+}
+
+export async function fetchFundMNManager(code: string): Promise<FundManagerDetail[]> {
+  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNManager?FCODE=${code}&deviceid=web&plat=Android&appType=ttjj&product=EFund&Version=1`
+  try {
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(10000) }).catch(() => null)
+    if (!res?.ok) return []
+    const data = await res.json().catch(() => null)
+    return (data?.Datas ?? []).map((m: any) => ({
+      name: m.MGRNAME || '',
+      startDate: m.FEMPDATE || '',
+      totalDays: parseInt(m.DAYS) || 0,
+      totalReturn: m.PENAVGROWTH || '',
+      years: m.TOTALDAYS ? `${Math.floor(parseInt(m.TOTALDAYS) / 365)}年` : '',
+      fundCount: parseInt(m.TOTALFUNDCOUNT) || 0
+    }))
   } catch {
     return []
   }

@@ -1,7 +1,9 @@
 /**
  * 行情中心 API — 对齐 VSCode 版 marketWebview.ts
- * 使用 push2.eastmoney.com（允许跨域）和 data.eastmoney.com（需 Vite proxy）
+ * 使用 push2.eastmoney.com（允许跨域）和 data.eastmoney.com（需代理）
  */
+
+import { proxyFetch } from '@/api/proxy'
 
 // ==================== 类型定义 ====================
 
@@ -125,9 +127,9 @@ export async function fetchPlateData(
   rankField: PlateRankField = 'f62'
 ): Promise<PlateItem[]> {
   const code = getPlateCode(plateTab)
-  const url = `/api-proxy/bkzj/getbkzj?key=${rankField}&code=${encodeURIComponent(code)}`
+  const url = `https://data.eastmoney.com/dataapi/bkzj/getbkzj?key=${rankField}&code=${encodeURIComponent(code)}`
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(12000) })
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(12000) })
     if (!res.ok) return []
     const data = await res.json()
     const list: any[] = data?.data ?? []

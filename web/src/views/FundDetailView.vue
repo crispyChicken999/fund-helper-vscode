@@ -36,32 +36,16 @@
       <div v-show="activeTab === 'holding'" class="tab-panel">
         <div class="info-grid-2col" v-if="fundView">
           <div class="grid-item">
-            <span class="g-label">持仓份额</span>
-            <span class="g-value">{{ fmtNum(fundView.num) }}</span>
-          </div>
-          <div class="grid-item">
-            <span class="g-label">持仓成本</span>
-            <span class="g-value">{{ fmtPrice(fundView.cost) }}</span>
-          </div>
-          <div class="grid-item">
-            <span class="g-label">当前金额</span>
+            <span class="g-label">持有金额</span>
             <span class="g-value">{{ fmtMoney(holdingAmount) }}</span>
           </div>
           <div class="grid-item">
-            <span class="g-label">最新净值</span>
-            <span class="g-value">{{ fmtPrice(fundView.netValue) }}</span>
+            <span class="g-label">持有份额</span>
+            <span class="g-value">{{ fmtNum(fundView.num) }}</span>
           </div>
           <div class="grid-item">
-            <span class="g-label">估算净值</span>
-            <span class="g-value" :class="pctClass(fundView.estimatedChange)">
-              {{ fundView.estimatedValue != null ? fmtPrice(fundView.estimatedValue) : '--' }}
-            </span>
-          </div>
-          <div class="grid-item">
-            <span class="g-label">估算涨跌幅</span>
-            <span class="g-value" :class="pctClass(fundView.estimatedChange)">
-              {{ fmtPct(fundView.estimatedChange) }}
-            </span>
+            <span class="g-label">成本价</span>
+            <span class="g-value">{{ fmtPrice(fundView.cost) }}</span>
           </div>
           <div class="grid-item">
             <span class="g-label">持有收益</span>
@@ -77,9 +61,25 @@
           </div>
           <div class="grid-item">
             <span class="g-label">日收益（估）</span>
-            <span class="g-value" :class="pctClass(fundView.dailyGain)">
-              {{ fmtMoney(fundView.dailyGain) }}
+            <span class="g-value" :class="pctClass(estimatedDailyGain)">
+              {{ fmtMoney(estimatedDailyGain) }}
             </span>
+          </div>
+          <div class="grid-item">
+            <span class="g-label">当日收益</span>
+            <span class="g-value" :class="pctClass(actualDailyGain)">
+              {{ fmtMoney(actualDailyGain) }}
+            </span>
+          </div>
+          <div class="grid-item">
+            <span class="g-label">估算净值</span>
+            <span class="g-value" :class="pctClass(fundView.estimatedChange)">
+              {{ fundView.estimatedValue != null ? fmtPrice(fundView.estimatedValue) : '--' }}
+            </span>
+          </div>
+          <div class="grid-item">
+            <span class="g-label">单位净值</span>
+            <span class="g-value">{{ fmtPrice(fundView.netValue) }}</span>
           </div>
           <div class="grid-item">
             <span class="g-label">更新时间</span>
@@ -96,30 +96,48 @@
 
       <!-- 基金概况 -->
       <div v-show="activeTab === 'overview'" class="tab-panel">
-        <div v-if="overview" class="info-list">
-          <div class="info-row"><span>基金类型</span><span>{{ overview.ftype || '--' }}</span></div>
-          <div class="info-row"><span>风险等级</span><span>{{ riskLabel(overview.riskLevel) }}</span></div>
-          <div class="info-row"><span>成立日期</span><span>{{ overview.estabDate || '--' }}</span></div>
-          <div class="info-row"><span>基金规模</span><span>{{ overview.endNav ? overview.endNav + ' 亿元' : '--' }}</span></div>
-          <div class="info-row"><span>基金公司</span><span>{{ overview.company || '--' }}</span></div>
-          <div class="info-row" v-if="overview.indexName"><span>跟踪指数</span><span>{{ overview.indexName }}</span></div>
-          <div class="info-row" v-if="overview.trkError"><span>跟踪误差</span><span>{{ overview.trkError }}</span></div>
-          <div class="info-row" v-if="overview.bench"><span>基准指数</span><span class="bench-text">{{ overview.bench }}</span></div>
-          <div class="info-row"><span>近1年收益</span><span :class="pctClass(parseFloat(overview.syl1n))">{{ overview.syl1n ? overview.syl1n + '%' : '--' }}</span></div>
-          <div class="info-row"><span>近3年收益</span><span :class="pctClass(parseFloat(overview.sylLn))">{{ overview.sylLn ? overview.sylLn + '%' : '--' }}</span></div>
-          <div class="info-row"><span>成立来收益</span><span :class="pctClass(parseFloat(overview.sylZ))">{{ overview.sylZ ? overview.sylZ + '%' : '--' }}</span></div>
-          <div class="info-row"><span>申购费率</span><span>{{ overview.sourceRate || '--' }}</span></div>
-          <div class="info-row"><span>管理费率</span><span>{{ overview.rate || '--' }}</span></div>
-          <div class="info-row"><span>夏普比率(1年)</span><span>{{ overview.sharp1 || '--' }}</span></div>
-          <div class="info-row"><span>最大回撤(1年)</span><span class="negative">{{ overview.maxRetra1 ? overview.maxRetra1 + '%' : '--' }}</span></div>
+        <div v-if="overview || mnDetail" class="info-list">
+          <div class="info-row"><span>基金类型</span><span>{{ mnDetail?.fundType || overview?.ftype || '--' }}</span></div>
+          <div class="info-row"><span>风险等级</span><span>{{ riskLabel(overview?.riskLevel || '') }}</span></div>
+          <div class="info-row"><span>成立日期</span><span>{{ mnDetail?.estabDate || overview?.estabDate || '--' }}</span></div>
+          <div class="info-row"><span>基金规模</span><span>{{ (mnDetail?.fundScale || overview?.endNav) ? (mnDetail?.fundScale || overview?.endNav) + ' 亿元' : '--' }}</span></div>
+          <div class="info-row"><span>基金公司</span><span>{{ mnDetail?.company || overview?.company || '--' }}</span></div>
+          <div class="info-row"><span>基金经理</span><span>{{ mnDetail?.managerName || managers[0]?.name || '--' }}</span></div>
+          <div class="info-row"><span>单位净值</span><span>{{ mnDetail?.nav ? mnDetail.nav + ' (' + mnDetail.navDate + ')' : '--' }}</span></div>
+          <div class="info-row"><span>累计净值</span><span>{{ mnDetail?.accNav || '--' }}</span></div>
+          <div class="info-row" v-if="mnDetail?.buyStatus || mnDetail?.sellStatus"><span>交易状态</span><span>{{ mnDetail?.buyStatus }} / {{ mnDetail?.sellStatus }}</span></div>
+          <div class="info-row" v-if="overview?.indexName"><span>跟踪指数</span><span>{{ overview.indexName }}</span></div>
+          <div class="info-row" v-if="overview?.bench"><span>基准指数</span><span class="bench-text">{{ overview.bench }}</span></div>
         </div>
-        <el-empty v-else-if="!tabLoading" description="暂无概况数据" />
-        <div v-else class="loading-hint">加载中...</div>
+
+        <!-- 阶段收益率 -->
+        <div v-if="periodIncrease" class="info-list" style="margin-top: 12px;">
+          <div class="info-row section-title"><span>阶段收益率</span><span></span></div>
+          <div class="info-row"><span>近1周</span><span :class="pctClass(parseFloat(periodIncrease.weekRate))">{{ periodIncrease.weekRate ? periodIncrease.weekRate + '%' : '--' }}</span></div>
+          <div class="info-row"><span>近1月</span><span :class="pctClass(parseFloat(periodIncrease.monthRate))">{{ periodIncrease.monthRate ? periodIncrease.monthRate + '%' : '--' }}{{ periodIncrease.monthRank ? ' (' + periodIncrease.monthRank + ')' : '' }}</span></div>
+          <div class="info-row"><span>近3月</span><span :class="pctClass(parseFloat(periodIncrease.threeMonthRate))">{{ periodIncrease.threeMonthRate ? periodIncrease.threeMonthRate + '%' : '--' }}{{ periodIncrease.threeMonthRank ? ' (' + periodIncrease.threeMonthRank + ')' : '' }}</span></div>
+          <div class="info-row"><span>近6月</span><span :class="pctClass(parseFloat(periodIncrease.sixMonthRate))">{{ periodIncrease.sixMonthRate ? periodIncrease.sixMonthRate + '%' : '--' }}{{ periodIncrease.sixMonthRank ? ' (' + periodIncrease.sixMonthRank + ')' : '' }}</span></div>
+          <div class="info-row"><span>近1年</span><span :class="pctClass(parseFloat(periodIncrease.yearRate))">{{ periodIncrease.yearRate ? periodIncrease.yearRate + '%' : '--' }}{{ periodIncrease.yearRank ? ' (' + periodIncrease.yearRank + ')' : '' }}</span></div>
+          <div class="info-row"><span>近3年</span><span :class="pctClass(parseFloat(periodIncrease.threeYearRate))">{{ periodIncrease.threeYearRate ? periodIncrease.threeYearRate + '%' : '--' }}{{ periodIncrease.threeYearRank ? ' (' + periodIncrease.threeYearRank + ')' : '' }}</span></div>
+          <div class="info-row"><span>近5年</span><span :class="pctClass(parseFloat(periodIncrease.fiveYearRate))">{{ periodIncrease.fiveYearRate ? periodIncrease.fiveYearRate + '%' : '--' }}{{ periodIncrease.fiveYearRank ? ' (' + periodIncrease.fiveYearRank + ')' : '' }}</span></div>
+          <div class="info-row"><span>成立以来</span><span :class="pctClass(parseFloat(periodIncrease.sinceEstablishRate))">{{ periodIncrease.sinceEstablishRate ? periodIncrease.sinceEstablishRate + '%' : '--' }}</span></div>
+        </div>
+
+        <div v-if="overview?.sourceRate || overview?.rate || overview?.sharp1 || overview?.maxRetra1" class="info-list" style="margin-top: 12px;">
+          <div class="info-row section-title"><span>费率与风险</span><span></span></div>
+          <div class="info-row" v-if="overview?.sourceRate"><span>申购费率</span><span>{{ overview.sourceRate }}</span></div>
+          <div class="info-row" v-if="overview?.rate"><span>管理费率</span><span>{{ overview.rate }}</span></div>
+          <div class="info-row" v-if="overview?.sharp1"><span>夏普比率(1年)</span><span>{{ overview.sharp1 }}</span></div>
+          <div class="info-row" v-if="overview?.maxRetra1"><span>最大回撤(1年)</span><span class="negative">{{ overview.maxRetra1 }}%</span></div>
+        </div>
+
+        <el-empty v-if="!overview && !mnDetail && !tabLoading" description="暂无概况数据" />
+        <div v-if="tabLoading && !overview && !mnDetail" class="loading-hint">加载中...</div>
       </div>
 
       <!-- 基金经理 -->
       <div v-show="activeTab === 'manager'" class="tab-panel">
-        <div v-if="managers.length" class="manager-list">
+        <div v-if="managers.length || mnManagers.length" class="manager-list">
           <div v-for="m in managers" :key="m.name" class="manager-card">
             <div class="manager-name">{{ m.name }}</div>
             <div class="manager-meta">
@@ -132,6 +150,20 @@
             </div>
             <div v-if="m.description" class="manager-desc">{{ m.description }}</div>
           </div>
+          <!-- Fallback to mnManagers if managers is empty -->
+          <template v-if="!managers.length">
+            <div v-for="m in mnManagers" :key="m.name" class="manager-card">
+              <div class="manager-name">{{ m.name }}</div>
+              <div class="manager-meta">
+                <span>任职时间：{{ m.startDate }} 至今</span>
+                <span v-if="m.totalReturn">任职回报：<strong :class="pctClass(parseFloat(m.totalReturn))">{{ m.totalReturn }}%</strong></span>
+              </div>
+              <div class="manager-meta">
+                <span v-if="m.years">从业年限：{{ m.years }}</span>
+                <span v-if="m.fundCount">管理基金：{{ m.fundCount }} 只</span>
+              </div>
+            </div>
+          </template>
         </div>
         <el-empty v-else-if="!tabLoading" description="暂无经理信息" />
         <div v-else class="loading-hint">加载中...</div>
@@ -209,7 +241,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { ArrowLeft, Refresh } from '@element-plus/icons-vue'
 import DetailLayout from '@/layouts/DetailLayout.vue'
-import { useFundStore, useGroupStore, useSettingStore } from '@/stores'
+import { useFundStore, useSettingStore } from '@/stores'
 import { fundService } from '@/services'
 import { formatCurrency, formatNumber, formatPrivacy } from '@/utils/format'
 import { loadEcharts } from '@/utils/echarts'
@@ -217,11 +249,17 @@ import {
   fetchFundDetailInfo,
   fetchRelateThemes,
   fetchNetValueHistory,
+  fetchFundMNDetail,
+  fetchPeriodIncrease,
+  fetchFundMNManager,
   getPageSize,
   type FundOverview,
   type FundManager,
   type RelateThemeItem,
-  type NetValueRecord
+  type NetValueRecord,
+  type FundMNDetailData,
+  type PeriodIncreaseData,
+  type FundManagerDetail
 } from '@/api/fundDetail'
 
 // ==================== Props ====================
@@ -265,6 +303,9 @@ const showEditDialog = ref(false)
 const overview = ref<FundOverview | null>(null)
 const managers = ref<FundManager[]>([])
 const themes = ref<RelateThemeItem[]>([])
+const mnDetail = ref<FundMNDetailData | null>(null)
+const periodIncrease = ref<PeriodIncreaseData | null>(null)
+const mnManagers = ref<FundManagerDetail[]>([])
 
 const netValueRange = ref('1m')
 const profitRange = ref('1m')
@@ -291,6 +332,24 @@ const holdingAmount = computed(() => {
   const fv = fundView.value
   if (!fv) return 0
   return (fv.num || 0) * (fv.netValue || 0)
+})
+
+// 日收益（估）= 份额 × 净值 × 估算涨幅%
+const estimatedDailyGain = computed(() => {
+  const fv = fundView.value
+  if (!fv) return 0
+  const gszzl = fv.estimatedChange || fv.changePercent || 0
+  if (!gszzl) return 0
+  return (fv.num || 0) * (fv.netValue || 0) * gszzl / 100
+})
+
+// 当日收益 = 份额 × 净值 × 当日涨幅%
+const actualDailyGain = computed(() => {
+  const fv = fundView.value
+  if (!fv) return 0
+  const navChgRt = fv.changePercent || 0
+  if (!navChgRt) return 0
+  return (fv.num || 0) * (fv.netValue || 0) * navChgRt / 100
 })
 
 // ==================== 格式化 ====================
@@ -338,9 +397,17 @@ async function loadTabData(tab: string) {
       break
     case 'overview':
     case 'manager': {
-      const result = await fetchFundDetailInfo(props.code)
+      const [result, detail, period, mgrList] = await Promise.all([
+        fetchFundDetailInfo(props.code),
+        fetchFundMNDetail(props.code),
+        fetchPeriodIncrease(props.code),
+        fetchFundMNManager(props.code)
+      ])
       overview.value = result.overview
       managers.value = result.managers
+      mnDetail.value = detail
+      periodIncrease.value = period
+      mnManagers.value = mgrList
       loadedTabs.add('overview')
       loadedTabs.add('manager')
       break
@@ -550,6 +617,7 @@ onUnmounted(() => {
 .fund-name {
   font-size: 15px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .fund-code {
@@ -635,6 +703,12 @@ onUnmounted(() => {
 
 .info-row:last-child {
   border-bottom: none;
+}
+
+.info-row.section-title span:first-child {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
 }
 
 .info-row span:first-child {

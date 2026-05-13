@@ -2,91 +2,97 @@
   <MainLayout>
     <template #header>
       <!-- 顶部资产展示区 -->
-      <el-header class="asset-header" @click="toggleAssetVisibility">
-        <div class="asset-card">
-          <div class="asset-item">
-            <div class="asset-label">资产总值</div>
-            <div class="asset-value">{{ formatAsset(totalAsset) }}</div>
-          </div>
-          <div class="asset-item">
-            <div class="asset-label">持有收益</div>
-            <div class="asset-value" :class="getValueClass(totalHoldingGain)">
-              {{ formatAsset(totalHoldingGain) }}
+      <div class="account-summary">
+        <div class="account-stats">
+          <!-- 第一栏：账户资产 -->
+          <div class="stat-item stat-item-main">
+            <div class="stat-label">
+              <span>账户资产</span>
+              <button class="btn-icon" @click="togglePrivacy" :title="settingStore.privacyMode ? '显示金额' : '隐藏金额'">
+                <el-icon v-if="!settingStore.privacyMode"><View /></el-icon>
+                <el-icon v-else><Hide /></el-icon>
+              </button>
+              <button class="btn-icon" :class="{ active: settingStore.grayscaleMode }" @click="toggleGrayscale" title="灰色模式">
+                <el-icon><MoonNight /></el-icon>
+              </button>
             </div>
+            <div class="stat-value-large">{{ formatAsset(totalAsset) }}</div>
           </div>
-          <div class="asset-item">
-            <div class="asset-label">日收益</div>
-            <div class="asset-value" :class="getValueClass(totalDailyGain)">
-              {{ formatAsset(totalDailyGain) }}
+          <!-- 第二栏 + 第三栏 -->
+          <div class="stat-item-wrapper">
+            <div class="stat-item">
+              <div class="stat-label">持有收益</div>
+              <div class="stat-value" :class="getValueClass(totalHoldingGain)">{{ formatAsset(totalHoldingGain) }}</div>
+              <div class="stat-rate" :class="getValueClass(holdingGainRate)">{{ formatPercent(holdingGainRate) }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">日收益</div>
+              <div class="stat-value" :class="getValueClass(totalDailyGain)">{{ formatAsset(totalDailyGain) }}</div>
+              <div class="stat-rate" :class="getValueClass(dailyGainRate)">{{ formatPercent(dailyGainRate) }}</div>
             </div>
           </div>
         </div>
-        <div class="asset-hint">点击切换显示/隐藏</div>
-      </el-header>
+      </div>
 
       <!-- 分组管理区 -->
-      <div class="group-tabs">
-        <el-scrollbar>
-          <div class="group-tabs-inner">
-            <el-tag
-              :type="selectedGroupKey === 'all' ? 'primary' : 'info'"
-              class="group-tag"
-              @click="selectGroup('all')"
-            >
-              全部 ({{ fundStore.fundCount }})
-            </el-tag>
-
-            <el-tag
-              v-for="group in groupList"
-              :key="group.key"
-              :type="selectedGroupKey === group.key ? 'primary' : 'info'"
-              class="group-tag"
-              @click="selectGroup(group.key)"
-              @pointerdown="onGroupPointerDown(group, $event)"
-              @pointerup="onGroupPointerUp"
-              @pointerleave="onGroupPointerUp"
-            >
-              {{ group.name }} ({{ group.fundCodes.length }})
-            </el-tag>
-            
-            <el-button size="small" @click="openGroupManage">
-              管理分组
-            </el-button>
-            <el-button
-              type="primary"
-              size="small"
-              circle
-              title="新建分组"
-              @click="showAddGroupDialog = true"
-            >
-              <el-icon><Plus /></el-icon>
-            </el-button>
+      <div class="group-tags-wrapper">
+        <div class="group-tags-container">
+          <div
+            class="group-tag-item"
+            :class="{ active: selectedGroupKey === 'all' }"
+            @click="selectGroup('all')"
+          >
+            全部
           </div>
-        </el-scrollbar>
+          <div
+            v-for="group in groupList"
+            :key="group.key"
+            class="group-tag-item"
+            :class="{ active: selectedGroupKey === group.key }"
+            @click="selectGroup(group.key)"
+            @pointerdown="onGroupPointerDown(group, $event)"
+            @pointerup="onGroupPointerUp"
+            @pointerleave="onGroupPointerUp"
+          >
+            {{ group.name }}
+          </div>
+        </div>
+        <button class="group-tag-settings" @click="showGroupManageDialog = true" title="分组管理">
+          ⚙
+        </button>
       </div>
     </template>
 
     <!-- 基金列表区 -->
     <div class="fund-list-main" v-loading="loading">
-        <div class="fund-list-header">
-          <el-input
-            v-model="searchQuery"
-            placeholder="搜索基金代码或名称"
-            clearable
-            @input="handleSearch"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-          <el-button type="primary" @click="showAddFundDialog = true">
+        <div class="fund-toolbar">
+          <div class="search-box">
+            <el-input
+              v-model="searchQuery"
+              placeholder="搜索基金代码或名称"
+              clearable
+              size="small"
+              @input="handleSearch"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </div>
+          <el-button type="primary" size="small" @click="showAddFundDialog = true">
             <el-icon><Plus /></el-icon>
-            <span>添加基金</span>
+            <span>添加</span>
           </el-button>
-          <el-button @click="handleRefresh" :loading="refreshing">
+          <el-button size="small" @click="handleRefresh" :loading="refreshing">
             <el-icon><Refresh /></el-icon>
-            <span>刷新</span>
           </el-button>
+          <el-button size="small" @click="showColumnSettings = true" title="列设置">
+            <el-icon><Operation /></el-icon>
+          </el-button>
+          <div class="market-status">
+            <span class="status-dot" :class="marketOpen ? 'status-open' : 'status-closed'"></span>
+            <span class="status-text">{{ marketOpen ? '开市' : '休市' }}</span>
+          </div>
         </div>
 
         <div v-if="sortedRows.length > 0" class="fund-table-wrap">
@@ -221,36 +227,19 @@
           @delete="onTooltipDelete"
         />
 
-        <el-dialog v-model="groupMenuVisible" title="分组操作" width="86%">
-          <p>{{ groupMenuTarget?.name }}</p>
-          <el-space direction="vertical" fill style="width:100%">
-            <el-button @click="renameGroupFromMenu">重命名</el-button>
-            <el-button type="danger" plain @click="deleteGroupFromMenu">删除分组</el-button>
-            <el-button @click="openGroupManage">管理分组…</el-button>
-          </el-space>
-        </el-dialog>
+        <!-- 分组统计弹窗 -->
+        <GroupTooltip
+          :visible="groupTooltipVisible"
+          :stats="groupTooltipStats"
+          @close="groupTooltipVisible = false"
+        />
 
-        <el-dialog v-model="showGroupManageDialog" title="分组管理" width="90%">
-          <p class="hint-text">
-            拖拽 <strong>☰</strong> 手柄可排序分组；「重命名」修改名称后需点<strong>保存</strong>。删除立即生效。
-          </p>
-          <el-empty v-if="manageGroupDraft.length === 0" description="暂无自定义分组，点击右侧 + 新建" />
-          <ul v-else ref="groupSortableRef" class="group-manage-list">
-            <li v-for="g in manageGroupDraft" :key="g.key" :data-key="g.key" class="group-manage-item">
-              <span class="drag-handle" title="拖拽排序">☰</span>
-              <span class="g-name">{{ g.name }}</span>
-              <span class="g-meta muted">{{ groupFundCount(g.key) }} 只基金</span>
-              <el-button size="small" link type="primary" @click="renameDraftGroup(g)">重命名</el-button>
-              <el-button size="small" link type="danger" @click="deleteDraftGroup(g)">删除</el-button>
-            </li>
-          </ul>
-          <template #footer>
-            <el-button @click="showGroupManageDialog = false">关闭</el-button>
-            <el-button type="primary" :disabled="manageGroupDraft.length === 0" @click="saveGroupManage">
-              保存
-            </el-button>
-          </template>
-        </el-dialog>
+        <!-- 分组管理弹窗 -->
+        <GroupManageDialog
+          v-model:visible="showGroupManageDialog"
+          :fund-rows="enrichedRows"
+          @saved="onGroupManageSaved"
+        />
     </div>
 
     <!-- 添加基金对话框 -->
@@ -362,6 +351,9 @@
         <el-button type="primary" @click="handleEditGroup" :loading="submitting">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 列设置对话框 -->
+    <ColumnSettingsDialog v-model:visible="showColumnSettings" />
   </MainLayout>
 </template>
 
@@ -369,16 +361,21 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Search, Refresh } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, View, Hide, MoonNight, Operation } from '@element-plus/icons-vue'
 import { useDebounceFn } from '@vueuse/core'
 import Sortable from 'sortablejs'
 import MainLayout from '@/layouts/MainLayout.vue'
 import FundTooltip from '@/components/FundTooltip.vue'
+import ColumnSettingsDialog from '@/components/ColumnSettingsDialog.vue'
+import GroupTooltip from '@/components/GroupTooltip.vue'
+import GroupManageDialog from '@/components/GroupManageDialog.vue'
+import type { GroupStats } from '@/components/GroupTooltip.vue'
 import { useFundStore, useGroupStore, useSettingStore } from '@/stores'
 import { fundService, groupService } from '@/services'
 import { searchFund } from '@/api/fundEastmoney'
 import { formatCurrency, formatNumber, formatPrivacy } from '@/utils/format'
 import { validateFundCode, validateGroupName } from '@/utils/validate'
+import { getChinaMarketStatus } from '@/utils/marketChina'
 import type { Group, FundView } from '@/types'
 import type { FundRowDisplay } from '@/utils/fundDisplay'
 
@@ -419,9 +416,29 @@ const showEditFundDialog = ref(false)
 const showAddGroupDialog = ref(false)
 const showEditGroupDialog = ref(false)
 const showGroupManageDialog = ref(false)
-const groupMenuVisible = ref(false)
-const groupMenuTarget = ref<Group | null>(null)
-const manageGroupDraft = ref<{ key: string; name: string }[]>([])
+const showColumnSettings = ref(false)
+const groupTooltipVisible = ref(false)
+const groupTooltipStats = ref<GroupStats>({
+  groupName: '',
+  fundCount: 0,
+  estimatedGain: 0,
+  estimatedChangePercent: 0,
+  estimatedUpCount: 0,
+  estimatedDownCount: 0,
+  estimatedDate: '',
+  dailyGain: 0,
+  dailyChangePercent: 0,
+  dailyUpCount: 0,
+  dailyDownCount: 0,
+  dailyDate: '',
+  holdingGain: 0,
+  holdingGainRate: 0,
+  holdingProfitCount: 0,
+  holdingLossCount: 0,
+  holdingDate: '',
+  totalAsset: 0,
+  totalCost: 0
+})
 
 const fundForm = ref({ code: '', num: 0, cost: 0, groupKey: '' })
 const editFundForm = ref({ code: '', name: '', num: 0, cost: 0, groupKey: '' })
@@ -438,9 +455,6 @@ const fundPickName = ref('')
 
 const tooltipVisible = ref(false)
 const tooltipRow = ref<FundRowDisplay | null>(null)
-
-const groupSortableRef = ref<HTMLElement | null>(null)
-let groupSortableInstance: Sortable | null = null
 
 let groupPressTimer: ReturnType<typeof setTimeout> | null = null
 const LONG_PRESS_MS = 520
@@ -484,6 +498,22 @@ const totalAsset = computed(() => fundStore.getTotalAsset)
 const totalHoldingGain = computed(() => fundStore.getTotalHoldingGain)
 const totalDailyGain = computed(() => fundStore.getTotalDailyGain)
 const groupList = computed(() => groupStore.getGroupList)
+
+const holdingGainRate = computed(() => {
+  const asset = totalAsset.value
+  const gain = totalHoldingGain.value
+  const costTotal = asset - gain
+  return costTotal === 0 ? 0 : (gain / costTotal) * 100
+})
+
+const dailyGainRate = computed(() => {
+  const asset = totalAsset.value
+  const daily = totalDailyGain.value
+  const prevAsset = asset - daily
+  return prevAsset === 0 ? 0 : (daily / prevAsset) * 100
+})
+
+const marketOpen = computed(() => getChinaMarketStatus().isOpen)
 
 const orderedVisibleColumns = computed(() => {
   const vis = new Set(settingStore.visibleColumns)
@@ -552,6 +582,8 @@ function headerSubLabel(col: string): string {
     case 'amountShares':
     case 'cost':
       return sample.navDateLabel
+    case 'sector':
+      return ''
     default:
       return '—'
   }
@@ -624,8 +656,13 @@ function fmtPctRow(v: number, show: boolean) {
 const isColumnVisible = (column: string) =>
   column === 'name' || settingStore.visibleColumns.includes(column)
 
-function toggleAssetVisibility() {
+function togglePrivacy() {
   settingStore.setPrivacyMode(!settingStore.privacyMode)
+}
+
+function toggleGrayscale() {
+  settingStore.setGrayscaleMode(!settingStore.grayscaleMode)
+  document.documentElement.dataset.grayscale = String(settingStore.grayscaleMode)
 }
 
 function selectGroup(key: string) {
@@ -874,8 +911,7 @@ function onGroupPointerDown(group: Group, e: PointerEvent) {
   onGroupPointerUp()
   groupPressTimer = setTimeout(() => {
     groupPressTimer = null
-    groupMenuTarget.value = group
-    groupMenuVisible.value = true
+    showGroupStats(group)
   }, LONG_PRESS_MS)
 }
 
@@ -886,122 +922,61 @@ function onGroupPointerUp() {
   }
 }
 
-async function renameGroupFromMenu() {
-  const g = groupMenuTarget.value
-  if (!g) return
-  try {
-    const { value } = await ElMessageBox.prompt('新名称', '重命名分组', {
-      inputValue: g.name
-    })
-    await groupService.updateGroup(g.key, value)
-    groupMenuVisible.value = false
-    ElMessage.success('已更新')
-  } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error(e?.message || '失败')
+function showGroupStats(group: Group) {
+  const rows = enrichedRows.value.filter(r => r.fund.groupKey === group.key)
+  let estimatedGain = 0, dailyGain = 0, holdingGain = 0
+  let totalAsset = 0, totalCost = 0
+  let estUp = 0, estDown = 0, dailyUp = 0, dailyDown = 0
+  let holdProfit = 0, holdLoss = 0
+
+  for (const row of rows) {
+    estimatedGain += row.estimatedGain
+    if (row.gszzl > 0) estUp++
+    else if (row.gszzl < 0) estDown++
+
+    dailyGain += row.dailyGain
+    if (row.navChgRt > 0) dailyUp++
+    else if (row.navChgRt < 0) dailyDown++
+
+    holdingGain += row.holdingGain
+    if (row.holdingGain > 0) holdProfit++
+    else if (row.holdingGain < 0) holdLoss++
+
+    totalAsset += row.holdingAmount
+    totalCost += row.costAmount
   }
-}
 
-async function deleteGroupFromMenu() {
-  const g = groupMenuTarget.value
-  if (!g) return
-  try {
-    await ElMessageBox.confirm(`删除分组「${g.name}」？`, '确认', { type: 'warning' })
-    await groupService.deleteGroup(g.key)
-    groupMenuVisible.value = false
-    ElMessage.success('已删除')
-  } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error(e?.message || '失败')
+  const sample = rows[0]
+  const estimatedDate = sample?.estimatedDateLabel || ''
+  const dailyDate = sample?.navDateLabel || ''
+
+  groupTooltipStats.value = {
+    groupName: group.name,
+    fundCount: rows.length,
+    estimatedGain,
+    estimatedChangePercent: totalAsset > 0 ? (estimatedGain / totalAsset) * 100 : 0,
+    estimatedUpCount: estUp,
+    estimatedDownCount: estDown,
+    estimatedDate,
+    dailyGain,
+    dailyChangePercent: totalAsset > 0 ? (dailyGain / totalAsset) * 100 : 0,
+    dailyUpCount: dailyUp,
+    dailyDownCount: dailyDown,
+    dailyDate,
+    holdingGain,
+    holdingGainRate: totalCost > 0 ? (holdingGain / totalCost) * 100 : 0,
+    holdingProfitCount: holdProfit,
+    holdingLossCount: holdLoss,
+    holdingDate: dailyDate,
+    totalAsset,
+    totalCost
   }
+  groupTooltipVisible.value = true
 }
 
-function groupFundCount(groupKey: string): number {
-  return groupStore.getGroup(groupKey)?.fundCodes.length ?? 0
-}
-
-function openGroupManage() {
-  manageGroupDraft.value = groupList.value.map(x => ({ key: x.key, name: x.name }))
-  showGroupManageDialog.value = true
-  groupMenuVisible.value = false
-}
-
-async function renameDraftGroup(g: { key: string; name: string }) {
-  try {
-    const { value } = await ElMessageBox.prompt('新名称', '重命名分组', { inputValue: g.name })
-    const name = String(value).trim()
-    if (!validateGroupName(name)) {
-      ElMessage.warning('分组名称长度为 1–50 个字符')
-      return
-    }
-    const item = manageGroupDraft.value.find(x => x.key === g.key)
-    if (item) item.name = name
-  } catch {
-    /* cancel */
-  }
-}
-
-async function deleteDraftGroup(g: { key: string; name: string }) {
-  try {
-    await ElMessageBox.confirm(`删除分组「${g.name}」？`, '确认', { type: 'warning' })
-    await groupService.deleteGroup(g.key)
-    manageGroupDraft.value = groupList.value.map(x => ({ key: x.key, name: x.name }))
-    ElMessage.success('已删除')
-  } catch (e: any) {
-    if (e !== 'cancel') ElMessage.error(e?.message || '失败')
-  }
-}
-
-async function saveGroupManage() {
-  try {
-    // Save reordered group order
-    const newOrder = manageGroupDraft.value.map(g => g.key)
-    await groupService.reorderGroups(newOrder)
-
-    // Save renamed groups
-    for (const g of manageGroupDraft.value) {
-      const live = groupStore.getGroup(g.key)
-      if (live && live.name !== g.name) {
-        await groupService.updateGroup(g.key, g.name)
-      }
-    }
-    showGroupManageDialog.value = false
-    ElMessage.success('已保存')
-  } catch (e: any) {
-    ElMessage.error(e?.message || '保存失败')
-  }
-}
-
-// --- Sortable: group management dialog drag-and-drop ---
-watch(showGroupManageDialog, async (visible) => {
-  if (visible) {
-    await nextTick()
-    initGroupSortable()
-  } else {
-    destroyGroupSortable()
-  }
-})
-
-function initGroupSortable() {
-  destroyGroupSortable()
-  const el = groupSortableRef.value
-  if (!el) return
-  groupSortableInstance = Sortable.create(el, {
-    handle: '.drag-handle',
-    animation: 200,
-    ghostClass: 'sortable-ghost',
-    onEnd(evt) {
-      const { oldIndex, newIndex } = evt
-      if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
-      const item = manageGroupDraft.value.splice(oldIndex, 1)[0]!
-      manageGroupDraft.value.splice(newIndex, 0, item)
-    }
-  })
-}
-
-function destroyGroupSortable() {
-  if (groupSortableInstance) {
-    groupSortableInstance.destroy()
-    groupSortableInstance = null
-  }
+function onGroupManageSaved() {
+  // Refresh data after group management changes
+  fundService.refreshAllFunds().catch(() => {})
 }
 
 // --- Sortable: fund table row drag-and-drop (only in "all" group with default sort) ---
@@ -1059,65 +1034,145 @@ onMounted(async () => {
 
 onUnmounted(() => {
   onGroupPointerUp()
-  destroyGroupSortable()
   destroyFundTableSortable()
 })
 </script>
 
 <style scoped>
-.asset-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px;
-  cursor: pointer;
-  user-select: none;
-  --el-header-height: 120px;
+.account-summary {
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.asset-card {
+.account-stats {
   display: flex;
-  justify-content: space-around;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-item-main .stat-label {
+  display: flex;
   align-items: center;
-}
-
-.asset-item {
-  text-align: center;
-}
-
-.asset-label {
-  font-size: 14px;
-  opacity: 0.9;
-  margin-bottom: 8px;
-}
-
-.asset-value {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.asset-hint {
-  text-align: center;
+  gap: 8px;
   font-size: 12px;
-  opacity: 0.7;
-  margin-top: 10px;
+  color: var(--text-secondary);
 }
 
-.group-tabs {
-  padding: 10px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color);
+.stat-item-main .stat-value-large {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 4px;
+  color: var(--text-primary);
 }
 
-.group-tabs-inner {
+.stat-item-wrapper {
   display: flex;
-  gap: 10px;
-  align-items: center;
+  gap: 16px;
 }
 
-.group-tag {
+.stat-item-wrapper .stat-item {
+  flex: 1;
+}
+
+.stat-item .stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.stat-item .stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.stat-item .stat-rate {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
   cursor: pointer;
+  padding: 2px 4px;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+  font-size: 14px;
+}
+
+.btn-icon:hover {
+  background: var(--bg-secondary);
+}
+
+.btn-icon.active {
+  color: var(--color-primary);
+}
+
+.group-tags-wrapper {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.group-tags-container {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 12px;
+}
+
+.group-tags-container::-webkit-scrollbar {
+  display: none;
+}
+
+.group-tag-item {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
   white-space: nowrap;
+  transition: all 0.2s;
   user-select: none;
+}
+
+.group-tag-item:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.group-tag-item.active {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 500;
+}
+
+.group-tag-settings {
+  flex-shrink: 0;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-left: 1px solid var(--border-color);
+  background: var(--bg-card);
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-secondary);
+  transition: background 0.2s;
+}
+
+.group-tag-settings:hover {
+  background: var(--bg-secondary);
 }
 
 .fund-list-main {
@@ -1125,14 +1180,39 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-.fund-list-header {
+.fund-toolbar {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.fund-list-header .el-input {
+.fund-toolbar .search-box {
   flex: 1;
+}
+
+.market-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-dot.status-open {
+  background: #22c55e;
+  box-shadow: 0 0 4px #22c55e;
+}
+
+.status-dot.status-closed {
+  background: #9ca3af;
 }
 
 .fund-name-cell {
@@ -1268,52 +1348,6 @@ onUnmounted(() => {
   line-height: 1.5;
 }
 
-.group-manage-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.group-manage-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 10px 12px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 8px;
-  margin-bottom: 8px;
-}
-
-.group-manage-item .drag-handle {
-  cursor: grab;
-  font-size: 16px;
-  color: var(--el-text-color-secondary);
-  user-select: none;
-  flex-shrink: 0;
-  padding: 0 4px;
-}
-
-.group-manage-item .drag-handle:active {
-  cursor: grabbing;
-}
-
-.group-manage-item .g-name {
-  flex: 1;
-  min-width: 100px;
-  font-weight: 500;
-}
-
-.group-manage-item .g-meta {
-  font-size: 12px;
-}
-
-:deep(.sortable-ghost) {
-  opacity: 0.4;
-  background: var(--el-color-primary-light-9);
-  border-radius: 8px;
-}
-
 .fund-search-field {
   position: relative;
   width: 100%;
@@ -1352,15 +1386,15 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .asset-value {
-    font-size: 18px;
+  .stat-item-main .stat-value-large {
+    font-size: 20px;
   }
 
-  .fund-list-header {
+  .fund-toolbar {
     flex-wrap: wrap;
   }
 
-  .fund-list-header .el-input {
+  .fund-toolbar .search-box {
     flex: 1 1 100%;
   }
 
