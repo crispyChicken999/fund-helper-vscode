@@ -356,8 +356,6 @@ body {
 .el-table .caret-wrapper {
   width: 18px;
 }
-.el-overlay-dialog {
-}
 .el-dialog {
   border: 1px solid var(--el-border-color-lighter);
 }

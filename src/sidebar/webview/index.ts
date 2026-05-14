@@ -166,6 +166,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     this._sendMarketStatus();
     this._sendPrivacyMode();
     this._sendGrayscaleMode();
+    this._sendJsonboxName();
   }
 
   private _sendMarketStatus(): void {
@@ -204,6 +205,16 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     this.postMessage({
       command: "updateGrayscaleMode",
       value: grayscaleMode,
+    });
+  }
+
+  private _sendJsonboxName(): void {
+    const config = vscode.workspace.getConfiguration("fund-helper");
+    const jsonboxName = config.get<string>("jsonboxName", "");
+    // 初始加载用 initJsonboxName，让 webview 同时更新 savedBoxName 和 input
+    this.postMessage({
+      command: "initJsonboxName",
+      value: jsonboxName,
     });
   }
 
@@ -572,6 +583,125 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
         await vscode.commands.executeCommand("fund-helper.addGroup");
         break;
 
+      case "getJsonboxName":
+        {
+          const { getJsonboxName } = require("../../core");
+          this.postMessage({ command: "initJsonboxName", value: getJsonboxName() });
+        }
+        break;
+
+      case "saveJsonboxName":
+        if (typeof message.value === "string") {
+          const { saveJsonboxName } = require("../../core");
+          await saveJsonboxName(message.value);
+          this.postMessage({ command: "jsonboxNameSaved", value: message.value });
+        }
+        break;
+
+      case "generateJsonboxName":
+        {
+          const { generateJsonboxName } = require("../../core");
+          const newName = generateJsonboxName();
+          // 只回传给 webview 填入 input，不保存到用户配置
+          // 用户需要点击"保存"才会真正写入配置
+          this.postMessage({ command: "updateJsonboxName", value: newName });
+        }
+        break;
+
+      case "generateQRCode":
+        {
+          const text = message.value;
+          if (text) {
+            try {
+              const QRCode = require("qrcode");
+              const dataUrl = await QRCode.toDataURL(text, {
+                width: 200,
+                margin: 2,
+                color: { dark: '#000000', light: '#ffffff' }
+              });
+              this.postMessage({ command: "qrCodeGenerated", value: dataUrl });
+            } catch (e: any) {
+              console.error("QR code generation failed:", e);
+              this.postMessage({ command: "qrCodeGenerated", value: "" });
+            }
+          }
+        }
+        break;
+
+      case "syncToCloud":
+        {
+          const { buildExportPayload, jsonboxUpload, getJsonboxName } = require("../../core");
+          const boxName = getJsonboxName();
+          if (!boxName) {
+            this.postMessage({ command: "syncResult", success: false, message: "请先设置 Box Name" });
+            break;
+          }
+          try {
+            const payload = buildExportPayload();
+            await jsonboxUpload(boxName, payload);
+            this.postMessage({ command: "syncResult", success: true, message: "上传成功" });
+          } catch (e: any) {
+            this.postMessage({ command: "syncResult", success: false, message: `上传失败: ${e.message}` });
+          }
+        }
+        break;
+
+      case "syncFromCloud":
+        {
+          const { jsonboxRead, applyImportPayload, getJsonboxName } = require("../../core");
+          const boxName = getJsonboxName();
+          if (!boxName) {
+            this.postMessage({ command: "syncResult", success: false, message: "请先设置 Box Name" });
+            break;
+          }
+          try {
+            const records = await jsonboxRead(boxName);
+            if (!records || records.length === 0) {
+              this.postMessage({ command: "syncResult", success: false, message: "云端暂无数据" });
+              break;
+            }
+            // 取最新一条（最后一条）
+            const data = records[records.length - 1];
+            const messages = await applyImportPayload(data);
+            await this._loadFundData();
+            this.postMessage({ command: "syncResult", success: true, message: `下载成功：${messages.join('、')}` });
+          } catch (e: any) {
+            this.postMessage({ command: "syncResult", success: false, message: `下载失败: ${e.message}` });
+          }
+        }
+        break;
+
+      case "clearRemote":
+        {
+          const { jsonboxClear, getJsonboxName } = require("../../core");
+          const boxName = getJsonboxName();
+          if (!boxName) {
+            this.postMessage({ command: "syncResult", success: false, message: "请先设置 Box Name" });
+            break;
+          }
+          try {
+            await jsonboxClear(boxName);
+            this.postMessage({ command: "syncResult", success: true, message: "远程数据已清空" });
+          } catch (e: any) {
+            this.postMessage({ command: "syncResult", success: false, message: `清空失败: ${e.message}` });
+          }
+        }
+        break;
+
+      case "openJsonLink":
+        {
+          const { getJsonboxName } = require("../../core");
+          const boxName = getJsonboxName();
+          if (boxName) {
+            vscode.env.openExternal(vscode.Uri.parse(`https://jsonbox.cloud.exo-imaging.com/${boxName}`));
+          }
+        }
+        break;
+
+      case "openWebVersion":
+        vscode.env.openExternal(vscode.Uri.parse("https://fund-helper.netlify.app"));
+        break;
+
       default:
         console.log("未知消息:", message);
     }
@@ -614,6 +744,51 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       '        </div>',
       '      </div>',
       '    </div>',
+      '    <!-- 云同步弹窗 -->',
+      '    <div class="sync-modal" id="syncModal">',
+      '      <div class="sync-modal-overlay"></div>',
+      '      <div class="sync-modal-content">',
+      '        <div class="sync-modal-header">',
+      '          <h3>☁ 云同步配置</h3>',
+      '          <button class="sync-modal-close" id="syncModalClose">×</button>',
+      '        </div>',
+      '        <div class="sync-modal-body">',
+      '          <!-- Box Name -->',
+      '          <div class="sync-section">',
+      '            <div class="sync-section-label">Box Name</div>',
+      '            <div class="sync-input-row">',
+      '              <input class="sync-input" id="syncBoxNameInput" type="text" placeholder="fundhelper_xxxxxxxx" />',
+      '            </div>',
+      '            <div class="sync-btn-group">',
+      '              <button class="sync-btn primary" id="btnSyncSaveBoxName">保存</button>',
+      '              <button class="sync-btn" id="btnSyncCancelBoxName">取消</button>',
+      '              <button class="sync-btn" id="btnSyncRegenBoxName">重新生成</button>',
+      '            </div>',
+      '            <div class="sync-tip">字母数字下划线，至少 20 字符</div>',
+      '          </div>',
+      '          <div class="sync-divider"></div>',
+      '          <!-- 同步操作 -->',
+      '          <div class="sync-section">',
+      '            <div class="sync-section-label">同步操作</div>',
+      '            <div class="sync-btn-group">',
+      '              <button class="sync-btn primary" id="btnSyncUpload" disabled>⬆ 上传云端</button>',
+      '              <button class="sync-btn" id="btnSyncDownload" disabled>⬇ 下载云端</button>',
+      '              <button class="sync-btn" id="btnSyncOpenJson" disabled>🔗 查看 JSON</button>',
+      '              <button class="sync-btn danger" id="btnSyncClearRemote" disabled>🗑 清空远程</button>',
+      '            </div>',
+      '          </div>',
+      '          <!-- 状态消息 -->',
+      '          <div class="sync-status" id="syncStatusMsg"></div>',
+      '          <div class="sync-divider"></div>',
+      '          <!-- 二维码 -->',
+      '          <div class="sync-section sync-qr-container" id="syncQRSection" style="display:none;">',
+      '            <div class="sync-section-label">我的二维码（供其他设备扫描获取 Box Name）</div>',
+      '            <img id="syncQRImg" class="sync-qr-canvas" width="160" height="160" alt="QR Code" />',
+      '            <div class="sync-qr-hint">其他设备扫描此二维码可获取 Box Name</div>',
+      '          </div>',
+      '        </div>',
+      '      </div>',
+      '    </div>',
       '    <div class="account-summary">',
       '      <div class="account-stats">',
       '        <div class="stat-item">',
@@ -633,6 +808,16 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       '              </svg>',
       '              <svg width="16" height="16" viewBox="0 0 24 24" class="icon-grayscale-off">',
       '                <path fill="currentColor" d="M12 4.81V19c-3.31 0-6-2.63-6-5.87c0-1.56.62-3.03 1.75-4.14zM6.35 7.56C4.9 8.99 4 10.96 4 13.13C4 17.48 7.58 21 12 21s8-3.52 8-7.87c0-2.17-.9-4.14-2.35-5.57L12.7 2.69c-.39-.38-1.01-.38-1.4 0z"/>',
+      '              </svg>',
+      '            </button>',
+      '            <button class="btn-toggle-sync" id="btnOpenSync" title="云同步配置">',
+      '              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">',
+      '                <path fill="currentColor" d="M6.5 20q-2.28 0-3.89-1.57Q1 16.85 1 14.58q0-1.95 1.17-3.48q1.18-1.53 3.08-1.95q.63-2.3 2.5-3.72Q9.63 4 12 4q2.93 0 4.96 2.04Q19 8.07 19 11q1.73.2 2.86 1.5q1.14 1.28 1.14 3q0 1.88-1.31 3.19T18.5 20H13q-.82 0-1.41-.59Q11 18.83 11 18v-5.15L9.4 14.4L8 13l4-4l4 4l-1.4 1.4l-1.6-1.55V18h5.5q1.05 0 1.77-.73q.73-.72.73-1.77t-.73-1.77Q19.55 13 18.5 13H17v-2q0-2.07-1.46-3.54Q14.08 6 12 6Q9.93 6 8.46 7.46Q7 8.93 7 11h-.5q-1.45 0-2.47 1.03Q3 13.05 3 14.5T4.03 17q1.02 1 2.47 1H9v2m3-7"/>',
+      '              </svg>',
+      '            </button>',
+      '            <button class="btn-toggle-web" id="btnOpenWebVersion" title="打开网页版基金助手">',
+      '              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">',
+      '                <g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h20"/></g>',
       '              </svg>',
       '            </button>',
       '          </div>',

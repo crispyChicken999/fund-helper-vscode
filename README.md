@@ -8,7 +8,7 @@
 
 ![License](https://badgen.net/badge/License/MIT/red)
 ![VSCode](https://badgen.net/badge/VSCode/1.82.0+/blue?icon=visualstudio)
-![Version](https://badgen.net/badge/Version/0.3.4/orange?icon=git)
+![Version](https://badgen.net/badge/Version/0.3.5/orange?icon=git)
 ![Platform](https://badgen.net/badge/Platform/Windows|MacOS|Linux/purple?icon=windows)
 
 ![Downloads](https://badgen.net/vs-marketplace/d/CrispyChicken.fund-helper?label=Downloads&color=blue)
@@ -19,6 +19,8 @@
 </div>
 
 在 VSCode 侧边栏实时查看自选基金估值、涨跌幅与收益，支持加减仓操作、多维度排序、拖拽排序、行情中心大盘数据、AI 分析等功能。摸鱼理财两不误！
+
+> 🌐 **网页版已上线！** 无需安装，打开即用 → [**fund-helper.netlify.app**](https://fund-helper.netlify.app)
 
 ## 📑 目录 (Table of Contents)
 
@@ -33,7 +35,9 @@
   - [AI 智能分析](#ai-智能分析)
   - [行情中心](#行情中心)
   - [基金详情](#基金详情)
+  - [云同步](#云同步)
   - [数据持久化](#数据持久化)
+- [🌐 网页版 (Web Version)](#-网页版-web-version)
 - [💻 系统要求 (System Requirements)](#-系统要求-system-requirements)
 - [🚀 快速开始 (Quick Start)](#-快速开始-quick-start)
   - [1. 安装插件](#1-安装插件)
@@ -45,11 +49,18 @@
     - [树形视图模式](#树形视图模式)
     - [表格视图模式（推荐）](#表格视图模式推荐)
     - [其他功能](#其他功能)
+- [☁️ 云同步使用指南](#️-云同步使用指南)
+  - [设置 Box Name](#设置-box-name)
+  - [上传配置到云端](#上传配置到云端)
+  - [从云端下载配置](#从云端下载配置)
+  - [扫码同步（跨设备）](#扫码同步跨设备)
+  - [VSCode 版 ↔ 网页版 同步流程](#vscode-版--网页版-同步流程)
 - [⚙️ 配置说明 (Configuration)](#️-配置说明-configuration)
   - [基础配置](#基础配置)
   - [分组配置](#分组配置)
   - [隐私配置](#隐私配置)
   - [表格视图配置](#表格视图配置)
+  - [云同步配置](#云同步配置)
   - [AI 配置](#ai-配置)
   - [快捷操作](#快捷操作)
   - [如何使用 AI 分析功能](#如何使用-ai-分析功能)
@@ -122,12 +133,32 @@
 
 29. 📊 **详情页面**：Webview 展示基金详细信息，包括基金经理、成立日期、基金类型等
 30. 📈 **历史走势**：查看基金历史净值走势图
-31. � **持仓明细**：展示基金的十大持仓股票
+31. 📋 **持仓明细**：展示基金的十大持仓股票及债券，含实时价格和涨跌幅
+
+### 云同步
+
+32. ☁️ **Box Name 配置**：通过 jsonbox.io 免费云存储服务，设置唯一 Box Name 实现配置云端备份
+33. 📷 **二维码同步**：生成 Box Name 二维码，手机或其他设备扫码即可获取，快速同步配置
+34. 🔄 **双向同步**：支持上传配置到云端、从云端下载配置，VSCode 版与网页版之间无缝同步
 
 ### 数据持久化
 
-32. 💾 **配置保存**：基金列表、分组、排序方式、列设置等保存到 VSCode 用户全局配置
-33. 🔄 **状态恢复**：重启 VSCode 后自动恢复上次的视图状态
+35. 💾 **配置保存**：基金列表、分组、排序方式、列设置等保存到 VSCode 用户全局配置
+36. 🔄 **状态恢复**：重启 VSCode 后自动恢复上次的视图状态
+
+## 🌐 网页版 (Web Version)
+
+**基金助手网页版已正式上线！** 🎉
+
+> 🔗 **访问地址：[fund-helper.netlify.app](https://fund-helper.netlify.app)**
+
+网页版与 VSCode 插件版功能对齐，无需安装任何软件，在浏览器中即可使用：
+
+- 📊 完整的基金持仓管理（添加、加减仓、分组）
+- 📈 基金详情、历史净值、持仓明细
+- 🏭 行情中心、板块排行
+- ☁️ **云同步**：与 VSCode 版共享同一套配置，通过 Box Name 无缝切换
+- 📷 **扫码同步**：手机扫描 VSCode 版生成的二维码，即可在网页版中同步配置
 
 ## 💻 系统要求 (System Requirements)
 
@@ -204,6 +235,8 @@
 - ⚙️ 自定义列的显示/隐藏和顺序
 - 🏷️ 分组标签快速切换，hover 查看详细统计
 - 🔐 隐私模式一键隐藏敏感数据
+- ☁️ 点击账户资产旁的云图标打开云同步配置
+- 🌐 点击地球图标直接打开网页版
 
 #### 其他功能
 
@@ -211,6 +244,39 @@
 - 点击「行情中心」节点展开查看四大指数，再点展开「查看行情详情」打开完整行情 Webview
 - 点击标题栏的 `⚙️` 配置 AI，点击 `💡` 生成 AI 分析报告
 - 点击标题栏的 `📊` 切换视图模式（树形/表格）
+
+## ☁️ 云同步使用指南
+
+云同步基于 [jsonbox.io](https://jsonbox.io) 免费云存储服务，无需注册账号。
+
+### 设置 Box Name
+
+1. 在表格视图中，点击账户资产旁的 **☁ 云同步** 按钮
+2. 点击「**重新生成**」自动生成一个唯一的 Box Name（格式：`fundhelper_xxxxxxxxxxxx`）
+3. 点击「**保存**」确认
+
+### 上传配置到云端
+
+1. 打开云同步弹窗，确认 Box Name 已设置
+2. 点击「**⬆ 上传云端**」，当前所有配置（基金列表、分组、列设置等）将上传到云端
+
+### 从云端下载配置
+
+1. 打开云同步弹窗
+2. 点击「**⬇ 下载云端**」，云端配置将覆盖本地配置
+
+### 扫码同步（跨设备）
+
+1. 在 VSCode 版中设置好 Box Name 并上传配置
+2. 云同步弹窗底部会显示 Box Name 的**二维码**
+3. 在网页版（或其他设备）中扫描此二维码，即可获取 Box Name
+4. 在网页版中点击「下载云端」即可同步配置
+
+### VSCode 版 ↔ 网页版 同步流程
+
+```
+VSCode 版 → 上传云端 → [jsonbox.io](https://jsonbox.cloud.exo-imaging.com) → 下载云端 ← 网页版
+```
 
 ## ⚙️ 配置说明 (Configuration)
 
@@ -245,6 +311,12 @@
 | ----------------------------------- | --------------------------------------- | --------------------------- |
 | `fund-helper.webviewColumnOrder`    | 表格视图列的显示顺序                    | `["name", "estimatedChange", ...]` |
 | `fund-helper.webviewVisibleColumns` | 表格视图中显示的列                      | `["name", "estimatedChange", ...]` |
+
+### 云同步配置
+
+| 配置项                        | 说明                                    | 默认值                      |
+| ----------------------------- | --------------------------------------- | --------------------------- |
+| `fund-helper.jsonboxName`     | 云同步 Box Name（字母数字下划线，≥20字符）| `""`                        |
 
 ### AI 配置
 
@@ -301,6 +373,9 @@
 - [x] 基金分组：支持创建多个分组，灵活管理不同类型的基金
 - [x] 隐私模式：一键隐藏敏感数据
 - [x] 导入导出增强：支持完整配置备份
+- [x] 云同步：通过 [jsonbox.io](https://jsonbox.cloud.exo-imaging.com) 实现跨设备配置同步
+- [x] 网页版：无需安装，浏览器直接使用
+- [x] 持仓明细：基金详情页展示十大持仓股票和债券
 - [ ] 支持自定义涨跌颜色主题
 - [ ] 支持多组合切换（如：A股组合、港股组合）
 - [ ] 支持基金对比功能
@@ -315,8 +390,10 @@
 - 使用 `api.fund.eastmoney.com` 接口获取历史净值
 - 使用 `push2.eastmoney.com` 接口获取大盘指数与资金流向
 - 使用 `data.eastmoney.com` 接口获取板块排行（通过宿主进程代理解决 CORS）
+- 使用 [jsonbox.io](https://jsonbox.cloud.exo-imaging.com) 实现免费云端配置同步
 - 使用 [ECharts](https://echarts.apache.org/) 绘制资金流向折线图与板块柱状图
 - 技术栈：TypeScript、VSCode Extension API、ECharts
+- 网页版技术栈：Vue 3、TypeScript、Element Plus、Vite
 
 ## ⚠️ 免责声明 (Disclaimer)
 

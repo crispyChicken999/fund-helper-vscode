@@ -52,6 +52,22 @@ class SyncService {
       // 设置Box ID
       jsonboxApi.setBoxId(settingStore.jsonboxName)
       
+      // 先读取云端已有数据，保留 VSCode 专属字段（hideStatusBar, defaultViewMode, jsonboxName）
+      let vscodeFields: Record<string, any> = {}
+      try {
+        const existing = await jsonboxApi.read()
+        if (existing) {
+          const preserveKeys = ['hideStatusBar', 'defaultViewMode', 'jsonboxName']
+          for (const key of preserveKeys) {
+            if ((existing as any)[key] !== undefined) {
+              vscodeFields[key] = (existing as any)[key]
+            }
+          }
+        }
+      } catch {
+        // 读取失败不影响上传
+      }
+      
       // 准备数据 — 保持与 VSCode 导出格式一致
       const { groups, groupOrder } = groupStore.exportGroupsToObject()
       
@@ -76,6 +92,8 @@ class SyncService {
         refreshInterval: settings.refreshInterval,
         privacyMode: settings.privacyMode,
         grayscaleMode: settings.grayscaleMode,
+        // 保留 VSCode 专属字段
+        ...vscodeFields,
         version: syncStore.localVersion,
         lastModified: Date.now()
       } as any

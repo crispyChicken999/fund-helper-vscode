@@ -159,6 +159,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
         this._createSummaryFolder(),
         ...fundItems,
         this._createNewViewTipItem(),
+        this._createWebVersionItem(),
         this._createSponsorItem()
       ];
     }
@@ -203,6 +204,47 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       "🔄 随时可以切换回旧视图\n\n" +
       "---\n\n" +
       "🚀 **快来体验吧！**"
+    );
+
+    tooltip.isTrusted = true;
+    tooltip.supportHtml = true;
+    tooltip.supportThemeIcons = true;
+    item.tooltip = tooltip;
+
+    return item;
+  }
+
+  private _createWebVersionItem(): FundTreeItem {
+    const item = new FundTreeItem(
+      "网页版基金助手已上线，欢迎体验！",
+      vscode.TreeItemCollapsibleState.None,
+      undefined,
+      false
+    );
+    item.contextValue = "webVersionItem";
+    item.iconPath = new vscode.ThemeIcon("globe");
+    item.command = {
+      command: "vscode.open",
+      title: "打开网页版",
+      arguments: [vscode.Uri.parse("https://fund-helper.netlify.app")]
+    };
+
+    const tooltip = new vscode.MarkdownString(
+      "🌐 **基金助手 · 网页版** 🌐\n\n" +
+      "---\n\n" +
+      "📱 **无需安装，打开即用！**\n\n" +
+      "现在可以在任意浏览器中使用基金助手，随时随地查看持仓动态。\n\n" +
+      "---\n\n" +
+      "✨ **网页版特色功能：**\n\n" +
+      "  - 📊 完整的基金持仓管理\n\n" +
+      "  - ☁️ **云同步**：通过 Box Name 在 VSCode 版与网页版之间同步配置\n\n" +
+      "  - 📷 **扫码同步**：手机扫描二维码即可获取 Box Name，快速同步\n\n" +
+      "  - 📈 基金详情、历史净值、持仓明细\n\n" +
+      "  - 🏭 行情中心、板块排行\n\n" +
+      "---\n\n" +
+      "🔗 [**立即访问 → fund-helper.netlify.app**](https://fund-helper.netlify.app)\n\n" +
+      "---\n\n" +
+      "💡 *点击此项可直接在浏览器中打开网页版*"
     );
 
     tooltip.isTrusted = true;

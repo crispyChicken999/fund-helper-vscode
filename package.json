@@ -2,7 +2,7 @@
   "name": "fund-helper",
   "displayName": "基金助手",
   "description": "VSCode 查看基金估算收益、涨跌幅、行情等数据，支持分组、排序、AI分析等功能，助你轻松管理投资组合",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "author": "CrispyChicken",
   "publisher": "CrispyChicken",
   "license": "MIT",
@@ -769,6 +769,11 @@
               }
             }
           }
+        },
+        "fund-helper.jsonboxName": {
+          "type": "string",
+          "default": "",
+          "description": "云同步 Box Name（用于 jsonbox.io 云端配置同步，格式：字母数字下划线，至少20字符）"
         }
       }
     }
@@ -783,12 +788,14 @@
   },
   "devDependencies": {
     "@types/node": "^18.0.0",
+    "@types/qrcode": "^1.5.6",
     "@types/vscode": "^1.74.0",
     "esbuild": "^0.27.3",
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "axios": "^1.6.0",
-    "openai": "^6.25.0"
+    "openai": "^6.25.0",
+    "qrcode": "^1.5.4"
   }
 }

@@ -8,6 +8,149 @@ import { updateStatusBar } from "./statusBar";
 import { FundDataManager } from "./fundDataManager";
 import { FundWebviewViewProvider } from "./sidebar/webview";
 
+// ======================== Jsonbox 云同步 ========================
+
+const JSONBOX_BASE = 'https://jsonbox.cloud.exo-imaging.com';
+
+export function getJsonboxName(): string {
+  return vscode.workspace.getConfiguration("fund-helper").get<string>("jsonboxName", "");
+}
+
+export async function saveJsonboxName(name: string): Promise<void> {
+  await vscode.workspace.getConfiguration("fund-helper").update("jsonboxName", name, vscode.ConfigurationTarget.Global);
+}
+
+/** 生成随机 Box Name（与 web 端规则一致：fundhelper_ + 21位 a-z0-9） */
+export function generateJsonboxName(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const prefix = 'fundhelper_';
+  let suffix = '';
+  for (let i = 0; i < 21; i++) {
+    suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return prefix + suffix;
+}
+
+/** 读取云端配置 */
+export async function jsonboxRead(boxName: string): Promise<any[]> {
+  const url = `${JSONBOX_BASE}/${boxName}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json() as any;
+  return Array.isArray(data) ? data : [];
+}
+
+/** 上传配置到云端（先清空再写入） */
+export async function jsonboxUpload(boxName: string, payload: any): Promise<void> {
+  // 先读取已有记录，删除它们
+  const existing = await jsonboxRead(boxName);
+  for (const item of existing) {
+    if (item._id) {
+      await fetch(`${JSONBOX_BASE}/${boxName}/${item._id}`, {
+        method: 'DELETE',
+        signal: AbortSignal.timeout(8000),
+      }).catch(() => {});
+    }
+  }
+  // 写入新记录
+  const res = await fetch(`${JSONBOX_BASE}/${boxName}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) throw new Error(`上传失败 HTTP ${res.status}`);
+}
+
+/** 清空云端数据 */
+export async function jsonboxClear(boxName: string): Promise<void> {
+  const existing = await jsonboxRead(boxName);
+  for (const item of existing) {
+    if (item._id) {
+      await fetch(`${JSONBOX_BASE}/${boxName}/${item._id}`, {
+        method: 'DELETE',
+        signal: AbortSignal.timeout(8000),
+      }).catch(() => {});
+    }
+  }
+}
+
+/** 构建当前配置的导出 payload */
+export function buildExportPayload(): any {
+  const config = vscode.workspace.getConfiguration("fund-helper");
+  return {
+    funds: getFundConfigs(),
+    groups: getFundGroups(),
+    groupOrder: getFundGroupOrder(),
+    columnSettings: {
+      columnOrder: config.get<string[]>("webviewColumnOrder", []),
+      visibleColumns: config.get<string[]>("webviewVisibleColumns", []),
+    },
+    sortMethod: config.get<string>("sortMethod", "default"),
+    refreshInterval: config.get<number>("refreshInterval", 30),
+    hideStatusBar: config.get<boolean>("hideStatusBar", false),
+    defaultViewMode: config.get<string>("defaultViewMode", "tree"),
+    privacyMode: config.get<boolean>("privacyMode", false),
+    grayscaleMode: config.get<boolean>("grayscaleMode", false),
+    jsonboxName: getJsonboxName(),
+  };
+}
+
+/** 从 payload 恢复配置 */
+export async function applyImportPayload(data: any): Promise<string[]> {
+  const config = vscode.workspace.getConfiguration("fund-helper");
+  const messages: string[] = [];
+
+  if (Array.isArray(data.funds) && data.funds.length > 0) {
+    const newFunds: FundConfig[] = data.funds
+      .map((f: any) => ({
+        code: String(f.code || ""),
+        num: String(f.num ?? f.shares ?? "0"),
+        cost: String(f.cost ?? "0"),
+      }))
+      .filter((f: FundConfig) => f.code.length > 0);
+    await saveFundConfigs(newFunds);
+    messages.push(`${newFunds.length} 个基金`);
+  }
+  if (data.groups && typeof data.groups === 'object' && Object.keys(data.groups).length > 0) {
+    await saveFundGroups(data.groups);
+    messages.push(`${Object.keys(data.groups).length} 个分组`);
+  }
+  if (Array.isArray(data.groupOrder) && data.groupOrder.length > 0) {
+    await saveFundGroupOrder(data.groupOrder);
+  }
+  if (data.columnSettings?.columnOrder) {
+    await config.update("webviewColumnOrder", data.columnSettings.columnOrder, vscode.ConfigurationTarget.Global);
+  }
+  if (data.columnSettings?.visibleColumns) {
+    await config.update("webviewVisibleColumns", data.columnSettings.visibleColumns, vscode.ConfigurationTarget.Global);
+  }
+  if (typeof data.sortMethod === 'string') {
+    await config.update("sortMethod", data.sortMethod, vscode.ConfigurationTarget.Global);
+  }
+  if (typeof data.refreshInterval === 'number') {
+    await config.update("refreshInterval", data.refreshInterval, vscode.ConfigurationTarget.Global);
+  }
+  // defaultViewMode 和 hideStatusBar 是 VSCode 专属配置，仅当数据中明确包含时才覆盖
+  // 若来自 web 端同步（不含这两个字段），则保留本地现有值，避免丢失
+  if (typeof data.hideStatusBar === 'boolean') {
+    await config.update("hideStatusBar", data.hideStatusBar, vscode.ConfigurationTarget.Global);
+  }
+  if (typeof data.defaultViewMode === 'string') {
+    await config.update("defaultViewMode", data.defaultViewMode, vscode.ConfigurationTarget.Global);
+  }
+  if (typeof data.privacyMode === 'boolean') {
+    await config.update("privacyMode", data.privacyMode, vscode.ConfigurationTarget.Global);
+  }
+  if (typeof data.grayscaleMode === 'boolean') {
+    await config.update("grayscaleMode", data.grayscaleMode, vscode.ConfigurationTarget.Global);
+  }
+  if (typeof data.jsonboxName === 'string' && data.jsonboxName) {
+    await saveJsonboxName(data.jsonboxName);
+  }
+  return messages;
+}
+
 let refreshTimer: NodeJS.Timeout | undefined;
 let treeDataProvider: FundTreeDataProvider;
 let treeView: vscode.TreeView<FundTreeItem>;
@@ -391,6 +534,7 @@ export async function exportFund() {
   const defaultViewMode = config.get<string>("defaultViewMode", "tree");
   const privacyMode = config.get<boolean>("privacyMode", false);
   const grayscaleMode = config.get<boolean>("grayscaleMode", false);
+  const jsonboxName = getJsonboxName();
 
   const exportData = {
     funds,
@@ -405,7 +549,8 @@ export async function exportFund() {
     hideStatusBar,
     defaultViewMode,
     privacyMode,
-    grayscaleMode
+    grayscaleMode,
+    jsonboxName,
   };
 
   const now = new Date();
@@ -455,7 +600,8 @@ export async function exportFund() {
   "hideStatusBar": ${hideStatusBar},
   "defaultViewMode": ${JSON.stringify(defaultViewMode)},
   "privacyMode": ${privacyMode},
-  "grayscaleMode": ${grayscaleMode}
+  "grayscaleMode": ${grayscaleMode},
+  "jsonboxName": ${JSON.stringify(jsonboxName)}
 }`;
 
     fs.writeFileSync(uri.fsPath, formattedJson, "utf-8");
@@ -489,6 +635,7 @@ export async function importFund() {
     let defaultViewModeData: string | undefined;
     let privacyModeData: boolean | undefined;
     let grayscaleModeData: boolean | undefined;
+    let jsonboxNameData: string | undefined;
 
     if (Array.isArray(data.funds)) {
       fundsList = data.funds;
@@ -522,6 +669,9 @@ export async function importFund() {
       }
       if (typeof data.grayscaleMode === 'boolean') {
         grayscaleModeData = data.grayscaleMode;
+      }
+      if (typeof data.jsonboxName === 'string' && data.jsonboxName) {
+        jsonboxNameData = data.jsonboxName;
       }
     } else if (Array.isArray(data)) {
       fundsList = data;
@@ -586,6 +736,9 @@ export async function importFund() {
     if (grayscaleModeData !== undefined) {
       await config.update("grayscaleMode", grayscaleModeData, vscode.ConfigurationTarget.Global);
     }
+    if (jsonboxNameData !== undefined) {
+      await saveJsonboxName(jsonboxNameData);
+    }
 
     await refreshData();
 
@@ -607,6 +760,7 @@ export async function importFund() {
     if (defaultViewModeData !== undefined) otherSettings.push('默认视图');
     if (privacyModeData !== undefined) otherSettings.push('隐私模式');
     if (grayscaleModeData !== undefined) otherSettings.push('灰色模式');
+    if (jsonboxNameData !== undefined) otherSettings.push('云同步配置');
     if (otherSettings.length > 0) {
       messages.push(otherSettings.join('、'));
     }

@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 import { FundInfo } from '../fundModel';
+import { fetchFundInvestmentPosition } from '../fundService';
 import { getHTML } from './html';
 
 export class FundDetailWebview {
-  public static currentPanel: FundDetailWebview | undefined;
+  // 每个基金代码对应一个独立的 panel
+  private static panels: Map<string, FundDetailWebview> = new Map();
   public static readonly viewType = 'fundDetailWebview';
 
   private readonly _panel: vscode.WebviewPanel;
@@ -23,10 +25,12 @@ export class FundDetailWebview {
       ? vscode.window.activeTextEditor.viewColumn
       : undefined;
 
-    if (FundDetailWebview.currentPanel) {
-      FundDetailWebview.currentPanel._refreshCurrentFund = refreshCurrentFund;
-      FundDetailWebview.currentPanel.update(fund);
-      FundDetailWebview.currentPanel._panel.reveal(column);
+    // 检查该基金是否已有打开的 panel
+    const existing = FundDetailWebview.panels.get(fund.code);
+    if (existing) {
+      existing._refreshCurrentFund = refreshCurrentFund;
+      existing.update(fund);
+      existing._panel.reveal(column);
       return;
     }
 
@@ -40,12 +44,22 @@ export class FundDetailWebview {
       }
     );
 
-    FundDetailWebview.currentPanel = new FundDetailWebview(
+    const instance = new FundDetailWebview(
       panel,
       extensionUri,
       fund,
       refreshCurrentFund,
     );
+    FundDetailWebview.panels.set(fund.code, instance);
+  }
+
+  /** 获取当前打开的所有 panel（供外部刷新等使用） */
+  public static get currentPanel(): FundDetailWebview | undefined {
+    // 兼容旧代码：返回最近活跃的 panel（如果有）
+    for (const panel of FundDetailWebview.panels.values()) {
+      return panel;
+    }
+    return undefined;
   }
 
   private constructor(
@@ -64,6 +78,13 @@ export class FundDetailWebview {
     this._panel.webview.onDidReceiveMessage((message) => {
       if (message?.command === 'refresh') {
         void this.refresh(typeof message.activeTab === 'string' ? message.activeTab : undefined);
+      } else if (message?.command === 'fetchInvestmentPosition') {
+        const fundCode = message.fundCode;
+        if (fundCode) {
+          fetchFundInvestmentPosition(fundCode).then(data => {
+            this._panel.webview.postMessage({ command: 'investmentPositionData', data });
+          });
+        }
       }
     }, null, this._disposables);
 
@@ -71,7 +92,7 @@ export class FundDetailWebview {
   }
 
   public dispose() {
-    FundDetailWebview.currentPanel = undefined;
+    FundDetailWebview.panels.delete(this._currentFund.code);
     this._panel.dispose();
     while (this._disposables.length) {
       const x = this._disposables.pop();

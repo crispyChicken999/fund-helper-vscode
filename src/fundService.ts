@@ -20,9 +20,9 @@ function parseJsonp(text: string): any {
 }
 
 /**
- * 获取基金持仓信息
+ * 获取基金持仓信息（内部使用，返回 Datas 部分）
  */
-async function fetchFundInvestmentPosition(code: string): Promise<any> {
+async function fetchFundPositionDatas(code: string): Promise<any> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`;
   try {
     const controller = new AbortController();
@@ -100,7 +100,7 @@ function calcEstimateChange(positions: any[], stockData: any[]): number {
 async function fetchFundEstimateChange(code: string): Promise<number | null> {
   try {
     // 获取基金持仓
-    const positionData = await fetchFundInvestmentPosition(code);
+    const positionData = await fetchFundPositionDatas(code);
     if (!positionData || !positionData.fundStocks) {
       return null;
     }
@@ -521,6 +521,23 @@ export async function fetchMarketStat(): Promise<MarketStat> {
  * 通用宿主侧 JSON 代理请求（供 Webview 消息中继使用，绕过 CORS）
  */
 export async function fetchJsonProxy(url: string): Promise<any> {
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(tid);
+    if (!res.ok) { return null; }
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 获取基金持仓数据（从 extension host 调用，绕过 CORS/接口保护）
+ */
+export async function fetchFundInvestmentPosition(fundCode: string): Promise<any> {
+  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${fundCode}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`;
   try {
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), 12000);
