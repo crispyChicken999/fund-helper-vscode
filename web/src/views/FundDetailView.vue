@@ -105,59 +105,54 @@
           <!-- 股票持仓 -->
           <div v-if="positionData.stocks.length" class="position-section">
             <div class="position-section-title">股票持仓</div>
-            <div class="position-table-wrap">
-              <table class="position-table">
-                <thead>
-                  <tr>
-                    <th class="col-name">股票名称（代码）</th>
-                    <th class="col-num">价格</th>
-                    <th class="col-num">涨跌幅</th>
-                    <th class="col-num">持仓占比</th>
-                    <th class="col-num">较上期</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="s in positionData.stocks" :key="s.code">
-                    <td class="col-name">
-                      <div class="stock-name">{{ s.name }}</div>
-                      <div class="stock-code">{{ s.code }}</div>
-                    </td>
-                    <td class="col-num">
-                      {{ s.price != null ? s.price.toFixed(2) : '--' }}
-                    </td>
-                    <td class="col-num" :class="stockChangeClass(s.changePercent)">
-                      {{ s.changePercent != null ? (s.changePercent > 0 ? '+' : '') + s.changePercent.toFixed(2) + '%' : '--' }}
-                    </td>
-                    <td class="col-num">{{ s.ratio.toFixed(2) }}%</td>
-                    <td class="col-num" :class="comparedClass(s)">{{ comparedText(s) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <el-table :data="positionData.stocks" stripe size="small">
+              <el-table-column prop="name" label="股票名称（代码）" min-width="100">
+                <template #default="{ row: s }">
+                  <div class="stock-name">{{ s.name }}</div>
+                  <div class="stock-code">{{ s.code }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="price" label="价格" min-width="60" align="right">
+                <template #default="{ row: s }">
+                  {{ s.price != null ? safeNum(s.price).toFixed(2) : '--' }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="changePercent" label="涨跌幅" min-width="60" align="right">
+                <template #default="{ row: s }">
+                  <span :class="stockChangeClass(s.changePercent)">
+                    {{ s.changePercent != null ? (safeNum(s.changePercent) > 0 ? '+' : '') + safeNum(s.changePercent).toFixed(2) + '%' : '--' }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="ratio" label="持仓占比" min-width="60" align="right">
+                <template #default="{ row: s }">
+                  {{ safeNum(s.ratio).toFixed(2) }}%
+                </template>
+              </el-table-column>
+              <el-table-column prop="compared" label="较上期" min-width="60" align="right">
+                <template #default="{ row: s }">
+                  <span :class="comparedClass(s)">{{ comparedText(s) }}</span>
+                </template>
+              </el-table-column>
+            </el-table>
           </div>
 
           <!-- 债券持仓 -->
           <div v-if="positionData.bonds.length" class="position-section">
             <div class="position-section-title">债券持仓</div>
-            <div class="position-table-wrap">
-              <table class="position-table">
-                <thead>
-                  <tr>
-                    <th class="col-name">债券名称（代码）</th>
-                    <th class="col-num">占净值比</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="b in positionData.bonds" :key="b.code">
-                    <td class="col-name">
-                      <div class="stock-name">{{ b.name }}</div>
-                      <div class="stock-code">{{ b.code }}</div>
-                    </td>
-                    <td class="col-num">{{ b.ratio.toFixed(2) }}%</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <el-table :data="positionData.bonds" stripe size="small">
+              <el-table-column prop="name" label="债券名称（代码）" min-width="100">
+                <template #default="{ row: b }">
+                  <div class="stock-name">{{ b.name }}</div>
+                  <div class="stock-code">{{ b.code }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="ratio" label="占净值比" min-width="60" align="right">
+                <template #default="{ row: b }">
+                  {{ safeNum(b.ratio).toFixed(2) }}%
+                </template>
+              </el-table-column>
+            </el-table>
           </div>
         </template>
         <el-empty v-else-if="!tabLoading" description="暂无持仓数据" />
@@ -181,7 +176,7 @@
         <!-- 阶段收益率 -->
         <div v-if="periodIncrease" class="info-list" style="margin-top: 12px;">
           <div class="info-row section-title"><span>阶段收益率</span><span></span></div>
-          <div class="info-row"><span>近1周</span><span :class="pctClass(calcWeekRate)">{{ calcWeekRate !== null ? (calcWeekRate > 0 ? '+' : '') + calcWeekRate.toFixed(2) + '%' : '--' }}</span></div>
+          <div class="info-row"><span>近1周</span><span :class="pctClass(calcWeekRate)">{{ calcWeekRate !== null ? (safeNum(calcWeekRate) > 0 ? '+' : '') + safeNum(calcWeekRate).toFixed(2) + '%' : '--' }}</span></div>
           <div class="info-row"><span>近1月</span><span :class="pctClass(parseFloat(periodIncrease.monthRate))">{{ periodIncrease.monthRate ? periodIncrease.monthRate + '%' : '--' }}{{ periodIncrease.monthRank ? ' (' + periodIncrease.monthRank + ')' : '' }}</span></div>
           <div class="info-row"><span>近3月</span><span :class="pctClass(parseFloat(periodIncrease.threeMonthRate))">{{ periodIncrease.threeMonthRate ? periodIncrease.threeMonthRate + '%' : '--' }}{{ periodIncrease.threeMonthRank ? ' (' + periodIncrease.threeMonthRank + ')' : '' }}</span></div>
           <div class="info-row"><span>近6月</span><span :class="pctClass(parseFloat(periodIncrease.sixMonthRate))">{{ periodIncrease.sixMonthRate ? periodIncrease.sixMonthRate + '%' : '--' }}{{ periodIncrease.sixMonthRank ? ' (' + periodIncrease.sixMonthRank + ')' : '' }}</span></div>
@@ -232,7 +227,7 @@
         <div v-if="themes.length" class="theme-list">
           <div v-for="t in themes" :key="t.secName" class="theme-item">
             <span class="theme-name">{{ t.secName }}</span>
-            <span class="theme-corr">相关性：{{ t.corr1y.toFixed(2) }}</span>
+            <span class="theme-corr">相关性：{{ safeNum(t.corr1y).toFixed(2) }}</span>
           </div>
         </div>
         <el-empty v-else-if="!tabLoading" description="暂无关联板块数据" />
@@ -423,17 +418,23 @@ const calcWeekRate = computed((): number | null => {
 
 // ==================== 格式化 ====================
 
-function fmtNum(v: number) { return formatPrivacy(formatNumber(v, 2), settingStore.privacyMode) }
-function fmtPrice(v: number | undefined | null) { return v != null ? formatPrivacy(v.toFixed(4), settingStore.privacyMode) : '--' }
-function fmtMoney(v: number | undefined) { return v != null ? formatPrivacy(formatCurrency(v), settingStore.privacyMode) : '--' }
-function fmtPct(v: number | undefined) {
-  if (v == null) return '--'
-  return formatPrivacy(`${v > 0 ? '+' : ''}${v.toFixed(2)}%`, settingStore.privacyMode)
+function safeNum(v: unknown): number {
+  const n = Number(v)
+  return isFinite(n) ? n : 0
 }
-function pctClass(v: number | undefined | null) {
-  if (v == null || settingStore.grayscaleMode) return ''
-  if (v > 0) return 'positive'
-  if (v < 0) return 'negative'
+function fmtNum(v: unknown) { return formatPrivacy(formatNumber(safeNum(v), 2), settingStore.privacyMode) }
+function fmtPrice(v: unknown) { return v != null && v !== '' ? formatPrivacy(safeNum(v).toFixed(4), settingStore.privacyMode) : '--' }
+function fmtMoney(v: unknown) { return v != null ? formatPrivacy(formatCurrency(safeNum(v)), settingStore.privacyMode) : '--' }
+function fmtPct(v: unknown) {
+  if (v == null) return '--'
+  const n = safeNum(v)
+  return formatPrivacy(`${n > 0 ? '+' : ''}${n.toFixed(2)}%`, settingStore.privacyMode)
+}
+function pctClass(v: unknown) {
+  const n = safeNum(v)
+  if (!n || settingStore.grayscaleMode) return ''
+  if (n > 0) return 'positive'
+  if (n < 0) return 'negative'
   return ''
 }
 function riskLabel(level: string) {
@@ -591,8 +592,8 @@ async function renderNetValueChart(records: NetValueRecord[]) {
     yAxis: { type: 'value', scale: true, axisLabel: { fontSize: 10, formatter: (v: number) => v.toFixed(4) } },
     dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: 20, height: 18 }],
     series: [
-      { name: '单位净值', type: 'line', data: dwjz, smooth: true, showSymbol: false, lineStyle: { width: 2, color: '#409EFF' } },
-      { name: '累计净值', type: 'line', data: ljjz, smooth: true, showSymbol: false, lineStyle: { width: 2, color: '#E6A23C' } }
+      { name: '单位净值', type: 'line', data: dwjz, smooth: false, showSymbol: false, lineStyle: { width: 2, color: '#409EFF' } },
+      { name: '累计净值', type: 'line', data: ljjz, smooth: false, showSymbol: false, lineStyle: { width: 2, color: '#E6A23C' } }
     ]
   }, true)
 }
@@ -643,9 +644,9 @@ async function renderProfitChart(records: YieldRecord[]) {
     yAxis: { type: 'value', scale: true, axisLabel: { fontSize: 10, formatter: '{value}%' } },
     dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: 20, height: 18 }],
     series: [
-      { name: '涨幅', type: 'line', data: yieldData, smooth: true, showSymbol: false, lineStyle: { width: 2, color: '#F56C6C' } },
-      { name: '沪深300', type: 'line', data: indexYieldData, smooth: true, showSymbol: false, lineStyle: { width: 2, color: '#67C23A' } },
-      { name: '同类平均', type: 'line', data: fundTypeYieldData, smooth: true, showSymbol: false, lineStyle: { width: 2, color: '#E6A23C' } }
+      { name: '涨幅', type: 'line', data: yieldData, smooth: false, showSymbol: false, lineStyle: { width: 2, color: '#F56C6C' } },
+      { name: '沪深300', type: 'line', data: indexYieldData, smooth: false, showSymbol: false, lineStyle: { width: 2, color: '#67C23A' } },
+      { name: '同类平均', type: 'line', data: fundTypeYieldData, smooth: false, showSymbol: false, lineStyle: { width: 2, color: '#E6A23C' } }
     ]
   }, true)
 }
@@ -722,7 +723,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 6px 8px;
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color);
 }
@@ -742,6 +743,8 @@ onUnmounted(() => {
 .fund-name {
   font-size: 15px;
   font-weight: 600;
+  text-align: left;
+  padding-right: 10px;
   color: var(--text-primary);
 }
 
@@ -1055,51 +1058,7 @@ onUnmounted(() => {
   color: var(--el-text-color-secondary);
   padding: 4px 0;
   border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.position-table-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.position-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.position-table th {
-  padding: 6px 8px;
-  text-align: right;
-  font-weight: 600;
-  color: var(--el-text-color-secondary);
-  border-bottom: 1px solid var(--el-border-color);
-  background: var(--el-fill-color-lighter);
-}
-
-.position-table td {
-  padding: 7px 8px;
-  text-align: right;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  vertical-align: middle;
-}
-
-.position-table tr:last-child td {
-  border-bottom: none;
-}
-
-.position-table tr:nth-child(even) td {
-  background: var(--el-fill-color-blank);
-}
-
-.position-table .col-name {
-  text-align: left;
-  min-width: 100px;
-}
-
-.position-table .col-num {
-  min-width: 60px;
+  margin-bottom: 8px;
 }
 
 .stock-name {

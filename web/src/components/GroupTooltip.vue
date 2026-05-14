@@ -1,83 +1,87 @@
 <template>
   <Teleport to="body">
-    <div v-if="visible" class="group-tooltip-overlay" @click.self="$emit('close')">
-      <div class="group-tooltip-panel">
-        <header class="group-tooltip-head">
-          <div class="group-tooltip-title">{{ stats.groupName }}</div>
-          <div class="head-actions">
-            <el-button text size="small" @click="handleCopy">复制</el-button>
-            <el-button text type="primary" size="small" @click="$emit('close')">关闭</el-button>
-          </div>
-        </header>
+    <Transition name="tooltip-slide">
+      <div v-if="visible" class="group-tooltip-overlay" @click.self="$emit('close')">
+        <Transition name="tooltip-slide">
+          <div v-if="visible" class="group-tooltip-panel">
+            <header class="group-tooltip-head">
+              <div class="group-tooltip-title">{{ stats.groupName }}</div>
+              <div class="head-actions">
+                <el-button link type="info" @click="handleCopy">复制</el-button>
+                <el-button link type="primary" @click="$emit('close')">关闭</el-button>
+              </div>
+            </header>
 
-        <section class="group-tooltip-body">
-          <div class="info-row">
-            <span class="info-label">基金数量</span>
-            <span>{{ stats.fundCount }} 只</span>
-          </div>
+            <section class="group-tooltip-body">
+              <div class="info-row">
+                <span class="info-label">基金数量</span>
+                <span>{{ stats.fundCount }} 只</span>
+              </div>
 
-          <!-- 估算数据 -->
-          <div class="info-group">
-            <div class="info-row">
-              <span class="info-label">估算收益 ({{ stats.estimatedDate }})</span>
-              <span :class="moneyClass(stats.estimatedGain)">{{ fmtMoney(stats.estimatedGain) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">估算涨幅 ({{ stats.estimatedDate }})</span>
-              <span :class="pctClass(stats.estimatedChangePercent)">{{ fmtPct(stats.estimatedChangePercent) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">估算上涨/下跌 ({{ stats.estimatedDate }})</span>
-              <span><span class="positive">{{ stats.estimatedUpCount }}</span> / <span class="negative">{{ stats.estimatedDownCount }}</span></span>
-            </div>
-          </div>
+              <!-- 估算数据 -->
+              <div class="info-group">
+                <div class="info-row">
+                  <span class="info-label">估算收益 ({{ stats.estimatedDate }})</span>
+                  <span :class="moneyClass(stats.estimatedGain)">{{ fmtMoney(stats.estimatedGain) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">估算涨幅 ({{ stats.estimatedDate }})</span>
+                  <span :class="pctClass(stats.estimatedChangePercent)">{{ fmtPct(stats.estimatedChangePercent) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">估算上涨/下跌 ({{ stats.estimatedDate }})</span>
+                  <span><span class="positive">{{ stats.estimatedUpCount }}</span> / <span class="negative">{{ stats.estimatedDownCount }}</span></span>
+                </div>
+              </div>
 
-          <!-- 当日数据 -->
-          <div class="info-group">
-            <div class="info-row">
-              <span class="info-label">当日收益 ({{ stats.dailyDate }})</span>
-              <span :class="moneyClass(stats.dailyGain)">{{ fmtMoney(stats.dailyGain) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">当日涨幅 ({{ stats.dailyDate }})</span>
-              <span :class="pctClass(stats.dailyChangePercent)">{{ fmtPct(stats.dailyChangePercent) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">当日上涨/下跌 ({{ stats.dailyDate }})</span>
-              <span><span class="positive">{{ stats.dailyUpCount }}</span> / <span class="negative">{{ stats.dailyDownCount }}</span></span>
-            </div>
-          </div>
+              <!-- 当日数据 -->
+              <div class="info-group">
+                <div class="info-row">
+                  <span class="info-label">当日收益 ({{ stats.dailyDate }})</span>
+                  <span :class="moneyClass(stats.dailyGain)">{{ fmtMoney(stats.dailyGain) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">当日涨幅 ({{ stats.dailyDate }})</span>
+                  <span :class="pctClass(stats.dailyChangePercent)">{{ fmtPct(stats.dailyChangePercent) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">当日上涨/下跌 ({{ stats.dailyDate }})</span>
+                  <span><span class="positive">{{ stats.dailyUpCount }}</span> / <span class="negative">{{ stats.dailyDownCount }}</span></span>
+                </div>
+              </div>
 
-          <!-- 持有数据 -->
-          <div class="info-group">
-            <div class="info-row">
-              <span class="info-label">持有收益 ({{ stats.holdingDate }})</span>
-              <span :class="moneyClass(stats.holdingGain)">{{ fmtMoney(stats.holdingGain) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">持有收益率 ({{ stats.holdingDate }})</span>
-              <span :class="pctClass(stats.holdingGainRate)">{{ fmtPct(stats.holdingGainRate) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">持有盈利/亏损 ({{ stats.holdingDate }})</span>
-              <span><span class="positive">{{ stats.holdingProfitCount }}</span> / <span class="negative">{{ stats.holdingLossCount }}</span></span>
-            </div>
-          </div>
+              <!-- 持有数据 -->
+              <div class="info-group">
+                <div class="info-row">
+                  <span class="info-label">持有收益 ({{ stats.holdingDate }})</span>
+                  <span :class="moneyClass(stats.holdingGain)">{{ fmtMoney(stats.holdingGain) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">持有收益率 ({{ stats.holdingDate }})</span>
+                  <span :class="pctClass(stats.holdingGainRate)">{{ fmtPct(stats.holdingGainRate) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">持有盈利/亏损 ({{ stats.holdingDate }})</span>
+                  <span><span class="positive">{{ stats.holdingProfitCount }}</span> / <span class="negative">{{ stats.holdingLossCount }}</span></span>
+                </div>
+              </div>
 
-          <!-- 总计 -->
-          <div class="info-group">
-            <div class="info-row">
-              <span class="info-label">总资产</span>
-              <span>{{ fmtMoney(stats.totalAsset) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">总成本</span>
-              <span>{{ fmtMoney(stats.totalCost) }}</span>
-            </div>
+              <!-- 总计 -->
+              <div class="info-group">
+                <div class="info-row">
+                  <span class="info-label">总资产</span>
+                  <span>{{ fmtMoney(stats.totalAsset) }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">总成本</span>
+                  <span>{{ fmtMoney(stats.totalCost) }}</span>
+                </div>
+              </div>
+            </section>
           </div>
-        </section>
+        </Transition>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -119,22 +123,29 @@ defineEmits<{
 
 const settingStore = useSettingStore()
 
-function fmtMoney(v: number) {
-  return formatPrivacy(formatCurrency(v), settingStore.privacyMode)
+function safeNum(v: unknown): number {
+  const n = Number(v)
+  return isFinite(n) ? n : 0
 }
 
-function fmtPct(v: number) {
-  const s = `${v > 0 ? '+' : ''}${v.toFixed(2)}%`
+function fmtMoney(v: unknown) {
+  return formatPrivacy(formatCurrency(safeNum(v)), settingStore.privacyMode)
+}
+
+function fmtPct(v: unknown) {
+  const n = safeNum(v)
+  const s = `${n > 0 ? '+' : ''}${n.toFixed(2)}%`
   return formatPrivacy(s, settingStore.privacyMode)
 }
 
-function pctClass(v: number) {
-  if (v > 0) return 'positive'
-  if (v < 0) return 'negative'
+function pctClass(v: unknown) {
+  const n = safeNum(v)
+  if (n > 0) return 'positive'
+  if (n < 0) return 'negative'
   return ''
 }
 
-function moneyClass(v: number) {
+function moneyClass(v: unknown) {
   return pctClass(v)
 }
 
@@ -142,8 +153,8 @@ function handleCopy() {
   const s = props.stats
   // 复制始终使用真实数据，不受隐私模式影响
   const SEP = '━━━━━━━━━━━━━━━━'
-  const rawMoney = (v: number) => formatCurrency(v)
-  const rawPct = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(2)}%`
+  const rawMoney = (v: unknown) => formatCurrency(safeNum(v))
+  const rawPct = (v: unknown) => { const n = safeNum(v); return `${n > 0 ? '+' : ''}${n.toFixed(2)}%` }
 
   const lines = [
     `分组名称：${s.groupName}`,
@@ -183,6 +194,7 @@ function handleCopy() {
   justify-content: center;
   padding: 16px;
   box-sizing: border-box;
+  backdrop-filter: blur(4px);
 }
 
 .group-tooltip-panel {
@@ -193,7 +205,8 @@ function handleCopy() {
   background: var(--el-bg-color);
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--el-border-color-lighter);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .group-tooltip-head {
@@ -210,9 +223,14 @@ function handleCopy() {
   flex-shrink: 0;
 }
 
+.head-actions .el-button {
+  margin: 0;
+}
+
 .group-tooltip-title {
   font-size: 16px;
   font-weight: 600;
+  color: var(--el-text-color-primary);
 }
 
 .group-tooltip-body {
@@ -244,5 +262,21 @@ function handleCopy() {
 }
 .negative {
   color: var(--color-down);
+}
+
+/* 面板从下滑入 */
+.tooltip-slide-enter-active {
+  transition: transform 0.25s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.22s ease;
+}
+.tooltip-slide-leave-active {
+  transition: transform 0.2s ease, opacity 0.18s ease;
+}
+.tooltip-slide-enter-from {
+  transform: translateY(24px);
+  opacity: 0;
+}
+.tooltip-slide-leave-to {
+  transform: translateY(16px);
+  opacity: 0;
 }
 </style>

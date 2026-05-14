@@ -32,13 +32,12 @@
         <template v-else>
           <el-button
             size="small"
-            link
             :disabled="index <= 1"
             @click.stop="moveUp(index)"
           >↑</el-button>
           <el-button
             size="small"
-            link
+            style="margin: 0"
             :disabled="index >= draft.length - 1"
             @click.stop="moveDown(index)"
           >↓</el-button>
@@ -222,7 +221,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 0px 12px;
   border: 1px solid var(--el-border-color);
   border-radius: 8px;
   margin-bottom: 6px;
@@ -230,7 +229,7 @@ onBeforeUnmount(() => {
   transition: background 0.2s;
   cursor: pointer;
   user-select: none;
-  min-height: 44px; /* 移动端触摸友好 */
+  min-height: 38px; /* 移动端触摸友好 */
 }
 
 .col-settings-item.fixed {

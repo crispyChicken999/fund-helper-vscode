@@ -25,11 +25,12 @@
               type="primary"
               size="small"
               :disabled="!isBoxNameChanged"
+              :loading="savingBoxName"
               @click="saveBoxName"
             >保存</el-button>
             <el-button
               size="small"
-              :disabled="!isBoxNameChanged"
+              :disabled="!isBoxNameChanged || savingBoxName"
               @click="cancelBoxName"
             >取消</el-button>
             <el-button
@@ -110,16 +111,32 @@ async function generateQR(boxName: string) {
   } catch { qrDataUrl.value = '' }
 }
 
-function saveBoxName() {
+const savingBoxName = ref(false)
+
+async function saveBoxName() {
   const name = editingBoxName.value.trim()
   if (!name || !/^[a-zA-Z0-9_]{20,}$/.test(name)) {
     ElMessage.warning('Box Name 格式不正确（字母数字下划线，至少 20 字符）')
     return
   }
-  savedBoxName.value = name
-  settingStore.setJsonboxName(name)
-  generateQR(name)
-  ElMessage.success('Box Name 已保存')
+  savingBoxName.value = true
+  try {
+    // 用新 boxId 试读一次，检测 jsonbox 是否接受该 id
+    const { jsonboxApi } = await import('@/api/jsonbox')
+    jsonboxApi.setBoxId(name)
+    await jsonboxApi.read() // 正常返回 [] 或 null；无效 id 会抛错
+    savedBoxName.value = name
+    settingStore.setJsonboxName(name)
+    generateQR(name)
+    ElMessage.success('Box Name 已保存')
+  } catch (e: any) {
+    // 恢复 boxId 为上次有效值
+    const { jsonboxApi } = await import('@/api/jsonbox')
+    jsonboxApi.setBoxId(savedBoxName.value)
+    ElMessage.error(`Box Name 无效：${e.message || '请检查格式'}`)
+  } finally {
+    savingBoxName.value = false
+  }
 }
 
 function cancelBoxName() {

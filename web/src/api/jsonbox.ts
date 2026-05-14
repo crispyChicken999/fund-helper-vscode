@@ -59,17 +59,23 @@ class JsonboxClient {
 
     try {
       const response = await this.client.get(`/${this.boxId}`)
+      const data = response.data
 
-      if (response.data && response.data.length > 0) {
+      // jsonbox 对无效 box id 返回 {"message":"Invalid or empty box id"}
+      if (data && typeof data === 'object' && !Array.isArray(data) && data.message) {
+        throw new Error(data.message)
+      }
+
+      if (Array.isArray(data) && data.length > 0) {
         // JSONBox返回的是数组，取第一个元素
-        const data = response.data[0]
+        const item = data[0]
         return {
-          funds: data.funds || [],
-          groups: data.groups || {},
-          groupOrder: data.groupOrder || [],
-          settings: data.settings || {},
-          version: data.version || 1,
-          lastModified: data.lastModified || Date.now()
+          funds: item.funds || [],
+          groups: item.groups || {},
+          groupOrder: item.groupOrder || [],
+          settings: item.settings || {},
+          version: item.version || 1,
+          lastModified: item.lastModified || Date.now()
         }
       }
 

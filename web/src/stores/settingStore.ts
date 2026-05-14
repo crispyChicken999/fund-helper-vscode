@@ -157,11 +157,13 @@ export const useSettingStore = defineStore('setting', {
     // 设置隐私模式
     async setPrivacyMode(enabled: boolean) {
       this.settings.privacyMode = enabled
+      storageService.saveSettings(this.getSettings())
     },
 
     // 设置灰色模式
     async setGrayscaleMode(enabled: boolean) {
       this.settings.grayscaleMode = enabled
+      storageService.saveSettings(this.getSettings())
     },
 
     // 设置刷新间隔

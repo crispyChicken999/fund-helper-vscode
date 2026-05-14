@@ -38,7 +38,7 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to) => {
   try {
     await initApp()
   } catch (e) {
@@ -47,7 +47,6 @@ router.beforeEach(async (to, _from, next) => {
   if (to.meta.title) {
     document.title = `${to.meta.title} - 基金助手`
   }
-  next()
 })
 
 export default router

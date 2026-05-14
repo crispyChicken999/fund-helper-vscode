@@ -343,3 +343,21 @@ body {
     border-right-color: var(--border);
   }
 }
+
+.el-table .cell {
+  padding: 0 6px;
+}
+
+.el-table .cell:has(.col-head):has(.caret-wrapper) {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.el-table .caret-wrapper {
+  width: 18px;
+}
+.el-overlay-dialog {
+}
+.el-dialog {
+  border: 1px solid var(--el-border-color-lighter);
+}

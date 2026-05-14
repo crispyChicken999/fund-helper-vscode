@@ -312,11 +312,11 @@ async function renderFlowChart(data: { time: string; main: number; superLarge: n
       axisLabel: { fontSize: 10, formatter: '{value}亿' }
     },
     series: [
-      { name: '主力', type: 'line', data: data.map(d => parseFloat(d.main.toFixed(2))), smooth: true, lineStyle: { width: 2 }, symbol: 'none', color: '#3b82f6' },
-      { name: '超大单', type: 'line', data: data.map(d => parseFloat(d.superLarge.toFixed(2))), smooth: true, lineStyle: { width: 1.5 }, symbol: 'none', color: '#ef4444' },
-      { name: '大单', type: 'line', data: data.map(d => parseFloat(d.large.toFixed(2))), smooth: true, lineStyle: { width: 1.5 }, symbol: 'none', color: '#06b6d4' },
-      { name: '中单', type: 'line', data: data.map(d => parseFloat(d.medium.toFixed(2))), smooth: true, lineStyle: { width: 1.5 }, symbol: 'none', color: '#22c55e' },
-      { name: '小单', type: 'line', data: data.map(d => parseFloat(d.small.toFixed(2))), smooth: true, lineStyle: { width: 1.5 }, symbol: 'none', color: '#f97316' }
+      { name: '主力', type: 'line', data: data.map(d => parseFloat(d.main.toFixed(2))), smooth: false, lineStyle: { width: 2 }, symbol: 'none', color: '#3b82f6' },
+      { name: '超大单', type: 'line', data: data.map(d => parseFloat(d.superLarge.toFixed(2))), smooth: false, lineStyle: { width: 1.5 }, symbol: 'none', color: '#ef4444' },
+      { name: '大单', type: 'line', data: data.map(d => parseFloat(d.large.toFixed(2))), smooth: false, lineStyle: { width: 1.5 }, symbol: 'none', color: '#06b6d4' },
+      { name: '中单', type: 'line', data: data.map(d => parseFloat(d.medium.toFixed(2))), smooth: false, lineStyle: { width: 1.5 }, symbol: 'none', color: '#22c55e' },
+      { name: '小单', type: 'line', data: data.map(d => parseFloat(d.small.toFixed(2))), smooth: false, lineStyle: { width: 1.5 }, symbol: 'none', color: '#f97316' }
     ]
   }
   flowChartInstance.setOption(option, true)
@@ -521,7 +521,7 @@ onUnmounted(() => {
   gap: 12px;
   font-size: 13px;
   padding: 10px 12px;
-  background: var(--el-fill-color-lighter);
+  background: var(--el-fill-color);
   border-radius: 8px;
 }
 

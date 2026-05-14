@@ -24,7 +24,7 @@ export async function initApp(): Promise<void> {
 
       // 恢复排序配置
       const sortMethod = settingStore.sortMethod
-      if (sortMethod && sortMethod !== 'holdingGainRate_desc') {
+      if (sortMethod && sortMethod !== 'holdingGainRate_desc' && sortMethod !== 'default') {
         const parts = sortMethod.split('_')
         // sortMethod 格式可能是 "field_asc" 或 "field_desc"，field 本身可能含下划线
         // 取最后一段作为 order，其余拼回作为 field

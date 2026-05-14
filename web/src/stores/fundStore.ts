@@ -251,6 +251,17 @@ export const useFundStore = defineStore('fund', {
       } catch { /* ignore */ }
     },
 
+    // 重置为默认排序（持久化为 'default'）
+    resetSortConfig() {
+      this.sortConfig = { field: 'holdingGainRate', order: 'desc' }
+      try {
+        const raw = localStorage.getItem('fund_helper_settings')
+        const settings = raw ? JSON.parse(raw) : {}
+        settings.sortMethod = 'default'
+        localStorage.setItem('fund_helper_settings', JSON.stringify(settings))
+      } catch { /* ignore */ }
+    },
+
     // 设置选中的分组
     setSelectedGroupKey(groupKey: string) {
       this.selectedGroupKey = groupKey
