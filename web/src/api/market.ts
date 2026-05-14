@@ -3,6 +3,7 @@
  */
 
 import { fetchJSON } from '@/utils/jsonp'
+import { proxyFetch } from '@/api/proxy'
 
 // ==================== 类型定义 ====================
 
@@ -126,27 +127,13 @@ export async function fetchPlateData(
   const targetUrl = `https://data.eastmoney.com/dataapi/bkzj/getbkzj?key=${rankField}&code=${encodeURIComponent(code)}`
 
   try {
-    // 先尝试直接请求（可能无 CORS 限制）
-    const res = await fetch(targetUrl, { signal: AbortSignal.timeout(8000) })
+    // 开发环境走 Vite proxy，生产环境走 Netlify Function，统一由 proxyFetch 处理
+    const res = await proxyFetch(targetUrl, { signal: AbortSignal.timeout(12000) })
     if (res.ok) {
       const data = await res.json()
       return parsePlateResponse(data, rankField)
     }
-  } catch {
-    // 直接请求失败，尝试 Vite proxy（仅开发环境）
-  }
-
-  // Fallback: 开发环境走 Vite proxy
-  if (import.meta.env.DEV) {
-    try {
-      const proxyUrl = `/api-proxy/bkzj/getbkzj?key=${rankField}&code=${encodeURIComponent(code)}`
-      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) })
-      if (res.ok) {
-        const data = await res.json()
-        return parsePlateResponse(data, rankField)
-      }
-    } catch { /* ignore */ }
-  }
+  } catch { /* ignore */ }
 
   return []
 }

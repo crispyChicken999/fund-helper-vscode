@@ -178,7 +178,21 @@ export const useSettingStore = defineStore('setting', {
     async loadFromStorage() {
       const saved = storageService.loadSettings()
       if (saved) {
-        await this.updateSettings(saved)
+        // Merge column settings: if a column exists in defaultSettings but is
+        // completely absent from the saved columnOrder, it's a newly added column
+        // — append it to both columnOrder and visibleColumns.
+        // If it's already in columnOrder but not visibleColumns, the user hid it
+        // intentionally, so leave it alone.
+        const savedOrder: string[] = saved.columnOrder ?? []
+        const savedVisible: string[] = saved.visibleColumns ?? []
+
+        const newCols = defaultSettings.columnOrder.filter(col => !savedOrder.includes(col))
+
+        await this.updateSettings({
+          ...saved,
+          columnOrder: [...savedOrder, ...newCols],
+          visibleColumns: [...savedVisible, ...newCols]
+        })
       }
       const box = ensureBoxName()
       this.settings.jsonboxName = box

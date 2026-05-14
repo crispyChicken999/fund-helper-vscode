@@ -114,7 +114,7 @@
             <el-table-column
               v-if="isColumnVisible('name')"
               fixed="left"
-              width="176"
+              width="150"
               label="基金名称"
             >
               <template #default="{ row }">
@@ -439,15 +439,15 @@ type TableColMeta = {
 }
 
 const TABLE_COL_META: Record<string, TableColMeta> = {
-  estimatedChange: { title: '估算涨幅', sortProp: 'estimatedChange', minWidth: 112, align: 'right' },
-  estimatedGain: { title: '估算收益', sortProp: 'estimatedGain', minWidth: 116, align: 'right' },
-  dailyChange: { title: '当日涨幅', sortProp: 'dailyChange', minWidth: 104, align: 'right' },
-  dailyGain: { title: '当日收益', sortProp: 'dailyGain', minWidth: 116, align: 'right' },
-  holdingGain: { title: '持有收益', sortProp: 'holdingGain', minWidth: 116, align: 'right' },
-  holdingGainRate: { title: '总收益率', sortProp: 'holdingGainRate', minWidth: 108, align: 'right' },
+  estimatedChange: { title: '估算涨幅', sortProp: 'estimatedChange', minWidth: 100, align: 'right' },
+  estimatedGain: { title: '估算收益', sortProp: 'estimatedGain', minWidth: 90, align: 'right' },
+  dailyChange: { title: '当日涨幅', sortProp: 'dailyChange', minWidth: 95, align: 'right' },
+  dailyGain: { title: '当日收益', sortProp: 'dailyGain', minWidth: 90, align: 'right' },
+  holdingGain: { title: '持有收益', sortProp: 'holdingGain', minWidth: 95, align: 'right' },
+  holdingGainRate: { title: '总收益率', sortProp: 'holdingGainRate', minWidth: 90, align: 'right' },
   sector: { title: '关联板块', minWidth: 104, align: 'left' },
-  amountShares: { title: '金额/份额', sortProp: 'amountShares', minWidth: 116, align: 'right' },
-  cost: { title: '成本/最新', sortProp: 'cost', minWidth: 108, align: 'right' }
+  amountShares: { title: '金额/份额', sortProp: 'amountShares', minWidth: 100, align: 'right' },
+  cost: { title: '成本/最新', sortProp: 'cost', minWidth: 90, align: 'right' }
 }
 
 const router = useRouter()
@@ -1334,7 +1334,7 @@ onUnmounted(() => {
 
 .group-tag-item {
   flex-shrink: 0;
-  padding: 3px 10px;
+  padding: 0px 10px;
   font-size: 12px;
   border-radius: 12px;
   cursor: pointer;
@@ -1432,7 +1432,7 @@ onUnmounted(() => {
 }
 
 .fund-code {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--el-text-color-secondary);
 }
 
@@ -1462,7 +1462,7 @@ onUnmounted(() => {
 }
 
 .fund-el-table :deep(.el-table__cell) {
-  padding: 6px 8px;
+  padding: 4px;
 }
 
 .fund-el-table :deep(th.el-table__cell) {
@@ -1521,11 +1521,13 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 4px;
   margin-top: 2px;
+  height: 18px;
+  line-height: 18px;
 }
 
 .group-label {
   font-size: 10px;
-  padding: 1px 5px;
+  padding: 0px 4px;
   background: var(--color-primary);
   color: #fff;
   border-radius: 3px;
