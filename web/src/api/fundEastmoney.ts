@@ -4,12 +4,14 @@
 
 import type { Fund, FundInfo } from '@/types'
 import { fetchFundgzRawViaJsonp } from '@/api/fundgz'
-import { loadJSONP, fetchJSON } from '@/utils/jsonp'
+import { proxyFetch } from '@/api/proxy'
 
 async function fetchFundInvestmentPosition(code: string): Promise<any> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
   try {
-    const data = await loadJSONP<any>(url)
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return null
+    const data = await res.json().catch(() => null)
     return data?.Datas ?? null
   } catch {
     return null
@@ -70,13 +72,15 @@ async function fetchFundEstimateChange(code: string): Promise<number | null> {
   }
 }
 
-/** 批量 MNFInfo */
+/** 批量 MNFInfo — 通过 proxyFetch 走代理（开发=Vite proxy，生产=Netlify Function） */
 export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, any>> {
   const map = new Map<string, any>()
   if (!codes.length) return map
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=web&Fcodes=${codes.join(',')}`
   try {
-    const data = await loadJSONP<any>(url)
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(12000) })
+    if (!res.ok) return map
+    const data = await res.json().catch(() => null)
     const gztime = data?.Expansion?.GZTIME ?? ''
     for (const fund of data?.Datas ?? []) {
       map.set(fund.FCODE, {
@@ -95,7 +99,9 @@ export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, an
 async function fetchFundFromMNFInfo(code: string): Promise<any | null> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=web&Fcodes=${code}`
   try {
-    const data = await loadJSONP<any>(url)
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(12000) })
+    if (!res.ok) return null
+    const data = await res.json().catch(() => null)
     if (!data?.Datas?.length) return null
     const fund = data.Datas[0]
     const estimateChange = await fetchFundEstimateChange(code)

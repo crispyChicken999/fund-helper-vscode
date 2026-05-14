@@ -3,7 +3,7 @@
     :model-value="visible"
     title="分组管理"
     width="92%"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     @update:model-value="$emit('update:visible', $event)"
   >
     <div class="group-manage-hint">基金从底部拖拽到上方分组即可移动</div>
@@ -43,8 +43,8 @@
         <span class="gm-drag-handle">☰</span>
         <span class="gm-group-name">{{ g.name }}</span>
         <span class="gm-group-count">{{ getGroupFundCount(g.key) }} 只</span>
-        <el-button size="small" link type="primary" @click.stop="renameGroup(g)">✏️</el-button>
-        <el-button size="small" link type="danger" @click.stop="deleteGroup(g)">🗑️</el-button>
+        <el-button size="small" link type="primary" @click.stop="renameGroup(g)"><el-icon><Edit /></el-icon></el-button>
+        <el-button size="small" link type="danger" @click.stop="deleteGroup(g)"><el-icon><Delete /></el-icon></el-button>
       </li>
     </ul>
 
@@ -81,6 +81,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Edit, Delete } from '@element-plus/icons-vue'
 import { useGroupStore, useFundStore } from '@/stores'
 import { validateGroupName } from '@/utils/validate'
 import type { FundRowDisplay } from '@/utils/fundDisplay'

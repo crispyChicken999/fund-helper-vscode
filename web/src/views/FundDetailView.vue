@@ -205,7 +205,7 @@
     </div>
 
     <!-- 编辑基金对话框 -->
-    <el-dialog v-model="showEditDialog" title="编辑基金" width="90%" :close-on-click-modal="false">
+    <el-dialog v-model="showEditDialog" title="编辑基金" width="90%" :close-on-click-modal="true">
       <el-form :model="editForm" :rules="editFormRules" ref="editFormRef" label-width="100px">
         <el-form-item label="基金代码">
           <el-input :model-value="code" disabled />

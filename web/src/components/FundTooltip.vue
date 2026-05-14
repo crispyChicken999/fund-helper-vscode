@@ -7,7 +7,10 @@
             <div class="fund-tooltip-title">{{ row?.name }}</div>
             <div class="fund-tooltip-code">{{ row?.code }}</div>
           </div>
-          <el-button text type="primary" @click="$emit('close')">关闭</el-button>
+          <div class="head-actions">
+            <el-button text size="small" @click="handleCopy">复制</el-button>
+            <el-button text type="primary" @click="$emit('close')">关闭</el-button>
+          </div>
         </header>
 
         <section class="fund-tooltip-body" v-if="row">
@@ -100,6 +103,7 @@
 <script setup lang="ts">
 import type { FundRowDisplay } from '@/utils/fundDisplay'
 import { formatCurrency, formatNumber, formatPrivacy } from '@/utils/format'
+import { ElMessage } from 'element-plus'
 
 const props = defineProps<{
   visible: boolean
@@ -156,6 +160,30 @@ function estClass(v: number) {
   if (!props.row?.shouldShowEstimated) return 'flat'
   return pctClass(v)
 }
+
+function handleCopy() {
+  const r = props.row
+  if (!r) return
+  const lines = [
+    `${r.name} (${r.code})`,
+    `估算涨幅: ${fmtPct(r.gszzl, r.shouldShowEstimated)}`,
+    `估算收益: ${fmtEst(r.estimatedGain, r.shouldShowEstimated)}`,
+    `当日涨幅: ${fmtPct(r.navChgRt, true)}`,
+    `当日收益: ${fmtMoney(r.dailyGain)}`,
+    `持有收益: ${fmtMoney(r.holdingGain)}`,
+    `总收益率: ${fmtPct(r.holdingGainRate, true)}`,
+    `持有金额: ${fmtMoney(r.holdingAmount)}`,
+    `持有份额: ${fmtShares(r.fund.num)}`,
+    `成本价: ${fmt4(r.fund.cost)}`,
+    `单位净值: ${fmt4(r.dwjz)}`,
+    `更新时间: ${r.fullUpdateTime || r.updateTime || '—'}`
+  ]
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    ElMessage.success('已复制')
+  }).catch(() => {
+    ElMessage.error('复制失败')
+  })
+}
 </script>
 
 <style scoped>
@@ -187,6 +215,13 @@ function estClass(v: number) {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 12px;
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .fund-tooltip-title {

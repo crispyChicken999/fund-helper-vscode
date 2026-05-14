@@ -342,3 +342,7 @@ body {
     border-right-color: var(--border);
   }
 }
+
+.el-button+.el-button {
+  margin: 0;
+}

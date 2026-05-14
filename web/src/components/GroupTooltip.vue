@@ -4,7 +4,10 @@
       <div class="group-tooltip-panel">
         <header class="group-tooltip-head">
           <div class="group-tooltip-title">{{ stats.groupName }}</div>
-          <el-button text type="primary" size="small" @click="$emit('close')">关闭</el-button>
+          <div class="head-actions">
+            <el-button text size="small" @click="handleCopy">复制</el-button>
+            <el-button text type="primary" size="small" @click="$emit('close')">关闭</el-button>
+          </div>
         </header>
 
         <section class="group-tooltip-body">
@@ -81,6 +84,7 @@
 <script setup lang="ts">
 import { formatCurrency, formatPrivacy } from '@/utils/format'
 import { useSettingStore } from '@/stores'
+import { ElMessage } from 'element-plus'
 
 export interface GroupStats {
   groupName: string
@@ -104,7 +108,7 @@ export interface GroupStats {
   totalCost: number
 }
 
-defineProps<{
+const props = defineProps<{
   visible: boolean
   stats: GroupStats
 }>()
@@ -132,6 +136,27 @@ function pctClass(v: number) {
 
 function moneyClass(v: number) {
   return pctClass(v)
+}
+
+function handleCopy() {
+  const s = props.stats
+  const lines = [
+    `【${s.groupName}】`,
+    `基金数量: ${s.fundCount} 只`,
+    `估算收益: ${fmtMoney(s.estimatedGain)} (${fmtPct(s.estimatedChangePercent)})`,
+    `估算上涨/下跌: ${s.estimatedUpCount} / ${s.estimatedDownCount}`,
+    `当日收益: ${fmtMoney(s.dailyGain)} (${fmtPct(s.dailyChangePercent)})`,
+    `当日上涨/下跌: ${s.dailyUpCount} / ${s.dailyDownCount}`,
+    `持有收益: ${fmtMoney(s.holdingGain)} (${fmtPct(s.holdingGainRate)})`,
+    `持有盈利/亏损: ${s.holdingProfitCount} / ${s.holdingLossCount}`,
+    `总资产: ${fmtMoney(s.totalAsset)}`,
+    `总成本: ${fmtMoney(s.totalCost)}`
+  ]
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    ElMessage.success('已复制')
+  }).catch(() => {
+    ElMessage.error('复制失败')
+  })
 }
 </script>
 
@@ -164,6 +189,13 @@ function moneyClass(v: number) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .group-tooltip-title {

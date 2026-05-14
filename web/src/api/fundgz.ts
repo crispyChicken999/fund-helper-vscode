@@ -89,6 +89,7 @@ function loadFundgzJsonp(code: string): Promise<FundgzRawData> {
 
     script.async = true
     script.src = url
+    script.referrerPolicy = 'no-referrer'
     script.onerror = () => {
       window.clearTimeout(pendingRequest.timeoutId)
       removePendingFundgzRequest(code, pendingRequest)

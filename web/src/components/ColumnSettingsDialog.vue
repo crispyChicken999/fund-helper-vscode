@@ -3,7 +3,7 @@
     :model-value="visible"
     title="列设置"
     width="90%"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     @update:model-value="$emit('update:visible', $event)"
   >
     <div class="col-settings-hint">

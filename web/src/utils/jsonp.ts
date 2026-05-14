@@ -7,13 +7,14 @@ let jsonpCounter = 0
 
 export function loadJSONP<T = any>(url: string, timeout = 15000): Promise<T> {
   return new Promise((resolve, reject) => {
-    const callbackName = `__jsonp_cb_${Date.now()}_${++jsonpCounter}`
+    const callbackName = `jsonpCallback_${Date.now()}_${++jsonpCounter}`
     const separator = url.includes('?') ? '&' : '?'
     const fullUrl = `${url}${separator}callback=${callbackName}`
 
     const script = document.createElement('script')
     script.src = fullUrl
     script.async = true
+    script.referrerPolicy = 'no-referrer'
 
     const cleanup = () => {
       delete (window as any)[callbackName]

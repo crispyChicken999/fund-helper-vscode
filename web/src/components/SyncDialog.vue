@@ -3,7 +3,7 @@
     :model-value="visible"
     title="数据同步"
     width="92%"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     @update:model-value="$emit('update:visible', $event)"
     @closed="onDialogClosed"
   >

@@ -85,6 +85,9 @@
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
+            <template #append v-if="showQuickAddBtn">
+              <el-button type="primary" size="small" @click="handleQuickAdd">添加</el-button>
+            </template>
           </el-input>
         </div>
         <div class="market-status">
@@ -231,7 +234,7 @@
     </div>
 
     <!-- 添加基金对话框 -->
-    <el-dialog v-model="showAddFundDialog" title="添加基金" width="90%" :close-on-click-modal="false">
+    <el-dialog v-model="showAddFundDialog" title="添加基金" width="90%" :close-on-click-modal="true">
       <el-form :model="fundForm" :rules="fundFormRules" ref="fundFormRef" label-width="100px">
         <el-form-item label="搜索基金" prop="code">
           <div class="fund-search-field">
@@ -282,7 +285,7 @@
     </el-dialog>
 
     <!-- 编辑基金对话框 -->
-    <el-dialog v-model="showEditFundDialog" title="编辑基金" width="90%" :close-on-click-modal="false">
+    <el-dialog v-model="showEditFundDialog" title="编辑基金" width="90%" :close-on-click-modal="true">
       <el-form :model="editFundForm" :rules="fundFormRules" ref="editFundFormRef" label-width="100px">
         <el-form-item label="基金代码">
           <el-input v-model="editFundForm.code" disabled />
@@ -314,7 +317,7 @@
     </el-dialog>
 
     <!-- 添加分组对话框 -->
-    <el-dialog v-model="showAddGroupDialog" title="添加分组" width="90%" :close-on-click-modal="false">
+    <el-dialog v-model="showAddGroupDialog" title="添加分组" width="90%" :close-on-click-modal="true">
       <el-form :model="groupForm" :rules="groupFormRules" ref="groupFormRef" label-width="100px">
         <el-form-item label="分组名称" prop="name">
           <el-input v-model="groupForm.name" placeholder="请输入分组名称" maxlength="50" />
@@ -327,7 +330,7 @@
     </el-dialog>
 
     <!-- 编辑分组对话框 -->
-    <el-dialog v-model="showEditGroupDialog" title="编辑分组" width="90%" :close-on-click-modal="false">
+    <el-dialog v-model="showEditGroupDialog" title="编辑分组" width="90%" :close-on-click-modal="true">
       <el-form :model="editGroupForm" :rules="groupFormRules" ref="editGroupFormRef" label-width="100px">
         <el-form-item label="分组名称" prop="name">
           <el-input v-model="editGroupForm.name" placeholder="请输入分组名称" maxlength="50" />
@@ -344,7 +347,7 @@
     <ColumnSettingsDialog v-model:visible="showColumnSettings" />
 
     <!-- 加仓/减仓对话框 -->
-    <el-dialog v-model="showPositionDialog" :title="positionIsAdd ? '加仓' : '减仓'" width="90%" :close-on-click-modal="false">
+    <el-dialog v-model="showPositionDialog" :title="positionIsAdd ? '加仓' : '减仓'" width="90%" :close-on-click-modal="true">
       <div v-if="positionRow" class="position-dialog-content">
         <div class="position-fund-info">
           <span class="fund-name">{{ positionRow.name }}</span>
@@ -419,6 +422,7 @@ import GroupManageDialog from '@/components/GroupManageDialog.vue'
 import type { GroupStats } from '@/components/GroupTooltip.vue'
 import { useFundStore, useGroupStore, useSettingStore } from '@/stores'
 import { fundService, groupService } from '@/services'
+import { storageService } from '@/services/storageService'
 import { searchFund } from '@/api/fundEastmoney'
 import { fetchNetValueHistory } from '@/api/fundDetail'
 import { formatCurrency, formatNumber, formatPrivacy } from '@/utils/format'
@@ -612,11 +616,14 @@ const enrichedRows = computed(() => {
 const filteredRows = computed(() => {
   let rows = enrichedRows.value
   if (selectedGroupKey.value !== 'all') {
-    // Filter by group's fundCodes array (not fund.groupKey which is unreliable)
+    // Filter by group's fundCodes array and preserve group order
     const group = groupStore.getGroup(selectedGroupKey.value)
     if (group) {
-      const codesInGroup = new Set(group.fundCodes)
-      rows = rows.filter(r => codesInGroup.has(r.code))
+      const rowByCode = new Map(rows.map(r => [r.code, r]))
+      // Return rows in the order defined by group.fundCodes
+      rows = group.fundCodes
+        .map(code => rowByCode.get(code))
+        .filter((r): r is NonNullable<typeof r> => r != null)
     } else {
       rows = []
     }
@@ -630,13 +637,22 @@ const filteredRows = computed(() => {
   return rows
 })
 
-const sortedRows = computed(() =>
-  fundService.sortFundRows(
+const sortedRows = computed(() => {
+  const isDefaultSort =
+    fundStore.sortConfig.field === 'holdingGainRate' &&
+    fundStore.sortConfig.order === 'desc'
+
+  // When a specific group is selected and sort is default, preserve group.fundCodes order
+  if (selectedGroupKey.value !== 'all' && isDefaultSort && !searchQuery.value.trim()) {
+    return filteredRows.value
+  }
+
+  return fundService.sortFundRows(
     filteredRows.value,
     fundStore.sortConfig.field,
     fundStore.sortConfig.order
   )
-)
+})
 
 const showGroupTag = computed(() => selectedGroupKey.value === 'all')
 
@@ -740,10 +756,42 @@ function toggleGrayscale() {
 function selectGroup(key: string) {
   selectedGroupKey.value = key
   fundStore.setSelectedGroupKey(key)
+  // Reinit sortable after DOM updates (rows change when group changes)
+  if (canDragFundRows.value) {
+    nextTick(() => initFundTableSortable())
+  }
 }
 
 function handleSearch() {
   fundStore.setSearchQuery(searchQuery.value)
+}
+
+// Show quick-add button when: search is pure 6-digit number, no results, fund not already added
+const showQuickAddBtn = computed(() => {
+  const q = searchQuery.value.trim()
+  if (!/^\d{6}$/.test(q)) return false
+  if (sortedRows.value.length > 0) return false
+  // Don't show if fund already exists
+  if (fundStore.funds.some(f => f.code === q)) return false
+  return true
+})
+
+function handleQuickAdd() {
+  const code = searchQuery.value.trim()
+  if (!/^\d{6}$/.test(code)) return
+  // Pre-fill the add fund dialog with this code and immediately search
+  fundForm.value = { code, num: 0, cost: 0, groupKey: '' }
+  fundPickName.value = ''
+  fundSearchResults.value = []
+  showAddFundDialog.value = true
+  // Immediately trigger search so dropdown shows results right away
+  searchFund(code).then(results => {
+    fundSearchResults.value = results
+    // If only one result, auto-select it
+    if (results.length === 1) {
+      pickSearchFund(results[0]!)
+    }
+  }).catch(() => {})
 }
 
 async function handleRefresh() {
@@ -1042,7 +1090,9 @@ function onGroupPointerUp() {
 }
 
 function showGroupStats(group: Group) {
-  const rows = enrichedRows.value.filter(r => r.fund.groupKey === group.key)
+  // Filter by group's fundCodes array (not fund.groupKey which is unreliable)
+  const codesInGroup = new Set(group.fundCodes)
+  const rows = enrichedRows.value.filter(r => codesInGroup.has(r.code))
   let estimatedGain = 0, dailyGain = 0, holdingGain = 0
   let totalAsset = 0, totalCost = 0
   let estUp = 0, estDown = 0, dailyUp = 0, dailyDown = 0
@@ -1098,9 +1148,9 @@ function onGroupManageSaved() {
   fundService.refreshAllFunds().catch(() => {})
 }
 
-// --- Sortable: fund table row drag-and-drop (only in "all" group with default sort) ---
+// --- Sortable: fund table row drag-and-drop ---
+// Enabled when: default sort + no search + (all group OR specific group selected)
 const canDragFundRows = computed(() =>
-  selectedGroupKey.value === 'all' &&
   !searchQuery.value.trim() &&
   fundStore.sortConfig.field === 'holdingGainRate' &&
   fundStore.sortConfig.order === 'desc'
@@ -1131,7 +1181,27 @@ function initFundTableSortable() {
       const codes = sortedRows.value.map(r => r.code)
       const [moved] = codes.splice(oldIndex, 1)
       codes.splice(newIndex, 0, moved!)
-      fundService.reorderFundsGlobally(codes)
+
+      if (selectedGroupKey.value === 'all') {
+        // Reorder global fund list
+        fundService.reorderFundsGlobally(codes)
+      } else {
+        // Reorder within the selected group's fundCodes array
+        const group = groupStore.getGroup(selectedGroupKey.value)
+        if (group) {
+          // Rebuild the group's fundCodes in the new order
+          // Only reorder codes that belong to this group
+          const groupCodeSet = new Set(group.fundCodes)
+          const newGroupOrder = codes.filter(c => groupCodeSet.has(c))
+          // Preserve any codes in the group that aren't in the current view
+          const notInView = group.fundCodes.filter(c => !codes.includes(c))
+          group.fundCodes = [...newGroupOrder, ...notInView]
+          group.updatedAt = Date.now()
+          // Persist
+          const { groups, groupOrder } = groupStore.exportGroupsToObject()
+          storageService.saveGroups(groups, groupOrder)
+        }
+      }
     }
   })
 }
