@@ -124,6 +124,7 @@
                     <span class="fund-name">{{ row.name }}</span>
                   </div>
                   <div class="fund-code-row">
+                    <span v-if="canDragFundRows" class="drag-icon" title="拖拽排序">⠿</span>
                     <span class="fund-code">{{ row.code }}</span>
                     <span v-if="showGroupTag && row.groupName" class="group-label">{{ row.groupName }}</span>
                   </div>
@@ -444,7 +445,7 @@ const TABLE_COL_META: Record<string, TableColMeta> = {
   dailyChange: { title: '当日涨幅', sortProp: 'dailyChange', minWidth: 95, align: 'right' },
   dailyGain: { title: '当日收益', sortProp: 'dailyGain', minWidth: 90, align: 'right' },
   holdingGain: { title: '持有收益', sortProp: 'holdingGain', minWidth: 95, align: 'right' },
-  holdingGainRate: { title: '总收益率', sortProp: 'holdingGainRate', minWidth: 90, align: 'right' },
+  holdingGainRate: { title: '总收益率', sortProp: 'holdingGainRate', minWidth: 100, align: 'right' },
   sector: { title: '关联板块', minWidth: 104, align: 'left' },
   amountShares: { title: '金额/份额', sortProp: 'amountShares', minWidth: 100, align: 'right' },
   cost: { title: '成本/最新', sortProp: 'cost', minWidth: 90, align: 'right' }
@@ -1174,7 +1175,7 @@ function initFundTableSortable() {
   fundTableSortable = Sortable.create(tableEl as HTMLElement, {
     animation: 200,
     ghostClass: 'sortable-ghost',
-    handle: '.fund-name-cell',
+    handle: '.drag-icon',
     onEnd(evt) {
       const { oldIndex, newIndex } = evt
       if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
@@ -1253,6 +1254,11 @@ onUnmounted(() => {
   color: var(--text-secondary);
   flex-wrap: wrap;
 }
+
+.stat-label .el-button {
+  margin: 0;
+}
+
 
 .stat-label-spacer {
   flex: 1;
@@ -1523,6 +1529,20 @@ onUnmounted(() => {
   margin-top: 2px;
   height: 18px;
   line-height: 18px;
+}
+
+.drag-icon {
+  cursor: grab;
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
+  flex-shrink: 0;
+  user-select: none;
+  touch-action: none;
+  padding: 0 2px;
+}
+
+.drag-icon:active {
+  cursor: grabbing;
 }
 
 .group-label {

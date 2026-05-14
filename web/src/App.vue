@@ -1,9 +1,7 @@
 <template>
   <div id="app">
     <router-view v-slot="{ Component }">
-      <transition name="page" mode="out-in">
         <component :is="Component" />
-      </transition>
     </router-view>
   </div>
 </template>
@@ -39,22 +37,6 @@ watch(
   min-height: 100vh;
   background-color: var(--el-bg-color);
   color: var(--el-text-color-primary);
-}
-
-/* 页面切换动画 */
-.page-enter-active,
-.page-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
-}
-
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
 }
 
 /* 数值闪烁动画 */

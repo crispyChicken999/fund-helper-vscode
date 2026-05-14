@@ -2,7 +2,8 @@
   <el-dialog
     :model-value="visible"
     title="列设置"
-    width="90%"
+    width="min(92%, 480px)"
+    top="5vh"
     :close-on-click-modal="true"
     @update:model-value="$emit('update:visible', $event)"
   >
@@ -229,6 +230,7 @@ onBeforeUnmount(() => {
   transition: background 0.2s;
   cursor: pointer;
   user-select: none;
+  min-height: 44px; /* 移动端触摸友好 */
 }
 
 .col-settings-item.fixed {
@@ -237,10 +239,12 @@ onBeforeUnmount(() => {
 
 .drag-handle {
   cursor: grab;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--el-text-color-secondary);
   user-select: none;
   flex-shrink: 0;
+  padding: 4px;
+  touch-action: none;
 }
 
 .drag-handle.disabled {
@@ -269,5 +273,24 @@ onBeforeUnmount(() => {
   opacity: 0.4;
   background: var(--el-color-primary-light-9);
   border-radius: 8px;
+}
+
+/* 移动端：按钮更大，更易点击 */
+@media (max-width: 600px) {
+  .col-settings-hint {
+    font-size: 12px;
+  }
+
+  .col-label {
+    font-size: 13px;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 12px 16px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 10px 16px;
+  }
 }
 </style>

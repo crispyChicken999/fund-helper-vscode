@@ -8,9 +8,11 @@
  *   但由于 CORS 限制，改为使用 JSONP 方式的 FundMApi 接口
  * - 历史净值：JSONP → FundNetDiagram.ashx
  * - 累计收益：fetch → dataapi.1234567.com.cn（无 CORS）
+ * - 持仓明细：proxyFetch → FundMNInverstPosition（需代理）
  */
 
 import { loadJSONP, fetchJSON } from '@/utils/jsonp'
+import { proxyFetch } from '@/api/proxy'
 
 // ==================== 类型定义 ====================
 
@@ -304,6 +306,103 @@ export async function fetchHistoryYield(
     }))
   } catch {
     return []
+  }
+}
+
+// ==================== 持仓明细 ====================
+
+export interface PositionStock {
+  /** 股票代码 */
+  code: string
+  /** 股票简称 */
+  name: string
+  /** 持仓占比（%） */
+  ratio: number
+  /** 较上期变动类型：新增 / 增持 / 减持 / 不变 */
+  changeType: string
+  /** 较上期变动幅度（%），新增时等于 ratio */
+  changeRatio: number
+  /** 实时价格 */
+  price: number | null
+  /** 实时涨跌幅（%） */
+  changePercent: number | null
+  /** 新市场号，用于拼接实时行情 secid */
+  newTexch: string
+  /** 所属行业 */
+  indexName: string
+}
+
+export interface PositionBond {
+  /** 债券代码 */
+  code: string
+  /** 债券名称 */
+  name: string
+  /** 占净值比（%） */
+  ratio: number
+}
+
+export interface PositionData {
+  /** 截止日期 */
+  expansion: string
+  stocks: PositionStock[]
+  bonds: PositionBond[]
+}
+
+export async function fetchInvestmentPosition(code: string): Promise<PositionData | null> {
+  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
+  try {
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return null
+    const data = await res.json().catch(() => null)
+    if (!data?.Datas) return null
+
+    const datas = data.Datas
+    const expansion: string = data.Expansion || ''
+
+    // 解析股票持仓（先不含实时行情，行情单独请求）
+    const rawStocks: any[] = datas.fundStocks ?? []
+    const stocks: PositionStock[] = rawStocks.map((s: any) => ({
+      code: s.GPDM || '',
+      name: s.GPJC || '',
+      ratio: parseFloat(s.JZBL) || 0,
+      changeType: s.PCTNVCHGTYPE || '',
+      changeRatio: parseFloat(s.PCTNVCHG) || 0,
+      price: null,
+      changePercent: null,
+      newTexch: s.NEWTEXCH || '0',
+      indexName: s.INDEXNAME || ''
+    }))
+
+    // 解析债券持仓
+    const rawBonds: any[] = datas.fundboods ?? []
+    const bonds: PositionBond[] = rawBonds.map((b: any) => ({
+      code: b.ZQDM || '',
+      name: b.ZQMC || '',
+      ratio: parseFloat(b.ZJZBL) || 0
+    }))
+
+    // 批量拉取股票实时行情
+    if (stocks.length > 0) {
+      const secids = stocks.map(s => `${s.newTexch}.${s.code}`).join(',')
+      const quoteUrl = `https://push2.eastmoney.com/api/qt/ulist.np/get?fields=f2,f3&fltt=2&secids=${secids}&_=${Date.now()}`
+      try {
+        const quoteRes = await fetch(quoteUrl, { signal: AbortSignal.timeout(8000) }).catch(() => null)
+        if (quoteRes?.ok) {
+          const quoteData = await quoteRes.json().catch(() => null)
+          const diff: any[] = quoteData?.data?.diff ?? []
+          diff.forEach((q: any, i: number) => {
+            if (stocks[i]) {
+              stocks[i]!.price = typeof q.f2 === 'number' ? q.f2 : null
+              stocks[i]!.changePercent = typeof q.f3 === 'number' ? q.f3 : null
+            }
+          })
+        }
+      } catch { /* 行情失败不影响持仓展示 */ }
+    }
+
+    return { expansion, stocks, bonds }
+  } catch {
+    return null
   }
 }
 

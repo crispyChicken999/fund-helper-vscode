@@ -242,6 +242,13 @@ export const useFundStore = defineStore('fund', {
     // 设置排序配置
     setSortConfig(field: string, order: 'asc' | 'desc') {
       this.sortConfig = { field, order }
+      // 持久化到 settings（直接操作 localStorage 避免循环依赖）
+      try {
+        const raw = localStorage.getItem('fund_helper_settings')
+        const settings = raw ? JSON.parse(raw) : {}
+        settings.sortMethod = `${field}_${order}`
+        localStorage.setItem('fund_helper_settings', JSON.stringify(settings))
+      } catch { /* ignore */ }
     },
 
     // 设置选中的分组

@@ -303,6 +303,7 @@ code {
 [data-grayscale='true'] {
   --color-up: var(--text-primary);
   --color-down: var(--text-primary);
+  filter: grayscale(1);
 }
 
 /* 深色模式玻璃拟态 */
@@ -341,8 +342,4 @@ body {
     right: 0;
     border-right-color: var(--border);
   }
-}
-
-.el-button+.el-button {
-  margin: 0;
 }

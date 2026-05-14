@@ -7,7 +7,7 @@
     </template>
 
     <div class="settings-main">
-        <el-form label-width="120px">
+        <el-form :label-position="formLabelPosition" label-width="120px">
           <el-divider content-position="left">显示设置</el-divider>
           
           <el-form-item label="隐私模式">
@@ -79,21 +79,14 @@
             <el-input
               v-model="jsonboxName"
               placeholder="fundhelper_xxxxxxxx"
+              clearable
               @blur="handleJsonboxNameChange"
-            >
-              <template #append>
-                <el-button
-                  :icon="Connection"
-                  @click="handleTestConnection"
-                  :loading="testingConnection"
-                >
-                  测试
-                </el-button>
-              </template>
-            </el-input>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+            />
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;">
               <div class="form-item-tip">字母数字下划线，至少20字符</div>
-              <el-button size="small" link type="primary" @click="handleRegenerateBoxName">重新生成</el-button>
+              <el-button size="small" type="primary" @click="handleSaveBoxName" :disabled="!jsonboxNameChanged">保存</el-button>
+              <el-button size="small" @click="handleCancelBoxName" :disabled="!jsonboxNameChanged">取消</el-button>
+              <el-button size="small" @click="handleRegenerateBoxName">重新生成</el-button>
             </div>
           </el-form-item>
 
@@ -116,14 +109,14 @@
               >
                 下载云端
               </el-button>
-              <el-button @click="showSyncDialog = true">
-                📱 扫码/二维码
+              <el-button @click="showSyncDialog = true" :icon="Cellphone">
+                扫码同步/查看同步二维码
               </el-button>
               <el-button
                 @click="handleOpenJsonLink"
                 :disabled="!jsonboxName"
               >
-                🔗 查看JSON
+                查看在线JSON
               </el-button>
               <el-button
                 type="danger"
@@ -192,7 +185,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import SyncDialog from '@/components/SyncDialog.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Connection, Upload, Download, Delete } from '@element-plus/icons-vue'
+import { Upload, Download, Delete, Cellphone } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
 import { useSettingStore, useFundStore, useGroupStore, useSyncStore } from '@/stores'
 import { syncService } from '@/services'
@@ -211,6 +204,7 @@ const grayscaleMode = ref(false)
 const theme = ref<'light' | 'dark'>('light')
 const refreshInterval = ref(20)
 const jsonboxName = ref('')
+const savedJsonboxName = ref('')
 const testingConnection = ref(false)
 const showSyncDialog = ref(false)
 const visibleColumns = ref<string[]>([])
@@ -219,6 +213,15 @@ const columnOrderDraft = ref<{ key: string; label: string; visible: boolean }[]>
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const columnSortRef = ref<HTMLElement | null>(null)
 let columnSortable: Sortable | null = null
+
+// 移动端 label 位置
+const formLabelPosition = computed(() =>
+  window.innerWidth < 600 ? 'top' : 'right'
+)
+
+const jsonboxNameChanged = computed(() =>
+  jsonboxName.value !== savedJsonboxName.value
+)
 
 const allColumns = [
   { key: 'name', label: '基金名称' },
@@ -245,6 +248,7 @@ onMounted(async () => {
   theme.value = settingStore.theme
   refreshInterval.value = settingStore.refreshInterval
   jsonboxName.value = settingStore.jsonboxName
+  savedJsonboxName.value = settingStore.jsonboxName
   visibleColumns.value = [...settingStore.visibleColumns]
   buildColumnDraft()
 
@@ -372,28 +376,29 @@ async function handleJsonboxNameChange() {
   }
 }
 
+function handleSaveBoxName() {
+  const name = jsonboxName.value.trim()
+  if (!name || !/^[a-zA-Z0-9_]{20,}$/.test(name)) {
+    ElMessage.warning('Box Name 格式不正确（字母数字下划线，至少 20 字符）')
+    return
+  }
+  savedJsonboxName.value = name
+  settingStore.setJsonboxName(name)
+  storageService.saveSettings(settingStore.getSettings())
+  ElMessage.success('Box Name 已保存')
+}
+
+function handleCancelBoxName() {
+  jsonboxName.value = savedJsonboxName.value
+}
+
 function handleRegenerateBoxName() {
   const name = generateJsonboxName()
   jsonboxName.value = name
+  savedJsonboxName.value = name
   settingStore.setJsonboxName(name)
   storageService.saveSettings(settingStore.getSettings())
   ElMessage.success('已重新生成 Box Name')
-}
-
-async function handleTestConnection() {
-  if (!jsonboxName.value) {
-    ElMessage.warning('请先输入 Box Name')
-    return
-  }
-  testingConnection.value = true
-  try {
-    const ok = await syncService.testConnection()
-    ElMessage[ok ? 'success' : 'error'](ok ? '连接成功' : '连接失败')
-  } catch (e: any) {
-    ElMessage.error('连接失败: ' + e.message)
-  } finally {
-    testingConnection.value = false
-  }
 }
 
 async function handleSyncToCloud() {
@@ -437,6 +442,7 @@ async function handleClearRemote() {
 function onSyncCompleted() {
   // Refresh local state after sync
   jsonboxName.value = settingStore.jsonboxName
+  savedJsonboxName.value = settingStore.jsonboxName
   privacyMode.value = settingStore.privacyMode
   grayscaleMode.value = settingStore.grayscaleMode
   refreshInterval.value = settingStore.refreshInterval
@@ -653,6 +659,7 @@ async function handleClearAll() {
   font-size: 12px;
   color: var(--el-text-color-secondary);
   margin-top: 4px;
+  margin-left: 4px;
 }
 
 .column-settings-list {
@@ -675,6 +682,7 @@ async function handleClearAll() {
   transition: background 0.15s;
   cursor: pointer;
   user-select: none;
+  min-height: 44px;
 }
 
 .column-settings-item.fixed {
@@ -685,7 +693,9 @@ async function handleClearAll() {
   cursor: grab;
   color: var(--el-text-color-secondary);
   user-select: none;
-  font-size: 14px;
+  font-size: 16px;
+  padding: 4px;
+  touch-action: none;
 }
 
 .column-settings-item .drag-handle.disabled {
@@ -720,5 +730,34 @@ async function handleClearAll() {
 .sync-time {
   font-size: 12px;
   color: var(--el-text-color-secondary);
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+  .settings-main {
+    padding: 12px;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 16px;
+  }
+
+  :deep(.el-form-item__label) {
+    font-size: 13px;
+    font-weight: 500;
+    padding-bottom: 4px;
+  }
+
+  :deep(.el-divider__text) {
+    font-size: 13px;
+  }
+
+  :deep(.el-space) {
+    flex-wrap: wrap;
+  }
+
+  :deep(.el-space .el-button) {
+    margin: 0;
+  }
 }
 </style>

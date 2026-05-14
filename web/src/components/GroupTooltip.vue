@@ -140,17 +140,29 @@ function moneyClass(v: number) {
 
 function handleCopy() {
   const s = props.stats
+  // 复制始终使用真实数据，不受隐私模式影响
+  const SEP = '━━━━━━━━━━━━━━━━'
+  const rawMoney = (v: number) => formatCurrency(v)
+  const rawPct = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(2)}%`
+
   const lines = [
-    `【${s.groupName}】`,
-    `基金数量: ${s.fundCount} 只`,
-    `估算收益: ${fmtMoney(s.estimatedGain)} (${fmtPct(s.estimatedChangePercent)})`,
-    `估算上涨/下跌: ${s.estimatedUpCount} / ${s.estimatedDownCount}`,
-    `当日收益: ${fmtMoney(s.dailyGain)} (${fmtPct(s.dailyChangePercent)})`,
-    `当日上涨/下跌: ${s.dailyUpCount} / ${s.dailyDownCount}`,
-    `持有收益: ${fmtMoney(s.holdingGain)} (${fmtPct(s.holdingGainRate)})`,
-    `持有盈利/亏损: ${s.holdingProfitCount} / ${s.holdingLossCount}`,
-    `总资产: ${fmtMoney(s.totalAsset)}`,
-    `总成本: ${fmtMoney(s.totalCost)}`
+    `分组名称：${s.groupName}`,
+    `基金数量：${s.fundCount} 只`,
+    SEP,
+    `估算收益 (${s.estimatedDate})：${rawMoney(s.estimatedGain)}`,
+    `估算涨幅 (${s.estimatedDate})：${rawPct(s.estimatedChangePercent)}`,
+    `估算上涨/下跌 (${s.estimatedDate})：${s.estimatedUpCount} / ${s.estimatedDownCount}`,
+    SEP,
+    `当日收益 (${s.dailyDate})：${rawMoney(s.dailyGain)}`,
+    `当日涨幅 (${s.dailyDate})：${rawPct(s.dailyChangePercent)}`,
+    `当日上涨/下跌 (${s.dailyDate})：${s.dailyUpCount} / ${s.dailyDownCount}`,
+    SEP,
+    `持有收益 (${s.holdingDate})：${rawMoney(s.holdingGain)}`,
+    `持有收益率 (${s.holdingDate})：${rawPct(s.holdingGainRate)}`,
+    `持有盈利/亏损 (${s.holdingDate})：${s.holdingProfitCount} / ${s.holdingLossCount}`,
+    SEP,
+    `总资产：${rawMoney(s.totalAsset)}`,
+    `总成本：${rawMoney(s.totalCost)}`
   ]
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
     ElMessage.success('已复制')

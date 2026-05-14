@@ -164,19 +164,38 @@ function estClass(v: number) {
 function handleCopy() {
   const r = props.row
   if (!r) return
+
+  // 复制始终使用真实数据，不受隐私模式影响
+  const SEP = '━━━━━━━━━━━━━━━━'
+  const rawMoney = (v: number) => formatCurrency(v)
+  const rawPct = (v: number, show: boolean) => {
+    if (!show) return '—'
+    return `${v > 0 ? '+' : ''}${v.toFixed(2)}%`
+  }
+  const raw4 = (v: number) => v.toFixed(4)
+  const rawShares = (v: number) => formatNumber(v, 2)
+
   const lines = [
-    `${r.name} (${r.code})`,
-    `估算涨幅: ${fmtPct(r.gszzl, r.shouldShowEstimated)}`,
-    `估算收益: ${fmtEst(r.estimatedGain, r.shouldShowEstimated)}`,
-    `当日涨幅: ${fmtPct(r.navChgRt, true)}`,
-    `当日收益: ${fmtMoney(r.dailyGain)}`,
-    `持有收益: ${fmtMoney(r.holdingGain)}`,
-    `总收益率: ${fmtPct(r.holdingGainRate, true)}`,
-    `持有金额: ${fmtMoney(r.holdingAmount)}`,
-    `持有份额: ${fmtShares(r.fund.num)}`,
-    `成本价: ${fmt4(r.fund.cost)}`,
-    `单位净值: ${fmt4(r.dwjz)}`,
-    `更新时间: ${r.fullUpdateTime || r.updateTime || '—'}`
+    `${r.name}`,
+    `基金代码：${r.code}`,
+    SEP,
+    `估算涨幅 (${r.estimatedDateLabel})：${rawPct(r.gszzl, r.shouldShowEstimated)}`,
+    `估算收益 (${r.estimatedDateLabel})：${r.shouldShowEstimated ? rawMoney(r.estimatedGain) : '—'}`,
+    SEP,
+    `当日涨幅 (${r.navDateLabel})：${rawPct(r.navChgRt, true)}`,
+    `当日收益 (${r.navDateLabel})：${rawMoney(r.dailyGain)}`,
+    SEP,
+    `持有收益：${rawMoney(r.holdingGain)}`,
+    `总收益率：${rawPct(r.holdingGainRate, true)}`,
+    SEP,
+    `持有金额：${rawMoney(r.holdingAmount)}`,
+    `持有份额：${rawShares(r.fund.num)}`,
+    `成本价：${raw4(r.fund.cost)}`,
+    `估算净值：${raw4(r.displayGsz)}`,
+    `单位净值：${raw4(r.dwjz)}`,
+    SEP,
+    `关联板块：${r.relateTheme || '—'}`,
+    `更新时间：${r.fullUpdateTime || r.updateTime || '—'}`
   ]
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
     ElMessage.success('已复制')

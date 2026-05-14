@@ -94,9 +94,77 @@
         </div>
       </div>
 
+      <!-- 持仓明细 -->
+      <div v-show="activeTab === 'position'" class="tab-panel">
+        <div v-if="tabLoading && !positionData" class="loading-hint">加载中...</div>
+        <template v-else-if="positionData">
+          <div class="position-header">
+            <span class="position-date">截止日期：{{ positionData.expansion }}</span>
+          </div>
+
+          <!-- 股票持仓 -->
+          <div v-if="positionData.stocks.length" class="position-section">
+            <div class="position-section-title">股票持仓</div>
+            <div class="position-table-wrap">
+              <table class="position-table">
+                <thead>
+                  <tr>
+                    <th class="col-name">股票名称（代码）</th>
+                    <th class="col-num">价格</th>
+                    <th class="col-num">涨跌幅</th>
+                    <th class="col-num">持仓占比</th>
+                    <th class="col-num">较上期</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="s in positionData.stocks" :key="s.code">
+                    <td class="col-name">
+                      <div class="stock-name">{{ s.name }}</div>
+                      <div class="stock-code">{{ s.code }}</div>
+                    </td>
+                    <td class="col-num">
+                      {{ s.price != null ? s.price.toFixed(2) : '--' }}
+                    </td>
+                    <td class="col-num" :class="stockChangeClass(s.changePercent)">
+                      {{ s.changePercent != null ? (s.changePercent > 0 ? '+' : '') + s.changePercent.toFixed(2) + '%' : '--' }}
+                    </td>
+                    <td class="col-num">{{ s.ratio.toFixed(2) }}%</td>
+                    <td class="col-num" :class="comparedClass(s)">{{ comparedText(s) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 债券持仓 -->
+          <div v-if="positionData.bonds.length" class="position-section">
+            <div class="position-section-title">债券持仓</div>
+            <div class="position-table-wrap">
+              <table class="position-table">
+                <thead>
+                  <tr>
+                    <th class="col-name">债券名称（代码）</th>
+                    <th class="col-num">占净值比</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="b in positionData.bonds" :key="b.code">
+                    <td class="col-name">
+                      <div class="stock-name">{{ b.name }}</div>
+                      <div class="stock-code">{{ b.code }}</div>
+                    </td>
+                    <td class="col-num">{{ b.ratio.toFixed(2) }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
+        <el-empty v-else-if="!tabLoading" description="暂无持仓数据" />
+      </div>
+
       <!-- 基金概况 -->
-      <div v-show="activeTab === 'overview'" class="tab-panel">
-        <div v-if="overview" class="info-list">
+      <div v-show="activeTab === 'overview'" class="tab-panel">        <div v-if="overview" class="info-list">
           <div class="info-row"><span>基金类型</span><span>{{ overview.ftype || '--' }}</span></div>
           <div class="info-row"><span>风险等级</span><span>{{ riskLabel(overview.riskLevel || '') }}</span></div>
           <div class="info-row"><span>成立日期</span><span>{{ overview.estabDate || '--' }}</span></div>
@@ -240,12 +308,14 @@ import {
   fetchManagerAndThemes,
   fetchNetValueHistory,
   fetchHistoryYield,
+  fetchInvestmentPosition,
   type FundOverview,
   type PeriodIncreaseData,
   type FundManager,
   type RelateThemeItem,
   type NetValueRecord,
-  type YieldRecord
+  type YieldRecord,
+  type PositionData
 } from '@/api/fundDetail'
 
 // ==================== Props ====================
@@ -257,6 +327,7 @@ const props = defineProps<Props>()
 
 const tabs = [
   { key: 'holding', label: '持仓信息' },
+  { key: 'position', label: '持仓明细' },
   { key: 'overview', label: '基金概况' },
   { key: 'manager', label: '基金经理' },
   { key: 'theme', label: '关联板块' },
@@ -291,6 +362,7 @@ const managers = ref<FundManager[]>([])
 const themes = ref<RelateThemeItem[]>([])
 const periodIncrease = ref<PeriodIncreaseData | null>(null)
 const weekNavRecords = ref<NetValueRecord[]>([])
+const positionData = ref<PositionData | null>(null)
 
 const netValueRange = ref('1m')
 const profitRange = ref('1m')
@@ -369,6 +441,30 @@ function riskLabel(level: string) {
   return map[level] || level || '--'
 }
 
+// ==================== 持仓明细辅助 ====================
+
+function stockChangeClass(changePercent: number | null) {
+  if (changePercent == null || settingStore.grayscaleMode) return ''
+  if (changePercent > 0) return 'positive'
+  if (changePercent < 0) return 'negative'
+  return ''
+}
+
+function comparedText(s: { changeType: string; changeRatio: number }) {
+  if (s.changeType === '新增') return '新增'
+  if (isNaN(s.changeRatio)) return '--'
+  const icon = s.changeRatio > 0 ? '↑' : '↓'
+  return `${icon} ${Math.abs(s.changeRatio).toFixed(2)}%`
+}
+
+function comparedClass(s: { changeType: string; changeRatio: number }) {
+  if (settingStore.grayscaleMode) return ''
+  if (s.changeType === '新增') return 'positive'
+  if (s.changeRatio > 0) return 'positive'
+  if (s.changeRatio < 0) return 'negative'
+  return ''
+}
+
 // ==================== Tab 切换 & 数据加载 ====================
 
 async function switchTab(tab: string) {
@@ -392,6 +488,11 @@ async function loadTabData(tab: string) {
     case 'holding':
       // 本地数据，无需请求
       break
+    case 'position': {
+      const result = await fetchInvestmentPosition(props.code)
+      positionData.value = result
+      break
+    }
     case 'overview':
     case 'manager': {
       const [overviewResult, managerResult, weekNav] = await Promise.all([
@@ -929,6 +1030,88 @@ onUnmounted(() => {
   padding: 40px;
   color: var(--el-text-color-secondary);
   font-size: 13px;
+}
+
+/* 持仓明细 */
+.position-header {
+  padding: 4px 0 8px;
+}
+
+.position-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.position-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.position-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.position-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.position-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.position-table th {
+  padding: 6px 8px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+  border-bottom: 1px solid var(--el-border-color);
+  background: var(--el-fill-color-lighter);
+}
+
+.position-table td {
+  padding: 7px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  vertical-align: middle;
+}
+
+.position-table tr:last-child td {
+  border-bottom: none;
+}
+
+.position-table tr:nth-child(even) td {
+  background: var(--el-fill-color-blank);
+}
+
+.position-table .col-name {
+  text-align: left;
+  min-width: 100px;
+}
+
+.position-table .col-num {
+  min-width: 60px;
+}
+
+.stock-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+}
+
+.stock-code {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+  margin-top: 1px;
 }
 
 @media (max-width: 768px) {

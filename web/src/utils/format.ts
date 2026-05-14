@@ -25,13 +25,14 @@ export function formatPercent(value: number, decimals: number = 2): string {
 
 /**
  * 格式化数字
- * @param value 数值
+ * @param value 数值（允许 string，内部会 parseFloat）
  * @param decimals 小数位数，默认2位
  * @returns 格式化后的数字字符串
  */
-export function formatNumber(value: number, decimals: number = 2): string {
-  if (isNaN(value)) return '0.00'
-  return value.toFixed(decimals)
+export function formatNumber(value: number | string | undefined | null, decimals: number = 2): string {
+  const n = typeof value === 'number' ? value : parseFloat(String(value ?? ''))
+  if (isNaN(n)) return '0.00'
+  return n.toFixed(decimals)
 }
 
 /**
