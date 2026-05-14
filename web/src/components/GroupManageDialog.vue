@@ -273,7 +273,7 @@ function onFundDropToGroup(targetKey: string, e: DragEvent) {
 
 function moveFundToGroup(fundCode: string, targetKey: string) {
   // Remove from all groups
-  for (const [key, codes] of draftFundGroups.value.entries()) {
+  for (const [_key, codes] of draftFundGroups.value.entries()) {
     const idx = codes.indexOf(fundCode)
     if (idx >= 0) codes.splice(idx, 1)
   }
@@ -389,9 +389,9 @@ async function handleSave() {
     // Update fund groupKey in fundStore
     for (const fund of fundStore.funds) {
       let foundGroup: string | undefined
-      for (const [key, codes] of draftFundGroups.value.entries()) {
+      for (const [groupKey, codes] of draftFundGroups.value.entries()) {
         if (codes.includes(fund.code)) {
-          foundGroup = key
+          foundGroup = groupKey
           break
         }
       }

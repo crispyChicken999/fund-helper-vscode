@@ -80,7 +80,6 @@ const ALL_COLUMNS: { key: string; label: string }[] = [
   { key: 'cost', label: '成本/最新' }
 ]
 
-const DEFAULT_ORDER = ALL_COLUMNS.map(c => c.key)
 const DEFAULT_VISIBLE = [
   'name', 'estimatedGain', 'estimatedChange', 'holdingGainRate',
   'holdingGain', 'dailyChange', 'dailyGain'

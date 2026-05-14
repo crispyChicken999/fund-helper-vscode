@@ -10,7 +10,7 @@ interface FundgzGlobalScope extends Window {
 interface PendingFundgzRequest {
   resolve: (data: FundgzRawData) => void
   script: HTMLScriptElement
-  timeoutId: ReturnType<typeof window.setTimeout>
+  timeoutId: number
 }
 
 const pendingFundgzRequests = new Map<string, PendingFundgzRequest[]>()
