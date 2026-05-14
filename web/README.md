@@ -1,165 +1,103 @@
-# 基金助手 Web端
+# 基金助手 Web 版
 
-> 基于Vue 3 + Vite + TypeScript + Element Plus的基金投资组合管理Web应用
+基于 Vue 3 + TypeScript + Element Plus 构建的基金投资组合管理应用，与 VSCode 插件版共享云同步配置。
 
-## 📋 项目状态
+## 功能
 
-### ✅ 已完成（第一阶段：项目初期化与基础建设）
+**基金列表**
+- 实时估算涨跌幅、估算收益、日涨跌、日收益、持仓收益等多列展示
+- 自定义列显示/隐藏与排列顺序
+- 分组管理：创建、重命名、删除分组，拖拽调整分组顺序
+- 分组筛选：点击分组标签快速过滤，点击行内分组标签跳转对应分组
+- 基金排序：按涨跌幅、收益等字段排序
+- 搜索：按基金名称或代码过滤
+- 拖拽排序：全部视图下可拖拽调整基金顺序
+- 分组 Tooltip：hover 分组标签显示该组汇总统计
+- 基金 Tooltip：hover 基金名称显示持仓详情
 
-- [x] 项目创建与配置（Vue 3 + Vite + TypeScript）
-- [x] 依赖包安装（Pinia、Vue Router、Element Plus、Axios等）
-- [x] TypeScript类型定义（Fund、Group、Market、Settings等）
-- [x] 工具函数库（format、calc、validate）
-- [x] Pinia Store架构
-  - [x] fundStore - 基金数据管理
-  - [x] groupStore - 分组管理
-  - [x] settingStore - 用户设置管理
-- [x] 路由配置（首页、行情、设置、详情）
-- [x] 基础视图组件
-  - [x] HomeView - 首页（基础框架）
-  - [x] MarketView - 行情中心（占位）
-  - [x] SettingsView - 设置页面（基础功能）
-  - [x] FundDetailView - 基金详情（占位）
-- [x] 全局样式与主题配置
-- [x] 路径别名配置（@指向src）
+**基金详情**
+- 基金基本信息、净值走势图
+- 持仓股票/债券列表（含实时行情）
+- 历史净值、基金经理等详情
 
-### 🚧 待开发
+**行情中心**
+- 大盘指数、板块行情实时展示
 
-#### 第二阶段：首页-列表视图开发
-- [ ] 完善资产展示模块
-- [ ] 完善分组管理功能
-- [ ] 完善基金列表表格
-- [ ] 实现基金CRUD操作
-- [ ] 实现搜索、排序、筛选功能
-- [ ] 实现下拉刷新和自动刷新
+**设置**
+- 隐私模式（隐藏所有金额）
+- 灰色模式（移除色彩）
+- 浅色/深色主题
+- 自动刷新间隔配置
+- 列配置（显示/隐藏/排序）
+- 数据导入/导出（JSON）
 
-#### 第三阶段：行情中心开发
-- [ ] 行情数据获取（JSONP）
-- [ ] 行情分类管理
-- [ ] 行情搜索功能
-- [ ] 行情列表显示
+**云同步**
+- 基于 JSONBox 的云端配置同步
+- 上传/下载云端数据
+- 二维码分享 Box Name（供移动端扫码同步）
+- 与 VSCode 插件版数据格式完全兼容
 
-#### 第四阶段：基金详情页开发
-- [ ] 基金信息展示
-- [ ] 持仓信息展示
-- [ ] 预计收益计算
-- [ ] 编辑和删除功能
+## 快速开始
 
-#### 第五阶段：设置页面与数据同步
-- [ ] JSONBox数据同步
-- [ ] 数据冲突处理
-- [ ] 离线队列管理
-- [ ] 列表配置功能
-
-#### 第六阶段：测试与优化
-- [ ] 单元测试
-- [ ] 集成测试
-- [ ] 性能优化
-- [ ] 兼容性测试
-
-#### 第七阶段：部署与上线
-- [ ] 生产构建配置
-- [ ] GitHub Pages部署
-- [ ] CI/CD配置
-
-## 🚀 快速开始
-
-### 安装依赖
 ```bash
+# 安装依赖
 npm install
-```
 
-### 开发模式
-```bash
+# 开发模式
 npm run dev
-```
 
-### 构建生产版本
-```bash
+# 构建生产版本
 npm run build
-```
 
-### 预览生产版本
-```bash
+# 预览生产版本
 npm run preview
 ```
 
-## 📁 项目结构
+## 项目结构
 
 ```
-web/
-├── src/
-│   ├── components/          # 组件（待创建）
-│   ├── stores/             # Pinia stores
-│   │   ├── fundStore.ts    # 基金数据管理
-│   │   ├── groupStore.ts   # 分组管理
-│   │   ├── settingStore.ts # 用户设置管理
-│   │   └── index.ts        # Store导出
-│   ├── views/              # 视图组件
-│   │   ├── HomeView.vue    # 首页
-│   │   ├── MarketView.vue  # 行情中心
-│   │   ├── SettingsView.vue # 设置
-│   │   └── FundDetailView.vue # 基金详情
-│   ├── router/             # 路由配置
-│   │   └── index.ts
-│   ├── utils/              # 工具函数
-│   │   ├── format.ts       # 格式化
-│   │   ├── calc.ts         # 计算
-│   │   └── validate.ts     # 验证
-│   ├── types/              # TypeScript类型
-│   │   └── index.ts
-│   ├── App.vue             # 根组件
-│   ├── main.ts             # 入口文件
-│   └── style.css           # 全局样式
-├── public/                 # 静态资源
-├── index.html              # HTML模板
-├── vite.config.ts          # Vite配置
-├── tsconfig.json           # TypeScript配置
-└── package.json            # 项目配置
+src/
+├── api/              # 接口封装（基金数据、JSONBox）
+├── components/       # 公共组件
+│   ├── ColumnSettingsDialog.vue  # 列配置弹窗
+│   ├── FundTooltip.vue           # 基金 Tooltip
+│   ├── GroupManageDialog.vue     # 分组管理弹窗
+│   ├── GroupTooltip.vue          # 分组统计 Tooltip
+│   └── SyncDialog.vue            # 云同步弹窗
+├── layouts/          # 布局组件
+├── router/           # 路由配置
+├── services/         # 业务服务层（同步、存储）
+├── stores/           # Pinia 状态管理
+│   ├── fundStore.ts
+│   ├── groupStore.ts
+│   ├── settingStore.ts
+│   └── syncStore.ts
+├── types/            # TypeScript 类型定义
+├── utils/            # 工具函数（格式化、计算、校验）
+└── views/
+    ├── HomeView.vue        # 首页（基金列表）
+    ├── FundDetailView.vue  # 基金详情
+    ├── MarketView.vue      # 行情中心
+    └── SettingsView.vue    # 设置
 ```
 
-## 🛠️ 技术栈
+## 技术栈
 
-- **前端框架**: Vue 3
-- **构建工具**: Vite
-- **UI库**: Element Plus
-- **状态管理**: Pinia
-- **路由**: Vue Router
-- **HTTP客户端**: Axios
-- **跨域方案**: JSONP
-- **工具库**: @vueuse/core
-- **语言**: TypeScript
+| 类别 | 技术 |
+|------|------|
+| 框架 | Vue 3 + Composition API |
+| 语言 | TypeScript |
+| 构建 | Vite |
+| UI | Element Plus |
+| 状态管理 | Pinia |
+| 路由 | Vue Router |
+| HTTP | Axios |
+| 工具 | @vueuse/core |
 
-## 📖 文档
+## 与 VSCode 版同步
 
-详细文档请查看 `.docs/web-docs/` 目录：
+两端使用相同的 JSONBox 数据格式，可通过云同步互相导入配置。VSCode 专属字段（`hideStatusBar`、`defaultViewMode`）在 Web 端上传时会自动保留，不会被覆盖。
 
-- [README.md](.docs/web-docs/README.md) - 文档导航索引
-- [WEB_REQUIREMENTS.md](.docs/web-docs/WEB_REQUIREMENTS.md) - 详细需求文档
-- [WEB_IMPLEMENTATION_PLAN.md](.docs/web-docs/WEB_IMPLEMENTATION_PLAN.md) - 阶段任务表
-- [WEB_DATA_MODELS.md](.docs/web-docs/WEB_DATA_MODELS.md) - 数据模型与接口文档
-- [WEB_QUICK_REFERENCE.md](.docs/web-docs/WEB_QUICK_REFERENCE.md) - 快速参考指南
-
-## 📝 开发规范
-
-### 代码风格
-- 使用TypeScript严格模式
-- 遵循Vue 3 Composition API规范
-- 使用ESLint + Prettier格式化代码
-
-### 提交规范
-- feat: 新功能
-- fix: 修复bug
-- docs: 文档更新
-- style: 代码格式调整
-- refactor: 重构
-- test: 测试相关
-- chore: 构建/工具链相关
-
-## 📄 License
+## License
 
 MIT
-
-## 👥 贡献
-
-欢迎提交Issue和Pull Request！
