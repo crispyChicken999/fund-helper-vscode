@@ -176,6 +176,7 @@ export const useSettingStore = defineStore('setting', {
     // 设置主题
     async setTheme(theme: 'light' | 'dark') {
       this.settings.theme = theme
+      storageService.saveSettings(this.getSettings())
     },
 
     // 从本地存储加载并与 canonical box 名对齐

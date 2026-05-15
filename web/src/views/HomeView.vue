@@ -70,12 +70,21 @@
                   />
                 </svg>
               </button>
+              <button
+                class="btn-icon"
+                :class="{ active: settingStore.theme === 'dark' }"
+                @click="toggleDarkMode($event)"
+                title="主题切换"
+              >
+                <el-icon v-if="settingStore.theme === 'light'"><Sunny /></el-icon>
+                <el-icon v-else><Moon /></el-icon>
+              </button>
               <span class="stat-label-spacer"></span>
               <el-button
                 type="primary"
                 size="small"
                 round
-                plain
+                :plain="isDarkMode ? false : true"
                 @click="showAddFundDialog = true"
                 title="添加基金"
               >
@@ -703,6 +712,8 @@ import {
   Refresh,
   Operation,
   Setting,
+  Moon,
+  Sunny,
 } from "@element-plus/icons-vue";
 import { useDebounceFn, useMediaQuery } from "@vueuse/core";
 import Sortable from "sortablejs";
@@ -788,6 +799,7 @@ const router = useRouter();
 const fundStore = useFundStore();
 const groupStore = useGroupStore();
 const settingStore = useSettingStore();
+const isDarkMode = computed(() => settingStore.theme === "dark");
 
 const loading = ref(false);
 const refreshing = ref(false);
@@ -1149,6 +1161,57 @@ function toggleGrayscale() {
   document.documentElement.dataset.grayscale = String(
     settingStore.grayscaleMode,
   );
+}
+
+function computeMaxRadius(x: number, y: number): number {
+  const maxX = Math.max(x, window.innerWidth - x);
+  const maxY = Math.max(y, window.innerHeight - y);
+  return Math.hypot(maxX, maxY);
+}
+
+async function toggleDarkMode(event: MouseEvent) {
+  const isSupported =
+    (document.startViewTransition as any) &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!isSupported) {
+    const newTheme = settingStore.theme === 'light' ? 'dark' : 'light';
+    settingStore.setTheme(newTheme);
+    return;
+  }
+
+  const x = event.clientX;
+  const y = event.clientY;
+  const endRadius = computeMaxRadius(x, y);
+
+  const transition = (document.startViewTransition as any)(
+    async () => {
+      const newTheme = settingStore.theme === 'light' ? 'dark' : 'light';
+      settingStore.setTheme(newTheme);
+      await nextTick();
+    }
+  );
+
+  transition.ready.then(() => {
+    const isDark = settingStore.theme === 'dark';
+    const clipPath = [
+      `circle(0px at ${x}px ${y}px)`,
+      `circle(${endRadius}px at ${x}px ${y}px)`,
+    ];
+
+    (document.documentElement as any).animate(
+      {
+        clipPath: isDark ? [...clipPath].reverse() : clipPath,
+      },
+      {
+        duration: 450,
+        easing: 'ease-in',
+        pseudoElement: isDark
+          ? '::view-transition-old(root)'
+          : '::view-transition-new(root)',
+      } as any
+    );
+  });
 }
 
 function selectGroup(key: string) {
@@ -2148,7 +2211,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--el-border-color-lighter);
   background: var(--bg-card);
 }
 
@@ -2304,7 +2367,7 @@ onUnmounted(() => {
 .group-label {
   font-size: 10px;
   padding: 0px 4px;
-  background: var(--color-primary);
+  background: var(--el-color-primary);
   color: #fff;
   border-radius: 3px;
   max-width: 72px;
@@ -2314,6 +2377,11 @@ onUnmounted(() => {
   cursor: pointer;
   user-select: none;
   transition: opacity 0.15s;
+}
+
+html.dark .group-label {
+  background: var(--el-color-primary-light-8);
+  color: var(--el-text-color-primary);
 }
 
 .group-label:hover {

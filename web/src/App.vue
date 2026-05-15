@@ -53,6 +53,29 @@ watch(
 .flash-up { animation: flash-up 0.6s ease; }
 .flash-down { animation: flash-down 0.6s ease; }
 
+/* View Transitions API 样式 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2147483646;
+}
+
+html.dark::view-transition-old(root) {
+  z-index: 2147483646;
+}
+
+html.dark::view-transition-new(root) {
+  z-index: 1;
+}
+
 /* 移动端适配 */
 @media (max-width: 768px) {
   #app {
