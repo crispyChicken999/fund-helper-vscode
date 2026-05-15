@@ -274,30 +274,31 @@ code {
   }
 }
 
-/* Fund Helper — Phase 0 design tokens（涨跌色：A 股习惯涨红跌绿） */
+/* Fund Helper — Design tokens based on Element Plus */
 :root {
-  --color-primary: #3b82f6;
-  --color-primary-hover: #2563eb;
+  /* 基础颜色 - 使用 Element Plus 的内置变量 */
+  --color-primary: var(--el-color-primary);
+  --color-primary-hover: var(--el-color-primary-light-1);
+  
+  /* A 股习惯：涨红跌绿 */
   --color-up: #ef4444;
   --color-down: #22c55e;
-  --color-flat: #9ca3af;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-card: #ffffff;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --border-color: #e2e8f0;
+  --color-flat: var(--el-color-info);
+  
+  /* 背景和文本 - 使用 Element Plus 变量 */
+  --bg-primary: var(--el-bg-color);
+  --bg-secondary: var(--el-fill-color-light);
+  --bg-card: var(--el-bg-color);
+  
+  --text-primary: var(--el-text-color-primary);
+  --text-secondary: var(--el-text-color-regular);
+  --text-muted: var(--el-text-color-secondary);
+  
+  --border-color: var(--el-border-color);
 }
 
 [data-theme='dark'] {
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-card: #1a2035;
-  --bg-card-hover: #1e2a45;
-  --text-primary: #e2e8f0;
-  --text-secondary: #718096;
-  --border-color: #2d3748;
+  --bg-card-hover: var(--el-fill-color-light);
 }
 
 [data-grayscale='true'] {

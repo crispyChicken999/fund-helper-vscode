@@ -1,7 +1,7 @@
 // JSONBox API封装
 
 import axios, { type AxiosInstance } from 'axios'
-import type { Fund, Settings } from '@/types'
+import type { Fund } from '@/types'
 
 // JSONBox API基础URL
 const JSONBOX_API_BASE = 'https://jsonbox.cloud.exo-imaging.com'
@@ -13,9 +13,23 @@ export interface JsonboxData {
   funds: Fund[]
   groups: Record<string, string[]>
   groupOrder: string[]
-  settings: Partial<Settings>
+
   version: number
   lastModified: number
+  // Web 端设置（从云端同步到本地）
+  privacyMode?: boolean
+  grayscaleMode?: boolean
+  // VSCode 专属字段（保留）
+  hideStatusBar?: boolean
+  defaultViewMode?: 'webview' | 'editor'
+  jsonboxName?: string
+  // 其他设置
+  sortMethod?: string
+  refreshInterval?: number
+  columnSettings?: {
+    columnOrder: string[]
+    visibleColumns: string[]
+  }
 }
 
 /**
@@ -73,7 +87,15 @@ class JsonboxClient {
           funds: item.funds || [],
           groups: item.groups || {},
           groupOrder: item.groupOrder || [],
-          settings: item.settings || {},
+          columnSettings: item.columnSettings,
+          sortMethod: item.sortMethod,
+          refreshInterval: item.refreshInterval,
+          privacyMode: item.privacyMode,
+          grayscaleMode: item.grayscaleMode,
+          // VSCode 专属字段
+          hideStatusBar: item.hideStatusBar,
+          defaultViewMode: item.defaultViewMode,
+          jsonboxName: item.jsonboxName,
           version: item.version || 1,
           lastModified: item.lastModified || Date.now()
         }
@@ -122,7 +144,6 @@ class JsonboxClient {
         funds: [],
         groups: {},
         groupOrder: [],
-        settings: {},
         version: 1,
         lastModified: Date.now(),
         ...data

@@ -172,7 +172,11 @@ class SyncService {
       // 保存同步元数据
       this.saveSyncMetadata()
       
-      console.log('数据已从云端同步')
+      // 刷新基金数据
+      const { fundService } = await import('./fundService')
+      await fundService.refreshAllFunds()
+      
+      console.log('数据已从云端同步并刷新基金数据')
     } catch (error: any) {
       console.error('从云端同步失败:', error)
       syncStore.setSyncStatus('error')
@@ -238,6 +242,10 @@ class SyncService {
         syncStore.localVersion = data.version
         syncStore.updateLastSyncTime()
         this.saveSyncMetadata()
+        
+        // 刷新基金数据
+        const { fundService } = await import('./fundService')
+        await fundService.refreshAllFunds()
       }
       
       // 清除冲突
@@ -349,6 +357,7 @@ class SyncService {
    * 应用云端数据
    */
   private async applyCloudData(data: JsonboxData): Promise<void> {
+    console.log('data: ', data);
     const fundStore = useFundStore()
     const groupStore = useGroupStore()
     const settingStore = useSettingStore()
@@ -364,10 +373,31 @@ class SyncService {
     
     // 应用分组数据
     groupStore.initGroupsFromObject(data.groups, data.groupOrder)
+        
+    // 应用隐私模式（从云端读取）
+    if (data.privacyMode !== undefined) {
+      await settingStore.setPrivacyMode(data.privacyMode)
+    }
     
-    // 应用设置
-    if (data.settings) {
-      await settingStore.updateSettings(data.settings)
+    // 应用灰色模式（从云端读取）
+    if (data.grayscaleMode !== undefined) {
+      await settingStore.setGrayscaleMode(data.grayscaleMode)
+    }
+    
+    // 应用其他顶层设置
+    if (data.sortMethod !== undefined) {
+      await settingStore.setSortMethod(data.sortMethod)
+    }
+    if (data.refreshInterval !== undefined) {
+      await settingStore.setRefreshInterval(data.refreshInterval)
+    }
+    if (data.columnSettings) {
+      if (data.columnSettings.columnOrder) {
+        await settingStore.setColumnOrder(data.columnSettings.columnOrder)
+      }
+      if (data.columnSettings.visibleColumns) {
+        await settingStore.setVisibleColumns(data.columnSettings.visibleColumns)
+      }
     }
     
     // 保存到本地存储

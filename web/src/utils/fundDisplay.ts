@@ -188,7 +188,7 @@ export function buildFundRowDisplay(
     : extractDate(info.updateTime, market)
 
   let fullUpdateTime = info.updateTime
-    ? `${extractDate(info.updateTime, market)} ${extractTime(info.updateTime)}`.trim()
+    ? `${extractTime(info.updateTime)}`.trim()
     : ''
   if (gsz === 0 && gszzl !== 0 && fullUpdateTime && !fullUpdateTime.includes(':')) {
     const now = new Date()

@@ -105,7 +105,7 @@
           <!-- 股票持仓 -->
           <div v-if="positionData.stocks.length" class="position-section">
             <div class="position-section-title">股票持仓</div>
-            <el-table :data="positionData.stocks" stripe size="small">
+            <el-table :data="positionData.stocks" stripe size="small" border :cell-style="{ textAlign: 'center' }" :header-cell-style="{ background: '#f5f5f5', fontWeight: 'bold', textAlign: 'center' }">
               <el-table-column prop="name" label="股票名称（代码）" min-width="100">
                 <template #default="{ row: s }">
                   <div class="stock-name">{{ s.name }}</div>
@@ -586,14 +586,40 @@ async function renderNetValueChart(records: NetValueRecord[]) {
         return html + '</div>'
       }
     },
-    legend: { data: ['单位净值', '累计净值'], bottom: 0, textStyle: { fontSize: 11 } },
+    legend: { data: ['单位净值', '累计净值'], top: 0, textStyle: { fontSize: 11 } },
     grid: { left: 50, right: 16, top: 16, bottom: 60, containLabel: false },
     xAxis: { type: 'category', data: dates, axisLabel: { fontSize: 10 } },
     yAxis: { type: 'value', scale: true, axisLabel: { fontSize: 10, formatter: (v: number) => v.toFixed(4) } },
     dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: 20, height: 18 }],
     series: [
-      { name: '单位净值', type: 'line', data: dwjz, smooth: false, showSymbol: false, lineStyle: { width: 2, color: '#409EFF' } },
-      { name: '累计净值', type: 'line', data: ljjz, smooth: false, showSymbol: false, lineStyle: { width: 2, color: '#E6A23C' } }
+      {
+        name: '单位净值',
+        type: 'line',
+        data: dwjz,
+        smooth: false,
+        showSymbol: false,
+        lineStyle: { width: 2, color: '#409EFF' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(64, 158, 255, 0.4)' },
+            { offset: 1, color: 'rgba(64, 158, 255, 0)' }
+          ])
+        }
+      },
+      {
+        name: '累计净值',
+        type: 'line',
+        data: ljjz,
+        smooth: false,
+        showSymbol: false,
+        lineStyle: { width: 2, color: '#d84f00' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(216, 79, 0, 0.6)' },
+            { offset: 1, color: 'rgba(216, 79, 0, 0)' }
+          ])
+        }
+      }
     ]
   }, true)
 }
@@ -638,15 +664,54 @@ async function renderProfitChart(records: YieldRecord[]) {
         return html + '</div>'
       }
     },
-    legend: { data: ['涨幅', '沪深300', '同类平均'], bottom: 0, textStyle: { fontSize: 11 } },
+    legend: { data: ['涨幅', '沪深300', '同类平均'], top: 0, textStyle: { fontSize: 11 } },
     grid: { left: 50, right: 16, top: 16, bottom: 60, containLabel: false },
     xAxis: { type: 'category', data: dates, axisLabel: { fontSize: 10 } },
     yAxis: { type: 'value', scale: true, axisLabel: { fontSize: 10, formatter: '{value}%' } },
     dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: 20, height: 18 }],
     series: [
-      { name: '涨幅', type: 'line', data: yieldData, smooth: false, showSymbol: false, lineStyle: { width: 2, color: '#F56C6C' } },
-      { name: '沪深300', type: 'line', data: indexYieldData, smooth: false, showSymbol: false, lineStyle: { width: 2, color: '#67C23A' } },
-      { name: '同类平均', type: 'line', data: fundTypeYieldData, smooth: false, showSymbol: false, lineStyle: { width: 2, color: '#E6A23C' } }
+      {
+        name: '涨幅',
+        type: 'line',
+        data: yieldData,
+        smooth: false,
+        showSymbol: false,
+        lineStyle: { width: 2, color: '#F56C6C' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(245, 108, 108, 0.4)' },
+            { offset: 1, color: 'rgba(245, 108, 108, 0)' }
+          ])
+        }
+      },
+      {
+        name: '沪深300',
+        type: 'line',
+        data: indexYieldData,
+        smooth: false,
+        showSymbol: false,
+        lineStyle: { width: 2, color: '#67C23A' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(103, 194, 58, 0.4)' },
+            { offset: 1, color: 'rgba(103, 194, 58, 0)' }
+          ])
+        }
+      },
+      {
+        name: '同类平均',
+        type: 'line',
+        data: fundTypeYieldData,
+        smooth: false,
+        showSymbol: false,
+        lineStyle: { width: 2, color: '#E6A23C' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(230, 162, 60, 0.4)' },
+            { offset: 1, color: 'rgba(230, 162, 60, 0)' }
+          ])
+        }
+      }
     ]
   }, true)
 }
@@ -989,7 +1054,7 @@ onUnmounted(() => {
 }
 
 .range-item {
-  padding: 4px 10px;
+  padding: 2px 10px;
   font-size: 12px;
   border-radius: 12px;
   cursor: pointer;

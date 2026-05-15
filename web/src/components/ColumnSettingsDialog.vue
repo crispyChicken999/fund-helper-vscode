@@ -261,10 +261,10 @@ onBeforeUnmount(() => {
 }
 
 .col-fixed-tag {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--el-text-color-secondary);
-  background: var(--el-fill-color);
-  padding: 2px 6px;
+  background: var(--el-border-color-light);
+  padding: 2px 23px;
   border-radius: 4px;
 }
 

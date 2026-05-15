@@ -38,10 +38,10 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-import { HomeFilled, TrendCharts, Setting } from '@element-plus/icons-vue'
+import { useRoute } from "vue-router";
+import { HomeFilled, TrendCharts, Setting } from "@element-plus/icons-vue";
 
-const route = useRoute()
+const route = useRoute();
 </script>
 
 <style scoped>
@@ -88,6 +88,7 @@ const route = useRoute()
   text-decoration: none;
   transition: color 0.2s;
   position: relative;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-item .nav-icon {
@@ -100,7 +101,7 @@ const route = useRoute()
 }
 
 .nav-item.active::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   width: 24px;

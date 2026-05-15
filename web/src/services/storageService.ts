@@ -73,7 +73,14 @@ class StorageService {
   loadFunds(): Fund[] {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.FUNDS)
-      return data ? JSON.parse(data) : []
+      if (!data) return []
+      const funds = JSON.parse(data)
+      // 确保 num 和 cost 是数字类型（防止 JSON 反序列化时被转换为字符串）
+      return funds.map((fund: any) => ({
+        ...fund,
+        num: typeof fund.num === 'number' ? fund.num : Number(fund.num) || 0,
+        cost: typeof fund.cost === 'number' ? fund.cost : Number(fund.cost) || 0
+      }))
     } catch (error) {
       console.error('读取基金列表失败:', error)
       return []

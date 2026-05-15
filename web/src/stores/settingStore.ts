@@ -152,6 +152,7 @@ export const useSettingStore = defineStore('setting', {
     // 设置排序方法
     async setSortMethod(method: string) {
       this.settings.sortMethod = method
+      storageService.saveSettings(this.getSettings())
     },
 
     // 设置隐私模式
@@ -169,6 +170,7 @@ export const useSettingStore = defineStore('setting', {
     // 设置刷新间隔
     async setRefreshInterval(seconds: number) {
       this.settings.refreshInterval = seconds
+      storageService.saveSettings(this.getSettings())
     },
 
     // 设置主题

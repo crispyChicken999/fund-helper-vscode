@@ -666,12 +666,7 @@ import {
   type FormInstance,
   type FormRules,
 } from "element-plus";
-import {
-  Plus,
-  Search,
-  Refresh,
-  Operation,
-} from "@element-plus/icons-vue";
+import { Plus, Search, Refresh, Operation } from "@element-plus/icons-vue";
 import { useDebounceFn } from "@vueuse/core";
 import Sortable from "sortablejs";
 import MainLayout from "@/layouts/MainLayout.vue";
@@ -735,14 +730,14 @@ const TABLE_COL_META: Record<string, TableColMeta> = {
     minWidth: 100,
     align: "right",
   },
-  sector: { title: "关联板块", minWidth: 104, align: "left" },
+  sector: { title: "关联板块", minWidth: 104, align: "center" },
   amountShares: {
     title: "金额/份额",
     sortProp: "amountShares",
     minWidth: 100,
     align: "right",
   },
-  cost: { title: "成本/最新", sortProp: "cost", minWidth: 100, align: "right" },
+  cost: { title: "成本/最新", sortProp: "cost", minWidth: 100, align: "center" },
 };
 
 const router = useRouter();
@@ -1398,9 +1393,46 @@ async function handleAddFund() {
       fundSearchResults.value = [];
       fundFormRef.value?.resetFields();
     } catch (error: any) {
-      ElMessage.error("添加失败: " + error.message);
+      // 检查是否是重复基金错误
+      if (error.message === "基金已存在") {
+        try {
+          await ElMessageBox.confirm(
+            `基金 ${fundForm.value.code} 已在列表中，是否覆盖现有设置？`,
+            "基金已存在",
+            {
+              confirmButtonText: "覆盖",
+              cancelButtonText: "取消",
+              type: "warning",
+            },
+          );
+          // 用户确认覆盖，调用更新方法
+          submitting.value = true;
+          await fundService.updateFund(
+            fundForm.value.code,
+            fundForm.value.num,
+            fundForm.value.cost,
+            fundForm.value.groupKey || undefined,
+          );
+          ElMessage.success("更新成功");
+          showAddFundDialog.value = false;
+          fundForm.value = { code: "", num: 0, cost: 0, groupKey: "" };
+          fundPickName.value = "";
+          fundSearchResults.value = [];
+          fundFormRef.value?.resetFields();
+        } catch (e: any) {
+          if (e !== "cancel") {
+            ElMessage.error("更新失败: " + (e.message || ""));
+          }
+        } finally {
+          submitting.value = false;
+        }
+      } else {
+        ElMessage.error("添加失败: " + error.message);
+      }
     } finally {
-      submitting.value = false;
+      if (!showAddFundDialog.value) {
+        submitting.value = false;
+      }
     }
   });
 }
@@ -1785,6 +1817,7 @@ onUnmounted(() => {
   transition: all 0.2s;
   user-select: none;
   background: var(--bg-secondary);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .group-tag-item:hover {

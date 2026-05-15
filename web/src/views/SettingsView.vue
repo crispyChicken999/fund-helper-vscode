@@ -7,24 +7,21 @@
     </template>
 
     <div class="settings-main">
-      <el-form :label-position="formLabelPosition" label-width="120px">
+      <el-form label-position="right" :label-width="formLabelWidth">
         <el-divider content-position="left">显示设置</el-divider>
 
         <el-form-item label="隐私模式">
-          <el-switch v-model="privacyMode" @change="handlePrivacyModeChange" />
+          <el-switch v-model="privacyMode" />
           <div class="form-item-tip">开启后隐藏所有数值</div>
         </el-form-item>
 
         <el-form-item label="灰色模式">
-          <el-switch
-            v-model="grayscaleMode"
-            @change="handleGrayscaleModeChange"
-          />
+          <el-switch v-model="grayscaleMode" />
           <div class="form-item-tip">移除所有色彩，仅保留黑白灰</div>
         </el-form-item>
 
         <el-form-item label="主题">
-          <el-radio-group v-model="theme" @change="handleThemeChange">
+          <el-radio-group v-model="theme">
             <el-radio value="light">浅色</el-radio>
             <el-radio value="dark">深色</el-radio>
           </el-radio-group>
@@ -33,11 +30,16 @@
         <el-form-item label="刷新间隔">
           <el-select
             v-model="refreshInterval"
-            @change="handleRefreshIntervalChange"
+            allow-create
+            filterable
+            placeholder="选择或输入刷新间隔（秒）"
+            default-first-option
           >
             <el-option label="10秒" :value="10" />
             <el-option label="20秒" :value="20" />
             <el-option label="30秒" :value="30" />
+            <el-option label="40秒" :value="40" />
+            <el-option label="50秒" :value="50" />
             <el-option label="1分钟" :value="60" />
             <el-option label="5分钟" :value="300" />
           </el-select>
@@ -73,7 +75,7 @@
               />
               <span class="col-label">{{ col.label }}</span>
               <template v-if="col.key === 'name'">
-                <span class="col-fixed-tag">(固定)</span>
+                <span class="col-fixed-tag">固定</span>
               </template>
               <template v-else>
                 <el-button
@@ -109,6 +111,9 @@
             v-model="jsonboxName"
             placeholder="fundhelper_xxxxxxxx"
             clearable
+            minlength="20"
+            maxlength="64"
+            show-word-limit
             @blur="handleJsonboxNameChange"
           />
           <div
@@ -143,7 +148,9 @@
                 >重新生成</el-button
               >
             </div>
-            <div class="form-item-tip">字母数字下划线，至少20字符</div>
+            <div class="form-item-tip">
+              仅允许输入字母、数字、下划线，至少20字符
+            </div>
           </div>
         </el-form-item>
 
@@ -156,7 +163,7 @@
               :loading="isSyncing"
               :disabled="!jsonboxName"
             >
-              上传云端
+              上传至云端
             </el-button>
             <el-button
               :icon="Download"
@@ -164,10 +171,10 @@
               :loading="isSyncing"
               :disabled="!jsonboxName"
             >
-              下载云端
+              从云端同步
             </el-button>
             <el-button @click="showSyncDialog = true" :icon="Cellphone">
-              扫码同步/查看同步二维码
+              扫码同步/查看二维码
             </el-button>
             <el-button @click="handleOpenJsonLink" :disabled="!jsonboxName">
               查看在线JSON
@@ -178,7 +185,7 @@
               @click="handleClearRemote"
               :disabled="!jsonboxName"
             >
-              清空远程
+              清空云端数据
             </el-button>
           </el-space>
         </el-form-item>
@@ -203,7 +210,7 @@
           </el-button>
         </el-form-item>
 
-        <el-divider content-position="left">关于</el-divider>
+        <el-divider content-position="left">关于我们</el-divider>
 
         <el-form-item label="版本">
           <span>1.0.0</span>
@@ -211,6 +218,31 @@
 
         <el-form-item label="数据来源">
           <span>天天基金 / 东方财富</span>
+        </el-form-item>
+
+        <el-form-item label="项目仓库">
+          <div>
+            <div>
+              <a
+                href="https://github.com/crispyChicken999/fund-helper-vscode"
+                target="_blank"
+                rel="noopener noreferrer"
+                style="cursor: pointer"
+              >
+                <img
+                  src="https://badgen.net/github/stars/crispyChicken999/fund-helper-vscode?icon=github&label=Stars&color=blue"
+                  alt="GitHub Stars"
+                  style="height: 100%; vertical-align: middle"
+                />
+              </a>
+            </div>
+            <el-button link type="primary" @click="openRepository">
+              GitHub - fund-helper-vscode
+            </el-button>
+            <div class="form-item-tip">
+              本项目已开源，欢迎大家点个Star支持一下！
+            </div>
+          </div>
         </el-form-item>
       </el-form>
     </div>
@@ -253,10 +285,40 @@ const syncStore = useSyncStore();
 
 // ==================== 响应式数据 ====================
 
-const privacyMode = ref(false);
-const grayscaleMode = ref(false);
-const theme = ref<"light" | "dark">("light");
-const refreshInterval = ref(20);
+const privacyMode = computed({
+  get: () => settingStore.privacyMode,
+  set: async (value: boolean) => {
+    await settingStore.setPrivacyMode(value);
+    ElMessage.success(`已${value ? "开启" : "关闭"}隐私模式`);
+  },
+});
+
+const grayscaleMode = computed({
+  get: () => settingStore.grayscaleMode,
+  set: async (value: boolean) => {
+    await settingStore.setGrayscaleMode(value);
+    document.documentElement.dataset.grayscale = String(value);
+    ElMessage.success(`已${value ? "开启" : "关闭"}灰色模式`);
+  },
+});
+
+const theme = computed({
+  get: () => settingStore.theme,
+  set: async (value: "light" | "dark") => {
+    await settingStore.setTheme(value);
+    document.documentElement.dataset.theme = value;
+    ElMessage.success(`已切换到${value === "light" ? "浅色" : "深色"}主题`);
+  },
+});
+
+const refreshInterval = computed({
+  get: () => settingStore.refreshInterval,
+  set: async (value: number) => {
+    await settingStore.setRefreshInterval(value);
+    ElMessage.success(`刷新间隔已设置为 ${value} 秒`);
+  },
+});
+
 const jsonboxName = ref("");
 const savedJsonboxName = ref("");
 const showSyncDialog = ref(false);
@@ -269,9 +331,9 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 const columnSortRef = ref<HTMLElement | null>(null);
 let columnSortable: Sortable | null = null;
 
-// 移动端 label 位置
-const formLabelPosition = computed(() =>
-  window.innerWidth < 600 ? "top" : "right",
+// 移动端label宽度适配
+const formLabelWidth = computed(() =>
+  document.documentElement.clientWidth < 500 ? "105px" : "120px",
 );
 
 const jsonboxNameChanged = computed(
@@ -298,13 +360,19 @@ const isSyncing = computed(() => syncStore.isSyncing);
 // ==================== 初始化 ====================
 
 onMounted(async () => {
-  privacyMode.value = settingStore.privacyMode;
-  grayscaleMode.value = settingStore.grayscaleMode;
-  theme.value = settingStore.theme;
-  refreshInterval.value = settingStore.refreshInterval;
+  // 初始化 computed 已通过 getter 自动读取，无需手动赋值
+  // privacyMode, grayscaleMode, theme, refreshInterval 都是 computed
+
   jsonboxName.value = settingStore.jsonboxName;
   savedJsonboxName.value = settingStore.jsonboxName;
   visibleColumns.value = [...settingStore.visibleColumns];
+
+  // 应用 DOM 属性
+  document.documentElement.dataset.grayscale = String(
+    settingStore.grayscaleMode,
+  );
+  document.documentElement.dataset.theme = settingStore.theme;
+
   buildColumnDraft();
 
   await nextTick();
@@ -420,30 +488,6 @@ function saveColumnSettings() {
   ElMessage.success("列配置已保存");
 }
 
-// ==================== 显示设置 ====================
-
-async function handlePrivacyModeChange(value: boolean) {
-  await settingStore.setPrivacyMode(value);
-  storageService.saveSettings(settingStore.getSettings());
-}
-
-async function handleGrayscaleModeChange(value: boolean) {
-  await settingStore.setGrayscaleMode(value);
-  document.documentElement.dataset.grayscale = String(value);
-  storageService.saveSettings(settingStore.getSettings());
-}
-
-async function handleThemeChange(value: "light" | "dark") {
-  await settingStore.setTheme(value);
-  document.documentElement.dataset.theme = value;
-  storageService.saveSettings(settingStore.getSettings());
-}
-
-async function handleRefreshIntervalChange(value: number) {
-  await settingStore.setRefreshInterval(value);
-  storageService.saveSettings(settingStore.getSettings());
-}
-
 // ==================== 数据同步 ====================
 
 async function handleJsonboxNameChange() {
@@ -471,10 +515,7 @@ function handleCancelBoxName() {
 function handleRegenerateBoxName() {
   const name = generateJsonboxName();
   jsonboxName.value = name;
-  savedJsonboxName.value = name;
-  settingStore.setJsonboxName(name);
-  storageService.saveSettings(settingStore.getSettings());
-  ElMessage.success("已重新生成 Box Name");
+  ElMessage.success("已重新生成 Box Name，请点击保存");
 }
 
 async function handleSyncToCloud() {
@@ -489,7 +530,7 @@ async function handleSyncToCloud() {
 async function handleSyncFromCloud() {
   try {
     await syncService.syncFromCloud();
-    ElMessage.success("已从云端下载");
+    ElMessage.success("已同步云端配置");
   } catch (e: any) {
     ElMessage.error("下载失败: " + e.message);
   }
@@ -519,11 +560,17 @@ async function handleClearRemote() {
 
 function onSyncCompleted() {
   // Refresh local state after sync
+  // privacyMode, grayscaleMode, theme, refreshInterval 已通过 computed 自动同步
   jsonboxName.value = settingStore.jsonboxName;
   savedJsonboxName.value = settingStore.jsonboxName;
-  privacyMode.value = settingStore.privacyMode;
-  grayscaleMode.value = settingStore.grayscaleMode;
-  refreshInterval.value = settingStore.refreshInterval;
+
+  // 更新 DOM 属性以应用灰色模式和主题
+  document.documentElement.dataset.grayscale = String(
+    settingStore.grayscaleMode,
+  );
+  document.documentElement.dataset.theme = settingStore.theme;
+
+  // 重建列配置
   buildColumnDraft();
 }
 
@@ -618,19 +665,19 @@ async function onFileSelected(e: Event) {
 
     // 导入其他设置
     if (payload.privacyMode !== undefined) {
-      settingStore.setPrivacyMode(payload.privacyMode);
-      privacyMode.value = payload.privacyMode;
+      await settingStore.setPrivacyMode(payload.privacyMode);
+      // privacyMode computed 会自动读取新值
     }
     if (payload.grayscaleMode !== undefined) {
-      settingStore.setGrayscaleMode(payload.grayscaleMode);
-      grayscaleMode.value = payload.grayscaleMode;
+      await settingStore.setGrayscaleMode(payload.grayscaleMode);
       document.documentElement.dataset.grayscale = String(
         payload.grayscaleMode,
       );
+      // grayscaleMode computed 会自动读取新值
     }
     if (payload.refreshInterval !== undefined) {
-      settingStore.setRefreshInterval(payload.refreshInterval);
-      refreshInterval.value = payload.refreshInterval;
+      await settingStore.setRefreshInterval(payload.refreshInterval);
+      // refreshInterval computed 会自动读取新值
     }
     if (payload.sortMethod && typeof payload.sortMethod === "string") {
       // Map VSCode sortMethod format to web format
@@ -737,6 +784,13 @@ async function handleClearAll() {
     /* cancel */
   }
 }
+
+function openRepository() {
+  window.open(
+    "https://github.com/crispyChicken999/fund-helper-vscode",
+    "_blank",
+  );
+}
 </script>
 
 <style scoped>
@@ -816,8 +870,11 @@ async function handleClearAll() {
 }
 
 .column-settings-item .col-fixed-tag {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--el-text-color-secondary);
+  background: var(--el-border-color-light);
+  padding: 0 22px;
+  border-radius: 4px;
 }
 
 :deep(.sortable-ghost) {
