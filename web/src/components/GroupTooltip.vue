@@ -7,8 +7,12 @@
             <header class="group-tooltip-head">
               <div class="group-tooltip-title">{{ stats.groupName }}</div>
               <div class="head-actions">
-                <el-button link type="info" @click="handleCopy">复制</el-button>
-                <el-button link type="primary" @click="$emit('close')">关闭</el-button>
+                <button class="action-btn" @click="handleCopy" title="复制">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+                <button class="action-btn" @click="$emit('close')" title="关闭">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
             </header>
 
@@ -86,8 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatCurrency, formatPrivacy } from '@/utils/format'
-import { useSettingStore } from '@/stores'
+import { formatCurrency } from '@/utils/format'
 import { ElMessage } from 'element-plus'
 
 export interface GroupStats {
@@ -121,21 +124,19 @@ defineEmits<{
   close: []
 }>()
 
-const settingStore = useSettingStore()
-
+// 不受隐私模式影响，始终显示真实数据
 function safeNum(v: unknown): number {
   const n = Number(v)
   return isFinite(n) ? n : 0
 }
 
 function fmtMoney(v: unknown) {
-  return formatPrivacy(formatCurrency(safeNum(v)), settingStore.privacyMode)
+  return formatCurrency(safeNum(v))
 }
 
 function fmtPct(v: unknown) {
   const n = safeNum(v)
-  const s = `${n > 0 ? '+' : ''}${n.toFixed(2)}%`
-  return formatPrivacy(s, settingStore.privacyMode)
+  return `${n > 0 ? '+' : ''}${n.toFixed(2)}%`
 }
 
 function pctClass(v: unknown) {
@@ -151,29 +152,26 @@ function moneyClass(v: unknown) {
 
 function handleCopy() {
   const s = props.stats
-  // 复制始终使用真实数据，不受隐私模式影响
   const SEP = '━━━━━━━━━━━━━━━━'
-  const rawMoney = (v: unknown) => formatCurrency(safeNum(v))
-  const rawPct = (v: unknown) => { const n = safeNum(v); return `${n > 0 ? '+' : ''}${n.toFixed(2)}%` }
 
   const lines = [
     `分组名称：${s.groupName}`,
     `基金数量：${s.fundCount} 只`,
     SEP,
-    `估算收益 (${s.estimatedDate})：${rawMoney(s.estimatedGain)}`,
-    `估算涨幅 (${s.estimatedDate})：${rawPct(s.estimatedChangePercent)}`,
+    `估算收益 (${s.estimatedDate})：${fmtMoney(s.estimatedGain)}`,
+    `估算涨幅 (${s.estimatedDate})：${fmtPct(s.estimatedChangePercent)}`,
     `估算上涨/下跌 (${s.estimatedDate})：${s.estimatedUpCount} / ${s.estimatedDownCount}`,
     SEP,
-    `当日收益 (${s.dailyDate})：${rawMoney(s.dailyGain)}`,
-    `当日涨幅 (${s.dailyDate})：${rawPct(s.dailyChangePercent)}`,
+    `当日收益 (${s.dailyDate})：${fmtMoney(s.dailyGain)}`,
+    `当日涨幅 (${s.dailyDate})：${fmtPct(s.dailyChangePercent)}`,
     `当日上涨/下跌 (${s.dailyDate})：${s.dailyUpCount} / ${s.dailyDownCount}`,
     SEP,
-    `持有收益 (${s.holdingDate})：${rawMoney(s.holdingGain)}`,
-    `持有收益率 (${s.holdingDate})：${rawPct(s.holdingGainRate)}`,
+    `持有收益 (${s.holdingDate})：${fmtMoney(s.holdingGain)}`,
+    `持有收益率 (${s.holdingDate})：${fmtPct(s.holdingGainRate)}`,
     `持有盈利/亏损 (${s.holdingDate})：${s.holdingProfitCount} / ${s.holdingLossCount}`,
     SEP,
-    `总资产：${rawMoney(s.totalAsset)}`,
-    `总成本：${rawMoney(s.totalCost)}`
+    `总资产：${fmtMoney(s.totalAsset)}`,
+    `总成本：${fmtMoney(s.totalCost)}`
   ]
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
     ElMessage.success('已复制')
@@ -188,43 +186,60 @@ function handleCopy() {
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
   box-sizing: border-box;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
 }
 
 .group-tooltip-panel {
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
   max-height: 85vh;
   overflow: auto;
   background: var(--el-bg-color);
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px;
   border: 1px solid var(--el-border-color-lighter);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 .group-tooltip-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .head-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.head-actions .el-button {
-  margin: 0;
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.action-btn:hover {
+  background: var(--el-fill-color);
+  color: var(--el-text-color-primary);
 }
 
 .group-tooltip-title {
@@ -236,25 +251,35 @@ function handleCopy() {
 .group-tooltip-body {
   display: flex;
   flex-direction: column;
-  gap: 0;
 }
 
 .info-group {
-  padding: 8px 0;
-  border-top: 1px solid var(--el-border-color-lighter);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+}
+
+.info-group:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 0;
+  padding: 5px 0;
   font-size: 13px;
+  line-height: 1.4;
 }
 
 .info-label {
   color: var(--el-text-color-secondary);
   font-size: 12px;
+}
+
+.info-row > span:last-child {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .positive {

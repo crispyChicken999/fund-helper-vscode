@@ -7,7 +7,7 @@
           <!-- 第一栏：账户资产 -->
           <div class="stat-item stat-item-main">
             <div class="stat-label">
-              <span>账户资产</span>
+              <span>账户资产({{ fundStore.fundCount }})</span>
               <button
                 class="btn-icon"
                 @click="togglePrivacy"
@@ -135,6 +135,7 @@
             class="group-tag-item"
             :class="{ active: selectedGroupKey === 'all' }"
             @click="selectGroup('all')"
+            @contextmenu.prevent
           >
             全部
           </div>
@@ -148,6 +149,9 @@
             @pointerdown="onGroupPointerDown(group, $event)"
             @pointerup="onGroupPointerUp"
             @pointerleave="onGroupPointerUp"
+            @mouseenter="onGroupMouseEnter(group, $event)"
+            @mouseleave="onGroupMouseLeave"
+            @contextmenu.prevent
           >
             {{ group.name }}
           </div>
@@ -157,7 +161,7 @@
           @click="showGroupManageDialog = true"
           title="分组管理"
         >
-          ⚙
+          <el-icon><Setting /></el-icon>
         </button>
       </div>
 
@@ -211,11 +215,16 @@
           <el-table-column
             v-if="isColumnVisible('name')"
             fixed="left"
-            width="150"
+            width="136"
             label="基金名称"
           >
             <template #default="{ row }">
-              <div class="fund-name-cell" @click="openTooltip(row)">
+              <div
+                class="fund-name-cell"
+                @click="openTooltip(row)"
+                @mouseenter="onFundMouseEnter(row, $event)"
+                @mouseleave="onFundMouseLeave"
+              >
                 <div class="fund-name-row">
                   <span
                     v-if="row.showRealValueIcon"
@@ -361,6 +370,27 @@
         :visible="groupTooltipVisible"
         :stats="groupTooltipStats"
         @close="groupTooltipVisible = false"
+      />
+
+      <!-- PC 端 hover tooltip -->
+      <FundHoverTooltip
+        :visible="fundHoverVisible"
+        :row="fundHoverRow"
+        :privacy-mode="settingStore.privacyMode"
+        :x="fundHoverX"
+        :y="fundHoverY"
+        @mouseenter="onFundTooltipMouseEnter"
+        @mouseleave="onFundTooltipMouseLeave"
+        @close="closeFundHover"
+      />
+      <GroupHoverTooltip
+        :visible="groupHoverVisible"
+        :stats="groupHoverStats"
+        :x="groupHoverX"
+        :y="groupHoverY"
+        @mouseenter="onGroupTooltipMouseEnter"
+        @mouseleave="onGroupTooltipMouseLeave"
+        @close="closeGroupHover"
       />
 
       <!-- 分组管理弹窗 -->
@@ -666,14 +696,22 @@ import {
   type FormInstance,
   type FormRules,
 } from "element-plus";
-import { Plus, Search, Refresh, Operation } from "@element-plus/icons-vue";
-import { useDebounceFn } from "@vueuse/core";
+import {
+  Plus,
+  Search,
+  Refresh,
+  Operation,
+  Setting,
+} from "@element-plus/icons-vue";
+import { useDebounceFn, useMediaQuery } from "@vueuse/core";
 import Sortable from "sortablejs";
 import MainLayout from "@/layouts/MainLayout.vue";
 import FundTooltip from "@/components/FundTooltip.vue";
 import ColumnSettingsDialog from "@/components/ColumnSettingsDialog.vue";
 import GroupTooltip from "@/components/GroupTooltip.vue";
 import GroupManageDialog from "@/components/GroupManageDialog.vue";
+import FundHoverTooltip from "@/components/FundHoverTooltip.vue";
+import GroupHoverTooltip from "@/components/GroupHoverTooltip.vue";
 import type { GroupStats } from "@/components/GroupTooltip.vue";
 import { useFundStore, useGroupStore, useSettingStore } from "@/stores";
 import { fundService, groupService } from "@/services";
@@ -694,15 +732,33 @@ type TableColMeta = {
 };
 
 const TABLE_COL_META: Record<string, TableColMeta> = {
-  estimatedChange: {
-    title: "估算涨幅",
-    sortProp: "estimatedChange",
-    minWidth: 100,
-    align: "right",
-  },
   estimatedGain: {
     title: "估算收益",
     sortProp: "estimatedGain",
+    minWidth: 90,
+    align: "right",
+  },
+  estimatedChange: {
+    title: "估算涨幅",
+    sortProp: "estimatedChange",
+    minWidth: 90,
+    align: "right",
+  },
+  holdingGainRate: {
+    title: "总收益率",
+    sortProp: "holdingGainRate",
+    minWidth: 90,
+    align: "right",
+  },
+  holdingGain: {
+    title: "持有收益",
+    sortProp: "holdingGain",
+    minWidth: 95,
+    align: "right",
+  },
+  amountShares: {
+    title: "金额/份额",
+    sortProp: "amountShares",
     minWidth: 100,
     align: "right",
   },
@@ -718,26 +774,13 @@ const TABLE_COL_META: Record<string, TableColMeta> = {
     minWidth: 100,
     align: "right",
   },
-  holdingGain: {
-    title: "持有收益",
-    sortProp: "holdingGain",
-    minWidth: 95,
-    align: "right",
-  },
-  holdingGainRate: {
-    title: "总收益率",
-    sortProp: "holdingGainRate",
-    minWidth: 100,
-    align: "right",
-  },
   sector: { title: "关联板块", minWidth: 104, align: "center" },
-  amountShares: {
-    title: "金额/份额",
-    sortProp: "amountShares",
+  cost: {
+    title: "成本/最新",
+    sortProp: "cost",
     minWidth: 100,
-    align: "right",
+    align: "center",
   },
-  cost: { title: "成本/最新", sortProp: "cost", minWidth: 100, align: "center" },
 };
 
 const router = useRouter();
@@ -795,6 +838,44 @@ const fundPickName = ref("");
 
 const tooltipVisible = ref(false);
 const tooltipRow = ref<FundRowDisplay | null>(null);
+
+// PC 端 hover tooltip 状态
+const hasFinePointer = useMediaQuery("(pointer: fine)");
+const fundHoverVisible = ref(false);
+const fundHoverRow = ref<FundRowDisplay | null>(null);
+const fundHoverX = ref(0);
+const fundHoverY = ref(0);
+let fundHoverTimer: ReturnType<typeof setTimeout> | null = null;
+let fundHoverHideTimer: ReturnType<typeof setTimeout> | null = null;
+const HOVER_SHOW_DELAY = 350;
+const HOVER_HIDE_DELAY = 200;
+
+const groupHoverVisible = ref(false);
+const groupHoverStats = ref<GroupStats>({
+  groupName: "",
+  fundCount: 0,
+  estimatedGain: 0,
+  estimatedChangePercent: 0,
+  estimatedUpCount: 0,
+  estimatedDownCount: 0,
+  estimatedDate: "",
+  dailyGain: 0,
+  dailyChangePercent: 0,
+  dailyUpCount: 0,
+  dailyDownCount: 0,
+  dailyDate: "",
+  holdingGain: 0,
+  holdingGainRate: 0,
+  holdingProfitCount: 0,
+  holdingLossCount: 0,
+  holdingDate: "",
+  totalAsset: 0,
+  totalCost: 0,
+});
+const groupHoverX = ref(0);
+const groupHoverY = ref(0);
+let groupHoverTimer: ReturnType<typeof setTimeout> | null = null;
+let groupHoverHideTimer: ReturnType<typeof setTimeout> | null = null;
 
 // 分组 tag 容器 ref，用于滚动到对应 tag
 const groupTagsContainerRef = ref<HTMLElement | null>(null);
@@ -1194,8 +1275,199 @@ function confirmDeleteByRow(row: FundRowDisplay) {
 }
 
 function openTooltip(row: FundRowDisplay) {
+  // 关闭 hover tooltip
+  closeFundHover();
   tooltipRow.value = row;
   tooltipVisible.value = true;
+}
+
+// ===== PC 端 hover tooltip 逻辑 =====
+function onFundMouseEnter(row: FundRowDisplay, e: MouseEvent) {
+  if (!hasFinePointer.value) return;
+  // 清除隐藏定时器
+  if (fundHoverHideTimer) {
+    clearTimeout(fundHoverHideTimer);
+    fundHoverHideTimer = null;
+  }
+  // 延迟显示
+  fundHoverTimer = setTimeout(() => {
+    fundHoverRow.value = row;
+    // 基于基金名称元素位置，显示在名称右上角
+    const fundNameEl = (e.target as HTMLElement).querySelector('.fund-name') || (e.target as HTMLElement).closest('.fund-name-cell')?.querySelector('.fund-name');
+    if (fundNameEl) {
+      const rect = fundNameEl.getBoundingClientRect();
+      fundHoverX.value = rect.right + 8; // 名称右侧，留小边距
+      fundHoverY.value = rect.top; // 对齐名称顶部
+    } else {
+      // 备用方案：使用鼠标位置
+      fundHoverX.value = e.clientX;
+      fundHoverY.value = e.clientY;
+    }
+    fundHoverVisible.value = true;
+  }, HOVER_SHOW_DELAY);
+}
+
+function onFundMouseLeave() {
+  if (!hasFinePointer.value) return;
+  if (fundHoverTimer) {
+    clearTimeout(fundHoverTimer);
+    fundHoverTimer = null;
+  }
+  // 延迟隐藏，允许鼠标移入 tooltip
+  fundHoverHideTimer = setTimeout(() => {
+    fundHoverVisible.value = false;
+  }, HOVER_HIDE_DELAY);
+}
+
+function onFundTooltipMouseEnter() {
+  // 鼠标移入 tooltip 面板，取消隐藏
+  if (fundHoverHideTimer) {
+    clearTimeout(fundHoverHideTimer);
+    fundHoverHideTimer = null;
+  }
+}
+
+function onFundTooltipMouseLeave() {
+  // 鼠标离开 tooltip 面板，延迟隐藏
+  fundHoverHideTimer = setTimeout(() => {
+    fundHoverVisible.value = false;
+  }, HOVER_HIDE_DELAY);
+}
+
+function onGroupMouseEnter(group: Group, e: MouseEvent) {
+  if (!hasFinePointer.value) return;
+  if (groupHoverHideTimer) {
+    clearTimeout(groupHoverHideTimer);
+    groupHoverHideTimer = null;
+  }
+  groupHoverTimer = setTimeout(() => {
+    // 计算分组统计数据（复用 showGroupStats 的逻辑）
+    const codesInGroup = new Set(group.fundCodes);
+    const rows = enrichedRows.value.filter((r) => codesInGroup.has(r.code));
+    let estimatedGain = 0,
+      dailyGain = 0,
+      holdingGain = 0;
+    let totalAsset = 0,
+      totalCost = 0;
+    let estUp = 0,
+      estDown = 0,
+      dailyUp = 0,
+      dailyDown = 0;
+    let holdProfit = 0,
+      holdLoss = 0;
+
+    for (const row of rows) {
+      estimatedGain += row.estimatedGain;
+      if (row.gszzl > 0) estUp++;
+      else if (row.gszzl < 0) estDown++;
+      dailyGain += row.dailyGain;
+      if (row.navChgRt > 0) dailyUp++;
+      else if (row.navChgRt < 0) dailyDown++;
+      holdingGain += row.holdingGain;
+      if (row.holdingGain > 0) holdProfit++;
+      else if (row.holdingGain < 0) holdLoss++;
+      totalAsset += row.holdingAmount;
+      totalCost += row.costAmount;
+    }
+
+    const sample = rows[0];
+    const estimatedDate = sample?.estimatedDateLabel || "";
+    const dailyDate = sample?.navDateLabel || "";
+
+    groupHoverStats.value = {
+      groupName: group.name,
+      fundCount: rows.length,
+      estimatedGain,
+      estimatedChangePercent:
+        totalAsset > 0 ? (estimatedGain / totalAsset) * 100 : 0,
+      estimatedUpCount: estUp,
+      estimatedDownCount: estDown,
+      estimatedDate,
+      dailyGain,
+      dailyChangePercent: totalAsset > 0 ? (dailyGain / totalAsset) * 100 : 0,
+      dailyUpCount: dailyUp,
+      dailyDownCount: dailyDown,
+      dailyDate,
+      holdingGain,
+      holdingGainRate: totalCost > 0 ? (holdingGain / totalCost) * 100 : 0,
+      holdingProfitCount: holdProfit,
+      holdingLossCount: holdLoss,
+      holdingDate: dailyDate,
+      totalAsset,
+      totalCost,
+    };
+    // 基于分组元素位置，智能显示在左下角或右下角
+    const groupTagEl = (e.target as HTMLElement).closest('.group-tag-item');
+    if (groupTagEl) {
+      const rect = groupTagEl.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      // 判断分组item是否在右侧（中心点在视口右半部分）
+      const isRightSide = rect.left + rect.width / 2 > viewportWidth / 2;
+      
+      if (isRightSide) {
+        // 右侧item：显示在right bottom
+        groupHoverX.value = rect.right;
+        groupHoverY.value = rect.bottom + 8;
+      } else {
+        // 左侧item：显示在left bottom
+        groupHoverX.value = rect.left;
+        groupHoverY.value = rect.bottom + 8;
+      }
+    } else {
+      // 备用方案：使用鼠标位置
+      groupHoverX.value = e.clientX;
+      groupHoverY.value = e.clientY;
+    }
+    groupHoverVisible.value = true;
+  }, HOVER_SHOW_DELAY);
+}
+
+function onGroupMouseLeave() {
+  if (!hasFinePointer.value) return;
+  if (groupHoverTimer) {
+    clearTimeout(groupHoverTimer);
+    groupHoverTimer = null;
+  }
+  groupHoverHideTimer = setTimeout(() => {
+    groupHoverVisible.value = false;
+  }, HOVER_HIDE_DELAY);
+}
+
+function onGroupTooltipMouseEnter() {
+  if (groupHoverHideTimer) {
+    clearTimeout(groupHoverHideTimer);
+    groupHoverHideTimer = null;
+  }
+}
+
+function onGroupTooltipMouseLeave() {
+  groupHoverHideTimer = setTimeout(() => {
+    groupHoverVisible.value = false;
+  }, HOVER_HIDE_DELAY);
+}
+
+function closeFundHover() {
+  if (fundHoverTimer) {
+    clearTimeout(fundHoverTimer);
+    fundHoverTimer = null;
+  }
+  if (fundHoverHideTimer) {
+    clearTimeout(fundHoverHideTimer);
+    fundHoverHideTimer = null;
+  }
+  fundHoverVisible.value = false;
+}
+
+function closeGroupHover() {
+  if (groupHoverTimer) {
+    clearTimeout(groupHoverTimer);
+    groupHoverTimer = null;
+  }
+  if (groupHoverHideTimer) {
+    clearTimeout(groupHoverHideTimer);
+    groupHoverHideTimer = null;
+  }
+  groupHoverVisible.value = false;
 }
 
 // 移动端 fixed 列 clone DOM 不触发 Vue @click，在 wrapper 上监听 touchend
@@ -1517,6 +1789,10 @@ async function confirmDeleteGroup() {
 
 function onGroupPointerDown(group: Group, e: PointerEvent) {
   if (e.pointerType === "mouse" && e.button !== 0) return;
+  // 阻止长按默认行为（防止右键菜单和文本选中）
+  if (e.pointerType !== "mouse") {
+    e.preventDefault();
+  }
   onGroupPointerUp();
   groupPressTimer = setTimeout(() => {
     groupPressTimer = null;
@@ -1532,6 +1808,8 @@ function onGroupPointerUp() {
 }
 
 function showGroupStats(group: Group) {
+  // 关闭 hover tooltip
+  closeGroupHover();
   // Filter by group's fundCodes array (not fund.groupKey which is unreliable)
   const codesInGroup = new Set(group.fundCodes);
   const rows = enrichedRows.value.filter((r) => codesInGroup.has(r.code));
@@ -1816,6 +2094,9 @@ onUnmounted(() => {
   white-space: nowrap;
   transition: all 0.2s;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
   background: var(--bg-secondary);
   -webkit-tap-highlight-color: transparent;
 }
@@ -1962,11 +2243,16 @@ onUnmounted(() => {
 .cell-stack {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  line-height: 1;
 }
 
 .cell-stack > div {
   white-space: nowrap;
+}
+
+.cell-stack > div:first-child {
+  font-size: 14px;
 }
 
 .fund-name-row {
@@ -1974,7 +2260,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   overflow: hidden;
   cursor: pointer;
   color: var(--text-primary);
@@ -2041,7 +2327,7 @@ onUnmounted(() => {
 
 .td-sub {
   font-size: 11px;
-  margin-top: 2px;
+  font-weight: 100;
 }
 
 .td-sub.muted {
