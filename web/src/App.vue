@@ -53,28 +53,31 @@ watch(
 .flash-up { animation: flash-up 0.6s ease; }
 .flash-down { animation: flash-down 0.6s ease; }
 
-/* View Transitions API 样式 */
+/** 切换暗色模式过渡效果的相关css - start */
+/* stylelint-disable selector-pseudo-element-no-unknown */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation: none;
   mix-blend-mode: normal;
+  animation: none;
+}
+
+/* 进入dark模式和退出dark模式时，两个图像的位置顺序正好相反 */
+.dark::view-transition-old(root) {
+  z-index: 1;
+}
+
+.dark::view-transition-new(root) {
+  z-index: 99999;
 }
 
 ::view-transition-old(root) {
-  z-index: 1;
+  z-index: 99999;
 }
 
 ::view-transition-new(root) {
-  z-index: 2147483646;
-}
-
-html.dark::view-transition-old(root) {
-  z-index: 2147483646;
-}
-
-html.dark::view-transition-new(root) {
   z-index: 1;
 }
+
 
 /* 移动端适配 */
 @media (max-width: 768px) {

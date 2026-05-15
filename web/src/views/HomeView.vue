@@ -84,7 +84,7 @@
                 type="primary"
                 size="small"
                 round
-                :plain="isDarkMode ? false : true"
+                plain
                 @click="showAddFundDialog = true"
                 title="添加基金"
               >
@@ -810,7 +810,7 @@ const router = useRouter();
 const fundStore = useFundStore();
 const groupStore = useGroupStore();
 const settingStore = useSettingStore();
-const isDarkMode = computed(() => settingStore.theme === "dark");
+// const isDarkMode = computed(() => settingStore.theme === "dark");
 
 const loading = ref(false);
 const refreshing = ref(false);
@@ -1212,14 +1212,14 @@ async function toggleDarkMode(event: MouseEvent) {
 
     (document.documentElement as any).animate(
       {
-        clipPath: isDark ? [...clipPath].reverse() : clipPath,
+        clipPath: isDark ? clipPath : clipPath.reverse(),
       },
       {
-        duration: 450,
-        easing: 'ease-in',
+        duration: 700,
+          easing: "cubic-bezier(0.645, 0.045, 0.355, 1)",
         pseudoElement: isDark
-          ? '::view-transition-old(root)'
-          : '::view-transition-new(root)',
+          ? '::view-transition-new(root)'
+          : '::view-transition-old(root)',
       } as any
     );
   });
@@ -1672,11 +1672,10 @@ function showAllGroupStats() {
   groupTooltipVisible.value = true;
 }
 
-// FundHoverTooltip 操作事件处理
 function onHoverTooltipDetail() {
   if (!fundHoverRow.value) return;
   closeFundHover();
-  openTooltip(fundHoverRow.value);
+  router.push(`/fund/${fundHoverRow.value.code}`);
 }
 
 function onHoverTooltipAdjust(isAdd: boolean) {
@@ -2355,7 +2354,7 @@ onUnmounted(() => {
   font-size: 12px;
   border-radius: 12px;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: var(--el-text-color-primary);
   white-space: nowrap;
   transition: all 0.2s;
   user-select: none;
@@ -2364,6 +2363,11 @@ onUnmounted(() => {
   touch-action: manipulation;
   background: var(--bg-secondary);
   -webkit-tap-highlight-color: transparent;
+}
+
+html.dark .group-tag-item.active {
+  background: var(--el-color-primary-light-3);
+  color: var(--el-text-color-primary);
 }
 
 .group-tag-item:hover {

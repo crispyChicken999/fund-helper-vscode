@@ -66,18 +66,25 @@
             :class="cardBorderClass(card.changePercent)"
           >
             <div class="card-name">{{ card.name }}</div>
-            <div class="card-price">{{ card.price.toFixed(2) }}</div>
             <div
-              class="card-change"
+              class="card-price"
               :class="changeColorClass(card.changePercent)"
             >
-              {{ fmtPct(card.changePercent) }}
+              {{ card.price.toFixed(2) }}
             </div>
-            <div
-              class="card-amount"
-              :class="changeColorClass(card.changeAmount)"
-            >
-              {{ fmtChange(card.changeAmount) }}
+            <div class="card-stats">
+              <div
+                class="card-amount"
+                :class="changeColorClass(card.changeAmount)"
+              >
+                {{ fmtChange(card.changeAmount) }}
+              </div>
+              <div
+                class="card-change"
+                :class="changeColorClass(card.changePercent)"
+              >
+                {{ fmtPct(card.changePercent) }}
+              </div>
             </div>
           </div>
         </div>
@@ -330,13 +337,15 @@ async function renderFlowChart(
   }
 
   const times = data.map((d) => d.time.split(" ").pop() ?? d.time);
+  // data-grayscale 属性控制是否启用灰度模式，配合 CSS filter 实现全图灰度
+  const isGrayScale = document.documentElement.dataset.grayscale === "true";
   const option = {
     tooltip: {
       trigger: "axis",
       formatter(params: any[]) {
         let html = `<div style="font-size:12px">${params[0]?.axisValue}<br/>`;
         params.forEach((p: any) => {
-          const color = p.value >= 0 ? "var(--color-up)" : "var(--color-down)";
+          const color = isGrayScale ? "var(--el-text-color)" : p.value >= 0 ? "var(--color-up)" : "var(--color-down)";
           html += `<span style="color:${color}">${p.seriesName}: ${p.value.toFixed(2)} 亿</span><br/>`;
         });
         return html + "</div>";
@@ -634,6 +643,7 @@ onUnmounted(() => {
   padding: 10px 12px;
   background: var(--el-fill-color);
   border-radius: 8px;
+  border: 1px solid var(--el-border-color);
 }
 
 .stat-up {
@@ -649,16 +659,22 @@ onUnmounted(() => {
 /* 指数卡片 */
 .index-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(120px,1fr));
+  gap: 12px;
 }
 
 .index-card {
-  padding: 12px;
-  border-radius: 8px;
+  padding: 10px;
+  border-radius: 6px;
   border: 1px solid var(--el-border-color);
-  border-left: 4px solid var(--el-border-color);
+  border-left: 3px solid var(--el-border-color);
   background: var(--el-bg-color);
+  transition: all 0.2s ease;
+}
+
+.index-card:hover {
+  background: var(--el-fill-color);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .index-card.border-up {
@@ -672,20 +688,35 @@ onUnmounted(() => {
 }
 
 .card-name {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
 }
 
 .card-price {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 4px;
+  font-size: 20px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.card-stats {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
 }
 
 .card-change,
 .card-amount {
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .color-up {
@@ -747,6 +778,10 @@ onUnmounted(() => {
   gap: 4px;
 }
 
+html.dark .index-img-wrap img {
+  filter: invert(1) grayscale(1) brightness(0.8);
+}
+
 .index-img-wrap img {
   width: 90px;
   height: 106px;
@@ -777,17 +812,10 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .index-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .market-stat-bar {
     font-size: 12px;
     gap: 8px;
   }
 
-  .card-price {
-    font-size: 16px;
-  }
 }
 </style>

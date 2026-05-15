@@ -4,7 +4,9 @@
       <slot name="header" />
     </div>
     <div class="layout-content">
-      <slot />
+      <el-scrollbar>
+        <slot  />
+      </el-scrollbar>
     </div>
   </div>
 </template>
@@ -24,7 +26,6 @@
 .layout-content {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 </style>

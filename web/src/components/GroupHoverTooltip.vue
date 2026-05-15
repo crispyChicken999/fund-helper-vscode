@@ -340,7 +340,7 @@ function handleCopy() {
 
 .info-group {
   padding: 7px 0;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .info-group-last,

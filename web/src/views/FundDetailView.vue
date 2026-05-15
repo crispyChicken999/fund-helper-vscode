@@ -3,10 +3,33 @@
     <template #header>
       <div class="detail-header">
         <div class="header-left">
-          <el-button text :icon="ArrowLeft" @click="goBack">返回</el-button>
+          <el-button plain :icon="ArrowLeft" @click="goBack">返回</el-button>
           <div class="header-info">
             <span class="fund-name">{{ displayName }}</span>
-            <span class="fund-code">{{ code }}</span>
+            <div class="fund-code-row">
+              <span class="fund-code">{{ code }}</span>
+              <div class="fund-nav-btns">
+                <el-button
+                  size="small"
+                  text
+                  :disabled="prevCode === null"
+                  :title="prevCode ? `上一个：${prevCode}` : '已是第一个'"
+                  @click="navigateTo(prevCode)"
+                  >‹</el-button
+                >
+                <span class="fund-nav-pos"
+                  >{{ currentIndex + 1 }} / {{ allFundCodes.length }}</span
+                >
+                <el-button
+                  size="small"
+                  text
+                  :disabled="nextCode === null"
+                  :title="nextCode ? `下一个：${nextCode}` : '已是最后一个'"
+                  @click="navigateTo(nextCode)"
+                  >›</el-button
+                >
+              </div>
+            </div>
           </div>
         </div>
         <el-button size="small" :loading="refreshing" @click="handleRefresh">
@@ -15,11 +38,12 @@
       </div>
       <!-- Tab 栏 -->
       <div class="detail-tabs">
-        <el-scrollbar>
-          <div class="detail-tabs-inner">
+        <el-scrollbar ref="tabScrollbarRef">
+          <div ref="tabsInnerRef" class="detail-tabs-inner">
             <span
               v-for="tab in tabs"
               :key="tab.key"
+              :data-tab-key="tab.key"
               class="tab-item"
               :class="{ active: activeTab === tab.key }"
               @click="switchTab(tab.key)"
@@ -526,7 +550,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import {
   ElMessage,
@@ -538,7 +562,7 @@ import { ArrowLeft, Refresh } from "@element-plus/icons-vue";
 import DetailLayout from "@/layouts/DetailLayout.vue";
 import { useFundStore, useSettingStore } from "@/stores";
 import { fundService } from "@/services";
-import { formatCurrency, formatNumber, formatPrivacy } from "@/utils/format";
+import { formatCurrency, formatNumber } from "@/utils/format";
 import { loadEcharts } from "@/utils/echarts";
 import {
   fetchFundOverview,
@@ -611,6 +635,12 @@ const profitChartRef = ref<HTMLElement | null>(null);
 let netValueChart: any = null;
 let profitChart: any = null;
 
+// Tab 滚动
+const tabScrollbarRef = ref<InstanceType<
+  (typeof import("element-plus"))["ElScrollbar"]
+> | null>(null);
+const tabsInnerRef = ref<HTMLElement | null>(null);
+
 const loadedTabs = new Set<string>();
 
 const editForm = ref({ num: 0, cost: 0 });
@@ -625,6 +655,30 @@ const editFormRules: FormRules = {
     { type: "number", min: 0.0001, message: "成本价>0", trigger: "blur" },
   ],
 };
+
+// ==================== 基金列表导航 ====================
+
+// 按 store 中的顺序取所有基金代码
+const allFundCodes = computed(() => fundStore.funds.map((f) => f.code));
+
+const currentIndex = computed(() => allFundCodes.value.indexOf(props.code));
+
+const prevCode = computed(() => {
+  const i = currentIndex.value;
+  return i > 0 ? allFundCodes.value[i - 1]! : null;
+});
+
+const nextCode = computed(() => {
+  const i = currentIndex.value;
+  return i >= 0 && i < allFundCodes.value.length - 1
+    ? allFundCodes.value[i + 1]!
+    : null;
+});
+
+async function navigateTo(targetCode: string | null) {
+  if (!targetCode) return;
+  await router.push(`/fund/${targetCode}`);
+}
 
 // ==================== 计算属性 ====================
 
@@ -673,25 +727,18 @@ function safeNum(v: unknown): number {
   return isFinite(n) ? n : 0;
 }
 function fmtNum(v: unknown) {
-  return formatPrivacy(formatNumber(safeNum(v), 2), settingStore.privacyMode);
+  return formatNumber(safeNum(v), 2);
 }
 function fmtPrice(v: unknown) {
-  return v != null && v !== ""
-    ? formatPrivacy(safeNum(v).toFixed(4), settingStore.privacyMode)
-    : "--";
+  return v != null && v !== "" ? safeNum(v).toFixed(4) : "--";
 }
 function fmtMoney(v: unknown) {
-  return v != null
-    ? formatPrivacy(formatCurrency(safeNum(v)), settingStore.privacyMode)
-    : "--";
+  return v != null ? formatCurrency(safeNum(v)) : "--";
 }
 function fmtPct(v: unknown) {
   if (v == null) return "--";
   const n = safeNum(v);
-  return formatPrivacy(
-    `${n > 0 ? "+" : ""}${n.toFixed(2)}%`,
-    settingStore.privacyMode,
-  );
+  return `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
 }
 function pctClass(v: unknown) {
   const n = safeNum(v);
@@ -739,7 +786,27 @@ function comparedClass(s: { changeType: string; changeRatio: number }) {
 
 async function switchTab(tab: string) {
   activeTab.value = tab;
+  scrollTabIntoCenter(tab);
   await loadTabOnce(tab);
+}
+
+function scrollTabIntoCenter(tabKey: string) {
+  nextTick(() => {
+    const inner = tabsInnerRef.value;
+    if (!inner) return;
+    const tabEl = inner.querySelector(
+      `[data-tab-key="${tabKey}"]`,
+    ) as HTMLElement | null;
+    if (!tabEl) return;
+    // 计算让 tab 居中所需的 scrollLeft
+    const containerWidth =
+      inner.parentElement?.clientWidth ?? inner.scrollWidth;
+    const tabLeft = tabEl.offsetLeft;
+    const tabWidth = tabEl.offsetWidth;
+    const targetScroll = tabLeft - containerWidth / 2 + tabWidth / 2;
+    // 使用 el-scrollbar 的 setScrollLeft
+    tabScrollbarRef.value?.setScrollLeft(Math.max(0, targetScroll));
+  });
 }
 
 async function loadTabOnce(tab: string) {
@@ -1067,12 +1134,49 @@ async function confirmDelete() {
 }
 
 function goBack() {
-  router.back();
+  router.push("/");
 }
 
 // ==================== ResizeObserver ====================
 
 let resizeObs: ResizeObserver | null = null;
+
+// ==================== 路由参数变化时重置 ====================
+
+watch(
+  () => props.code,
+  async (newCode) => {
+    if (!newCode) return;
+    // 重置所有状态，但保留当前 tab
+    overview.value = null;
+    managers.value = [];
+    themes.value = [];
+    periodIncrease.value = null;
+    weekNavRecords.value = [];
+    positionData.value = null;
+    netValueRange.value = "1m";
+    profitRange.value = "1m";
+    loadedTabs.clear();
+    loadedTabs.add("holding");
+
+    // 销毁旧图表，等 DOM 更新后重建
+    netValueChart?.dispose();
+    netValueChart = null;
+    profitChart?.dispose();
+    profitChart = null;
+
+    // 加载新基金数据
+    if (!fundStore.fundDetails.has(newCode)) {
+      await fundService.fetchFundDetail(newCode);
+    }
+    if (fundView.value) {
+      editForm.value = { num: fundView.value.num, cost: fundView.value.cost };
+    }
+    // 加载当前 tab 的数据（loadedTabs 已清空）并滚动居中
+    await loadTabOnce(activeTab.value);
+    scrollTabIntoCenter(activeTab.value);
+  },
+);
 
 // ==================== 生命周期 ====================
 
@@ -1085,6 +1189,8 @@ onMounted(async () => {
   if (fundView.value) {
     editForm.value = { num: fundView.value.num, cost: fundView.value.cost };
   }
+  // 初始 tab 滚动居中
+  scrollTabIntoCenter(activeTab.value);
   // 持仓 Tab 无需网络请求
   loadedTabs.add("holding");
 
@@ -1139,6 +1245,38 @@ onUnmounted(() => {
   color: var(--el-text-color-secondary);
 }
 
+.fund-code-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fund-nav-btns {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.fund-nav-btns .el-button {
+  padding: 0 4px;
+  font-size: 16px;
+  height: 20px;
+  min-height: unset;
+  line-height: 1;
+  color: var(--el-text-color-secondary);
+}
+
+.fund-nav-btns .el-button:not(:disabled):hover {
+  color: var(--el-color-primary);
+}
+
+.fund-nav-pos {
+  font-size: 11px;
+  color: var(--el-text-color-placeholder);
+  white-space: nowrap;
+  padding: 0 2px;
+}
+
 .detail-tabs {
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color);
@@ -1189,19 +1327,19 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 4px;
   padding: 12px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--el-border-color);
   border-radius: 8px;
-  background: var(--el-fill-color-lighter);
+  background: var(--el-fill-color);
 }
 
 .g-label {
-  font-size: 12px;
+  font-size: 16px;
   color: var(--el-text-color-secondary);
 }
 
 .g-value {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 /* 概况列表 */
@@ -1334,7 +1472,7 @@ onUnmounted(() => {
   font-size: 12px;
   color: var(--el-text-color-secondary);
   line-height: 1.6;
-  max-height: 220px;
+  max-height: 50vh;
   overflow-y: auto;
 }
 

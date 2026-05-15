@@ -98,7 +98,7 @@
             </section>
 
             <footer class="fund-tooltip-actions">
-              <el-button type="primary" size="small" @click="$emit('detail')">查看详情</el-button>
+              <el-button type="primary" plain size="small" @click="$emit('detail')">查看详情</el-button>
               <el-button size="small" @click="$emit('addShares')">加仓</el-button>
               <el-button size="small" @click="$emit('reduceShares')">减仓</el-button>
               <el-button size="small" @click="$emit('edit')">编辑持仓</el-button>
@@ -244,7 +244,7 @@ function handleCopy() {
   background: var(--el-bg-color);
   border-radius: 12px;
   padding: 20px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--el-border-color-light);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
@@ -254,7 +254,7 @@ function handleCopy() {
   align-items: flex-start;
   margin-bottom: 14px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .head-actions {
@@ -303,7 +303,7 @@ function handleCopy() {
 
 .info-group {
   padding: 10px 0;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .info-group:last-child {
