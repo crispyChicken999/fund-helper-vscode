@@ -7,30 +7,41 @@
     </template>
 
     <div class="settings-main">
-      <!-- 使用说明 -->
-      <el-alert class="usage-guide" :closable="false" show-icon type="success">
-        <template #title>
-          <span class="usage-guide-title">使用说明</span>
-        </template>
-        <ul class="usage-guide-list">
-          <li>
-            📌<strong>长按分组</strong>，可查看该分组的详情信息（持仓汇总、收益统计等）
-          </li>
-          <li>
-            ➕ 点击首页右上角
-            <strong>+</strong> 按钮可添加新基金，支持按代码或名称搜索
-          </li>
-          <li>✏️ <strong>点击基金名称</strong>，可查看基金详情、编辑持仓成本、份额和进行删除等操作</li>
-          <li>↕️ 默认排序时，<strong>拖动基金行</strong>可调整排列顺序</li>
-          <li>
-            🔒 开启<strong>隐私模式</strong>后所有数值将被隐藏，适合截图分享
-          </li>
-          <li>☁️ 配置 <strong>Box Name</strong>后，可在多设备间（VSCode插件、PC、Mobile）云同步数据</li>
-        </ul>
-      </el-alert>
+      <el-collapse v-model="activeCollapseItems" class="settings-collapse">
+        <!-- 使用说明 -->
+        <el-collapse-item
+          class="usage-guide settings-collapse-item"
+          name="display"
+        >
+          <template #title>
+            <span class="collapse-section-title">使用说明</span>
+          </template>
+          <ul class="usage-guide-list">
+            <li>
+              📌<strong>长按分组</strong>，可查看该分组的详情信息（持仓汇总、收益统计等）
+            </li>
+            <li>
+              ➕ 点击首页右上角
+              <strong>+</strong> 按钮可添加新基金，支持按代码或名称搜索
+            </li>
+            <li>
+              ✏️
+              <strong>点击基金名称</strong
+              >，可查看基金详情、编辑持仓成本、份额和进行删除等操作
+            </li>
+            <li>↕️ 默认排序时，<strong>拖动基金行</strong>可调整排列顺序</li>
+            <li>
+              🔒 开启<strong>隐私模式</strong>后所有数值将被隐藏，适合截图分享
+            </li>
+            <li>
+              ☁️ 配置
+              <strong>Box Name</strong
+              >后，可在多设备间（VSCode插件、PC、Mobile）云同步数据
+            </li>
+          </ul>
+        </el-collapse-item>
 
-      <el-form label-position="right" :label-width="formLabelWidth">
-        <el-collapse v-model="activeCollapseItems" class="settings-collapse">
+        <el-form label-position="right" :label-width="formLabelWidth">
           <!-- 显示设置 -->
           <el-collapse-item name="display" class="settings-collapse-item">
             <template #title>
@@ -78,9 +89,13 @@
               <span class="collapse-section-title">列表配置</span>
             </template>
             <el-form-item label="列配置">
-              <div class="form-item-tip" style="margin-bottom: 8px">
-                勾选显示，取消隐藏；拖动 ☰ 或点击箭头调整顺序
-              </div>
+              <el-alert
+                type="warning"
+                size="small"
+                :closable="false"
+                style="--el-alert-padding: 4px 16px; margin-bottom: 10px"
+                >勾选显示，取消隐藏；拖动 ☰ 或点击箭头调整顺序</el-alert
+              >
               <ul ref="columnSortRef" class="column-settings-list">
                 <li
                   v-for="(col, index) in columnOrderDraft"
@@ -128,9 +143,12 @@
                   </template>
                 </li>
               </ul>
-              <div style="display: flex; gap: 8px; margin-top: 10px">
+              <div style="display: flex; gap: 8px">
                 <el-button @click="resetColumnSettings">恢复默认</el-button>
-                <el-button type="primary" @click="saveColumnSettings"
+                <el-button
+                  type="primary"
+                  @click="saveColumnSettings"
+                  style="margin: 0"
                   >保存</el-button
                 >
               </div>
@@ -272,7 +290,15 @@
             </el-form-item>
 
             <el-form-item label="项目仓库" label-width="120px">
-              <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 8px">
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                  align-items: flex-start;
+                  gap: 8px;
+                "
+              >
                 <div>
                   <a
                     href="https://github.com/crispyChicken999/fund-helper-vscode"
@@ -290,16 +316,31 @@
                 <el-button link type="primary" @click="openRepository">
                   GitHub - fund-helper-vscode
                 </el-button>
-                <div class="form-item-tip" style="margin: 0px; text-align: justify">
+                <div
+                  class="form-item-tip"
+                  style="margin: 0px; text-align: justify"
+                >
                   本项目已开源，欢迎大家点个Star支持一下！
                 </div>
               </div>
             </el-form-item>
 
             <el-form-item label="VSCode 插件" label-width="120px">
-              <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 8px">
-                <div class="form-item-tip" style="margin: 0px; text-align: justify">
-                  本项目同时提供 VSCode 插件版本，在编码的同时随时关注基金行情，支持与本页面云同步数据，欢迎使用！点击下方按钮前往插件市场下载。
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                  align-items: flex-start;
+                  gap: 8px;
+                "
+              >
+                <div
+                  class="form-item-tip"
+                  style="margin: 0px; text-align: justify"
+                >
+                  本项目同时提供 VSCode
+                  插件版本，在编码的同时随时关注基金行情，支持与本页面云同步数据，欢迎使用！点击下方按钮前往插件市场下载。
                 </div>
                 <el-button
                   type="primary"
@@ -312,8 +353,8 @@
               </div>
             </el-form-item>
           </el-collapse-item>
-        </el-collapse>
-      </el-form>
+        </el-form>
+      </el-collapse>
     </div>
 
     <!-- 同步对话框 -->
@@ -917,7 +958,7 @@ function openVscodeExtension() {
   padding: 0px 12px;
   border: 1px solid var(--el-border-color);
   border-radius: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   background: var(--el-bg-color);
   font-size: 13px;
   transition: background 0.15s;
@@ -958,6 +999,7 @@ function openVscodeExtension() {
   background: var(--el-border-color-light);
   padding: 0 22px;
   border-radius: 4px;
+  line-height: 2;
 }
 
 :deep(.sortable-ghost) {
@@ -1017,7 +1059,7 @@ function openVscodeExtension() {
 }
 
 .usage-guide-list {
-  margin: 6px 0 0 0;
+  margin: 10px;
   padding-left: 4px;
   list-style: none;
   display: flex;
@@ -1038,7 +1080,7 @@ function openVscodeExtension() {
 }
 
 .settings-collapse-item {
-  margin-bottom: 8px;
+  margin-bottom: 16px;
   border: 1px solid var(--el-border-color) !important;
   border-radius: 8px !important;
   overflow: hidden;

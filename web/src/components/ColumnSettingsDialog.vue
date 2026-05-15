@@ -3,13 +3,17 @@
     :model-value="visible"
     title="列设置"
     width="min(92%, 480px)"
-    top="5vh"
+    top="15vh"
     :close-on-click-modal="true"
     @update:model-value="$emit('update:visible', $event)"
   >
-    <div class="col-settings-hint">
-      勾选显示，取消隐藏；拖动 ☰ 手柄或点击箭头排序
-    </div>
+    <el-alert
+      type="warning"
+      size="small"
+      :closable="false"
+      style="--el-alert-padding: 4px 16px; margin-bottom: 10px"
+      >勾选显示，取消隐藏；拖动 ☰ 或点击箭头调整顺序</el-alert
+    >
 
     <ul ref="sortableRef" class="col-settings-list">
       <li
@@ -20,7 +24,9 @@
         :class="{ fixed: col.key === 'name' }"
         @click="col.key !== 'name' && toggleVisible(index, !col.visible)"
       >
-        <span class="drag-handle" :class="{ disabled: col.key === 'name' }">☰</span>
+        <span class="drag-handle" :class="{ disabled: col.key === 'name' }"
+          >☰</span
+        >
         <el-checkbox
           :model-value="col.visible"
           :disabled="col.key === 'name'"
@@ -34,13 +40,15 @@
             size="small"
             :disabled="index <= 1"
             @click.stop="moveUp(index)"
-          >↑</el-button>
+            >↑</el-button
+          >
           <el-button
             size="small"
             style="margin: 0"
             :disabled="index >= draft.length - 1"
             @click.stop="moveDown(index)"
-          >↓</el-button>
+            >↓</el-button
+          >
         </template>
       </li>
     </ul>
@@ -53,155 +61,174 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onBeforeUnmount } from 'vue'
-import Sortable from 'sortablejs'
-import { useSettingStore } from '@/stores'
+import { ref, watch, nextTick, onBeforeUnmount } from "vue";
+import Sortable from "sortablejs";
+import { useSettingStore } from "@/stores";
 
 const props = defineProps<{
-  visible: boolean
-}>()
+  visible: boolean;
+}>();
 
 const emit = defineEmits<{
-  'update:visible': [value: boolean]
-}>()
+  "update:visible": [value: boolean];
+}>();
 
-const settingStore = useSettingStore()
+const settingStore = useSettingStore();
 
 const ALL_COLUMNS: { key: string; label: string }[] = [
-  { key: 'name', label: '基金名称' },
-  { key: 'estimatedChange', label: '估算涨幅' },
-  { key: 'estimatedGain', label: '估算收益' },
-  { key: 'dailyChange', label: '当日涨幅' },
-  { key: 'dailyGain', label: '当日收益' },
-  { key: 'holdingGain', label: '持有收益' },
-  { key: 'holdingGainRate', label: '总收益率' },
-  { key: 'sector', label: '关联板块' },
-  { key: 'amountShares', label: '金额/份额' },
-  { key: 'cost', label: '成本/最新' }
-]
+  { key: "name", label: "基金名称" },
+  { key: "estimatedGain", label: "估算收益" },
+  { key: "estimatedChange", label: "估算涨幅" },
+  { key: "holdingGainRate", label: "总收益率" },
+  { key: "holdingGain", label: "持有收益" },
+  { key: "amountShares", label: "金额/份额" },
+  { key: "dailyChange", label: "当日涨幅" },
+  { key: "dailyGain", label: "当日收益" },
+  { key: "sector", label: "关联板块" },
+  { key: "cost", label: "成本/最新" },
+];
 
 const DEFAULT_VISIBLE = [
-  'name', 'estimatedGain', 'estimatedChange', 'holdingGainRate',
-  'holdingGain', 'dailyChange', 'dailyGain'
-]
+  "name",
+  "estimatedGain",
+  "estimatedChange",
+  "holdingGainRate",
+  "holdingGain",
+  "amountShares",
+  "dailyChange",
+  "dailyGain",
+  "sector",
+  "cost",
+];
 
 interface DraftItem {
-  key: string
-  label: string
-  visible: boolean
+  key: string;
+  label: string;
+  visible: boolean;
 }
 
-const draft = ref<DraftItem[]>([])
-const sortableRef = ref<HTMLElement | null>(null)
-let sortableInstance: Sortable | null = null
+const draft = ref<DraftItem[]>([]);
+const sortableRef = ref<HTMLElement | null>(null);
+let sortableInstance: Sortable | null = null;
 
 function buildDraft() {
-  const order = settingStore.columnOrder
-  const vis = new Set(settingStore.visibleColumns)
+  const order = settingStore.columnOrder;
+  const vis = new Set(settingStore.visibleColumns);
 
   // Build ordered list: start with items in columnOrder, then append any missing
-  const seen = new Set<string>()
-  const result: DraftItem[] = []
+  const seen = new Set<string>();
+  const result: DraftItem[] = [];
 
   for (const key of order) {
-    const meta = ALL_COLUMNS.find(c => c.key === key)
+    const meta = ALL_COLUMNS.find((c) => c.key === key);
     if (meta) {
-      result.push({ key, label: meta.label, visible: key === 'name' || vis.has(key) })
-      seen.add(key)
+      result.push({
+        key,
+        label: meta.label,
+        visible: key === "name" || vis.has(key),
+      });
+      seen.add(key);
     }
   }
 
   for (const col of ALL_COLUMNS) {
     if (!seen.has(col.key)) {
-      result.push({ key: col.key, label: col.label, visible: col.key === 'name' || vis.has(col.key) })
+      result.push({
+        key: col.key,
+        label: col.label,
+        visible: col.key === "name" || vis.has(col.key),
+      });
     }
   }
 
-  draft.value = result
+  draft.value = result;
 }
 
 function toggleVisible(index: number, value: boolean) {
-  const item = draft.value[index]
-  if (item && item.key !== 'name') {
-    item.visible = value
+  const item = draft.value[index];
+  if (item && item.key !== "name") {
+    item.visible = value;
   }
 }
 
 function moveUp(index: number) {
-  if (index <= 1) return // Can't move above 'name' (index 0)
-  const arr = draft.value
-  const item = arr.splice(index, 1)[0]!
-  arr.splice(index - 1, 0, item)
+  if (index <= 1) return; // Can't move above 'name' (index 0)
+  const arr = draft.value;
+  const item = arr.splice(index, 1)[0]!;
+  arr.splice(index - 1, 0, item);
 }
 
 function moveDown(index: number) {
-  if (index >= draft.value.length - 1) return
-  const arr = draft.value
-  const item = arr.splice(index, 1)[0]!
-  arr.splice(index + 1, 0, item)
+  if (index >= draft.value.length - 1) return;
+  const arr = draft.value;
+  const item = arr.splice(index, 1)[0]!;
+  arr.splice(index + 1, 0, item);
 }
 
 function resetToDefault() {
-  draft.value = ALL_COLUMNS.map(col => ({
+  draft.value = ALL_COLUMNS.map((col) => ({
     key: col.key,
     label: col.label,
-    visible: DEFAULT_VISIBLE.includes(col.key)
-  }))
+    visible: DEFAULT_VISIBLE.includes(col.key),
+  }));
 }
 
 function handleSave() {
-  const newOrder = draft.value.map(d => d.key)
-  const newVisible = draft.value.filter(d => d.visible).map(d => d.key)
-  settingStore.setColumnOrder(newOrder)
-  settingStore.setVisibleColumns(newVisible)
-  emit('update:visible', false)
+  const newOrder = draft.value.map((d) => d.key);
+  const newVisible = draft.value.filter((d) => d.visible).map((d) => d.key);
+  settingStore.setColumnOrder(newOrder);
+  settingStore.setVisibleColumns(newVisible);
+  emit("update:visible", false);
 }
 
 function initSortable() {
-  destroySortable()
-  const el = sortableRef.value
-  if (!el) return
+  destroySortable();
+  const el = sortableRef.value;
+  if (!el) return;
   sortableInstance = Sortable.create(el, {
-    handle: '.drag-handle:not(.disabled)',
+    handle: ".drag-handle:not(.disabled)",
     animation: 200,
-    ghostClass: 'sortable-ghost',
-    filter: '.fixed',
+    ghostClass: "sortable-ghost",
+    filter: ".fixed",
     onEnd(evt) {
-      const { oldIndex, newIndex } = evt
-      if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
+      const { oldIndex, newIndex } = evt;
+      if (oldIndex == null || newIndex == null || oldIndex === newIndex) return;
       // Don't allow moving to position 0 (name is fixed)
       if (newIndex === 0) {
         // Revert: re-insert at old position
-        const item = draft.value.splice(newIndex, 1)[0]!
-        draft.value.splice(oldIndex, 0, item)
-        return
+        const item = draft.value.splice(newIndex, 1)[0]!;
+        draft.value.splice(oldIndex, 0, item);
+        return;
       }
-      const item = draft.value.splice(oldIndex, 1)[0]!
-      draft.value.splice(newIndex, 0, item)
-    }
-  })
+      const item = draft.value.splice(oldIndex, 1)[0]!;
+      draft.value.splice(newIndex, 0, item);
+    },
+  });
 }
 
 function destroySortable() {
   if (sortableInstance) {
-    sortableInstance.destroy()
-    sortableInstance = null
+    sortableInstance.destroy();
+    sortableInstance = null;
   }
 }
 
-watch(() => props.visible, async (val) => {
-  if (val) {
-    buildDraft()
-    await nextTick()
-    initSortable()
-  } else {
-    destroySortable()
-  }
-})
+watch(
+  () => props.visible,
+  async (val) => {
+    if (val) {
+      buildDraft();
+      await nextTick();
+      initSortable();
+    } else {
+      destroySortable();
+    }
+  },
+);
 
 onBeforeUnmount(() => {
-  destroySortable()
-})
+  destroySortable();
+});
 </script>
 
 <style scoped>
@@ -266,6 +293,7 @@ onBeforeUnmount(() => {
   background: var(--el-border-color-light);
   padding: 2px 23px;
   border-radius: 4px;
+  line-height: 1.6;
 }
 
 :deep(.sortable-ghost) {

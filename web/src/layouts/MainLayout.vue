@@ -5,7 +5,9 @@
     </div>
 
     <div class="layout-content">
-      <slot />
+      <el-scrollbar>
+        <slot />
+      </el-scrollbar>
     </div>
 
     <nav class="layout-footer bottom-nav" aria-label="主导航">
