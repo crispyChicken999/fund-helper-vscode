@@ -97,6 +97,16 @@
             </div>
           </div>
         </section>
+
+        <!-- 操作栏 -->
+        <footer class="tooltip-footer">
+          <button class="action-btn-sm" @click="$emit('detail')" title="查看详情">查看详情</button>
+          <button class="action-btn-sm" @click="$emit('addShares')" title="加仓">加仓</button>
+          <button class="action-btn-sm" @click="$emit('reduceShares')" title="减仓">减仓</button>
+          <button class="action-btn-sm" @click="$emit('edit')" title="编辑持仓">编辑</button>
+          <button class="action-btn-sm" @click="$emit('setGroup')" title="设置分组">分组</button>
+          <button class="action-btn-sm danger" @click="$emit('delete')" title="删除">删除</button>
+        </footer>
       </div>
     </Transition>
   </Teleport>
@@ -120,6 +130,12 @@ defineEmits<{
   mouseenter: []
   mouseleave: []
   close: []
+  detail: []
+  addShares: []
+  reduceShares: []
+  edit: []
+  setGroup: []
+  delete: []
 }>()
 
 const tooltipRef = ref<HTMLElement | null>(null)
@@ -397,6 +413,46 @@ function handleCopy() {
 }
 .flat {
   color: var(--color-flat);
+}
+
+.tooltip-footer {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+
+.action-btn-sm {
+  flex: 1;
+  min-width: 50px;
+  padding: 5px 8px;
+  font-size: 11px;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 4px;
+  background: var(--el-bg-color);
+  color: var(--el-text-color-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.action-btn-sm:hover {
+  background: var(--el-fill-color-light);
+  border-color: var(--el-border-color);
+  color: var(--el-color-primary);
+}
+
+.action-btn-sm.danger {
+  color: var(--el-color-danger);
+}
+
+.action-btn-sm.danger:hover {
+  background: var(--el-color-danger);
+  background-color: rgba(245, 34, 45, 0.1);
+  border-color: var(--el-color-danger);
+  color: var(--el-color-danger);
 }
 
 /* 淡入淡出动画 */

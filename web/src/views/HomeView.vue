@@ -145,6 +145,11 @@
             class="group-tag-item"
             :class="{ active: selectedGroupKey === 'all' }"
             @click="selectGroup('all')"
+            @pointerdown="onAllGroupPointerDown($event)"
+            @pointerup="onAllGroupPointerUp"
+            @pointerleave="onAllGroupPointerUp"
+            @mouseenter="onAllGroupMouseEnter($event)"
+            @mouseleave="onGroupMouseLeave"
             @contextmenu.prevent
           >
             全部
@@ -392,6 +397,12 @@
         @mouseenter="onFundTooltipMouseEnter"
         @mouseleave="onFundTooltipMouseLeave"
         @close="closeFundHover"
+        @detail="onHoverTooltipDetail"
+        @add-shares="onHoverTooltipAdjust(true)"
+        @reduce-shares="onHoverTooltipAdjust(false)"
+        @edit="onHoverTooltipEdit"
+        @set-group="onHoverTooltipSetGroup"
+        @delete="onHoverTooltipDelete"
       />
       <GroupHoverTooltip
         :visible="groupHoverVisible"
@@ -1508,6 +1519,196 @@ function onGroupTooltipMouseLeave() {
   groupHoverHideTimer = setTimeout(() => {
     groupHoverVisible.value = false;
   }, HOVER_HIDE_DELAY);
+}
+
+// "全部"分组事件处理
+let allGroupPressTimer: ReturnType<typeof setTimeout> | null = null;
+
+function onAllGroupPointerDown(e: PointerEvent) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  if (e.pointerType !== "mouse") {
+    e.preventDefault();
+  }
+  onAllGroupPointerUp();
+  allGroupPressTimer = setTimeout(() => {
+    allGroupPressTimer = null;
+    showAllGroupStats();
+  }, LONG_PRESS_MS);
+}
+
+function onAllGroupPointerUp() {
+  if (allGroupPressTimer) {
+    clearTimeout(allGroupPressTimer);
+    allGroupPressTimer = null;
+  }
+}
+
+function onAllGroupMouseEnter(e: MouseEvent) {
+  if (!hasFinePointer.value) return;
+  if (groupHoverHideTimer) {
+    clearTimeout(groupHoverHideTimer);
+    groupHoverHideTimer = null;
+  }
+  groupHoverTimer = setTimeout(() => {
+    // 计算所有基金的统计
+    let estimatedGain = 0,
+      dailyGain = 0,
+      holdingGain = 0;
+    let totalAsset = 0,
+      totalCost = 0;
+    let estUp = 0,
+      estDown = 0,
+      dailyUp = 0,
+      dailyDown = 0;
+    let holdProfit = 0,
+      holdLoss = 0;
+
+    for (const row of enrichedRows.value) {
+      estimatedGain += row.estimatedGain;
+      if (row.gszzl > 0) estUp++;
+      else if (row.gszzl < 0) estDown++;
+      dailyGain += row.dailyGain;
+      if (row.navChgRt > 0) dailyUp++;
+      else if (row.navChgRt < 0) dailyDown++;
+      holdingGain += row.holdingGain;
+      if (row.holdingGain > 0) holdProfit++;
+      else if (row.holdingGain < 0) holdLoss++;
+      totalAsset += row.holdingAmount;
+      totalCost += row.costAmount;
+    }
+
+    const sample = enrichedRows.value[0];
+    const estimatedDate = sample?.estimatedDateLabel || "";
+    const dailyDate = sample?.navDateLabel || "";
+
+    groupHoverStats.value = {
+      groupName: "全部基金",
+      fundCount: enrichedRows.value.length,
+      estimatedGain,
+      estimatedChangePercent:
+        totalAsset > 0 ? (estimatedGain / totalAsset) * 100 : 0,
+      estimatedUpCount: estUp,
+      estimatedDownCount: estDown,
+      estimatedDate,
+      dailyGain,
+      dailyChangePercent: totalAsset > 0 ? (dailyGain / totalAsset) * 100 : 0,
+      dailyUpCount: dailyUp,
+      dailyDownCount: dailyDown,
+      dailyDate,
+      holdingGain,
+      holdingGainRate: totalCost > 0 ? (holdingGain / totalCost) * 100 : 0,
+      holdingProfitCount: holdProfit,
+      holdingLossCount: holdLoss,
+      holdingDate: dailyDate,
+      totalAsset,
+      totalCost,
+    };
+    
+    // "全部"项在左侧，显示在right bottom
+    const allGroupEl = (e.target as HTMLElement);
+    const rect = allGroupEl.getBoundingClientRect();
+    groupHoverX.value = rect.right;
+    groupHoverY.value = rect.bottom + 8;
+    
+    groupHoverVisible.value = true;
+  }, HOVER_SHOW_DELAY);
+}
+
+function showAllGroupStats() {
+  // 计算所有基金的统计
+  let estimatedGain = 0,
+    dailyGain = 0,
+    holdingGain = 0;
+  let totalAsset = 0,
+    totalCost = 0;
+  let estUp = 0,
+    estDown = 0,
+    dailyUp = 0,
+    dailyDown = 0;
+  let holdProfit = 0,
+    holdLoss = 0;
+
+  for (const row of enrichedRows.value) {
+    estimatedGain += row.estimatedGain;
+    if (row.gszzl > 0) estUp++;
+    else if (row.gszzl < 0) estDown++;
+    dailyGain += row.dailyGain;
+    if (row.navChgRt > 0) dailyUp++;
+    else if (row.navChgRt < 0) dailyDown++;
+    holdingGain += row.holdingGain;
+    if (row.holdingGain > 0) holdProfit++;
+    else if (row.holdingGain < 0) holdLoss++;
+    totalAsset += row.holdingAmount;
+    totalCost += row.costAmount;
+  }
+
+  const sample = enrichedRows.value[0];
+  const estimatedDate = sample?.estimatedDateLabel || "";
+  const dailyDate = sample?.navDateLabel || "";
+
+  groupTooltipStats.value = {
+    groupName: "全部基金",
+    fundCount: enrichedRows.value.length,
+    estimatedGain,
+    estimatedChangePercent:
+      totalAsset > 0 ? (estimatedGain / totalAsset) * 100 : 0,
+    estimatedUpCount: estUp,
+    estimatedDownCount: estDown,
+    estimatedDate,
+    dailyGain,
+    dailyChangePercent: totalAsset > 0 ? (dailyGain / totalAsset) * 100 : 0,
+    dailyUpCount: dailyUp,
+    dailyDownCount: dailyDown,
+    dailyDate,
+    holdingGain,
+    holdingGainRate: totalCost > 0 ? (holdingGain / totalCost) * 100 : 0,
+    holdingProfitCount: holdProfit,
+    holdingLossCount: holdLoss,
+    holdingDate: dailyDate,
+    totalAsset,
+    totalCost,
+  };
+
+  groupTooltipVisible.value = true;
+}
+
+// FundHoverTooltip 操作事件处理
+function onHoverTooltipDetail() {
+  if (!fundHoverRow.value) return;
+  closeFundHover();
+  openTooltip(fundHoverRow.value);
+}
+
+function onHoverTooltipAdjust(isAdd: boolean) {
+  if (!fundHoverRow.value) return;
+  closeFundHover();
+  const row = fundHoverRow.value;
+  positionRow.value = row;
+  positionIsAdd.value = isAdd;
+  positionAmount.value = 0;
+  positionShares.value = 0;
+  selectedNavDate.value = "";
+  selectedNavValue.value = 0;
+  showPositionDialog.value = true;
+  loadNavHistory(row.code);
+}
+
+function onHoverTooltipEdit() {
+  if (!fundHoverRow.value) return;
+  closeFundHover();
+  openTooltip(fundHoverRow.value);
+}
+
+function onHoverTooltipSetGroup() {
+  if (!fundHoverRow.value) return;
+  closeFundHover();
+  openTooltip(fundHoverRow.value);
+}
+
+function onHoverTooltipDelete() {
+  if (!fundHoverRow.value) return;
+  closeFundHover();
+  confirmDeleteByRow(fundHoverRow.value);
 }
 
 function closeFundHover() {
