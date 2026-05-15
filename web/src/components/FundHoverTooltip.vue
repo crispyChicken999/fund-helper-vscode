@@ -296,9 +296,9 @@ function handleCopy() {
 .fund-hover-tooltip {
   position: fixed;
   z-index: 9999;
-  width: 300px;
+  width: 200px;
   background: var(--el-bg-color);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 14px;
   border: 1px solid var(--el-border-color-lighter);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);

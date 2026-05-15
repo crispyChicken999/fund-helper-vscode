@@ -75,6 +75,7 @@
                 type="primary"
                 size="small"
                 round
+                plain
                 @click="showAddFundDialog = true"
                 title="添加基金"
               >

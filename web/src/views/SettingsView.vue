@@ -7,243 +7,312 @@
     </template>
 
     <div class="settings-main">
+      <!-- 使用说明 -->
+      <el-alert class="usage-guide" :closable="false" show-icon type="success">
+        <template #title>
+          <span class="usage-guide-title">使用说明</span>
+        </template>
+        <ul class="usage-guide-list">
+          <li>
+            📌<strong>长按分组</strong>，可查看该分组的详情信息（持仓汇总、收益统计等）
+          </li>
+          <li>
+            ➕ 点击首页右上角
+            <strong>+</strong> 按钮可添加新基金，支持按代码或名称搜索
+          </li>
+          <li>✏️ <strong>点击基金名称</strong>，可查看基金详情、编辑持仓成本、份额和进行删除等操作</li>
+          <li>↕️ 默认排序时，<strong>拖动基金行</strong>可调整排列顺序</li>
+          <li>
+            🔒 开启<strong>隐私模式</strong>后所有数值将被隐藏，适合截图分享
+          </li>
+          <li>☁️ 配置 <strong>Box Name</strong>后，可在多设备间（VSCode插件、PC、Mobile）云同步数据</li>
+        </ul>
+      </el-alert>
+
       <el-form label-position="right" :label-width="formLabelWidth">
-        <el-divider content-position="left">显示设置</el-divider>
+        <el-collapse v-model="activeCollapseItems" class="settings-collapse">
+          <!-- 显示设置 -->
+          <el-collapse-item name="display" class="settings-collapse-item">
+            <template #title>
+              <span class="collapse-section-title">显示设置</span>
+            </template>
+            <el-form-item label="隐私模式">
+              <el-switch v-model="privacyMode" />
+              <div class="form-item-tip">开启后隐藏所有数值</div>
+            </el-form-item>
 
-        <el-form-item label="隐私模式">
-          <el-switch v-model="privacyMode" />
-          <div class="form-item-tip">开启后隐藏所有数值</div>
-        </el-form-item>
+            <el-form-item label="灰色模式">
+              <el-switch v-model="grayscaleMode" />
+              <div class="form-item-tip">移除所有色彩，仅保留黑白灰</div>
+            </el-form-item>
 
-        <el-form-item label="灰色模式">
-          <el-switch v-model="grayscaleMode" />
-          <div class="form-item-tip">移除所有色彩，仅保留黑白灰</div>
-        </el-form-item>
+            <el-form-item label="主题">
+              <el-radio-group v-model="theme">
+                <el-radio value="light">浅色</el-radio>
+                <el-radio value="dark">深色</el-radio>
+              </el-radio-group>
+            </el-form-item>
 
-        <el-form-item label="主题">
-          <el-radio-group v-model="theme">
-            <el-radio value="light">浅色</el-radio>
-            <el-radio value="dark">深色</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
-        <el-form-item label="刷新间隔">
-          <el-select
-            v-model="refreshInterval"
-            allow-create
-            filterable
-            placeholder="选择或输入刷新间隔（秒）"
-            default-first-option
-          >
-            <el-option label="10秒" :value="10" />
-            <el-option label="20秒" :value="20" />
-            <el-option label="30秒" :value="30" />
-            <el-option label="40秒" :value="40" />
-            <el-option label="50秒" :value="50" />
-            <el-option label="1分钟" :value="60" />
-            <el-option label="5分钟" :value="300" />
-          </el-select>
-        </el-form-item>
-
-        <el-divider content-position="left">列表配置</el-divider>
-
-        <el-form-item label="列配置">
-          <div class="form-item-tip" style="margin-bottom: 8px">
-            勾选显示，取消隐藏；拖动 ☰ 或点击箭头调整顺序
-          </div>
-          <ul ref="columnSortRef" class="column-settings-list">
-            <li
-              v-for="(col, index) in columnOrderDraft"
-              :key="col.key"
-              :data-key="col.key"
-              class="column-settings-item"
-              :class="{ fixed: col.key === 'name' }"
-              @click="
-                col.key !== 'name' && toggleColVisible(index, !col.visible)
-              "
-            >
-              <span
-                class="drag-handle"
-                :class="{ disabled: col.key === 'name' }"
-                >☰</span
+            <el-form-item label="刷新间隔">
+              <el-select
+                v-model="refreshInterval"
+                allow-create
+                filterable
+                placeholder="选择或输入刷新间隔（秒）"
+                default-first-option
               >
-              <el-checkbox
-                :model-value="col.visible"
-                :disabled="col.key === 'name'"
-                @click.stop
-                @update:model-value="toggleColVisible(index, $event as boolean)"
+                <el-option label="10秒" :value="10" />
+                <el-option label="20秒" :value="20" />
+                <el-option label="30秒" :value="30" />
+                <el-option label="40秒" :value="40" />
+                <el-option label="50秒" :value="50" />
+                <el-option label="1分钟" :value="60" />
+                <el-option label="5分钟" :value="300" />
+              </el-select>
+            </el-form-item>
+          </el-collapse-item>
+
+          <!-- 列表配置 -->
+          <el-collapse-item name="columns" class="settings-collapse-item">
+            <template #title>
+              <span class="collapse-section-title">列表配置</span>
+            </template>
+            <el-form-item label="列配置">
+              <div class="form-item-tip" style="margin-bottom: 8px">
+                勾选显示，取消隐藏；拖动 ☰ 或点击箭头调整顺序
+              </div>
+              <ul ref="columnSortRef" class="column-settings-list">
+                <li
+                  v-for="(col, index) in columnOrderDraft"
+                  :key="col.key"
+                  :data-key="col.key"
+                  class="column-settings-item"
+                  :class="{ fixed: col.key === 'name' }"
+                  @click="
+                    col.key !== 'name' && toggleColVisible(index, !col.visible)
+                  "
+                >
+                  <span
+                    class="drag-handle"
+                    :class="{ disabled: col.key === 'name' }"
+                    >☰</span
+                  >
+                  <el-checkbox
+                    :model-value="col.visible"
+                    :disabled="col.key === 'name'"
+                    @click.stop
+                    @update:model-value="
+                      toggleColVisible(index, $event as boolean)
+                    "
+                  />
+                  <span class="col-label">{{ col.label }}</span>
+                  <template v-if="col.key === 'name'">
+                    <span class="col-fixed-tag">固定</span>
+                  </template>
+                  <template v-else>
+                    <el-button
+                      size="small"
+                      plain
+                      :disabled="index <= 1"
+                      @click.stop="moveColUp(index)"
+                      >↑</el-button
+                    >
+                    <el-button
+                      size="small"
+                      plain
+                      style="margin: 0"
+                      :disabled="index >= columnOrderDraft.length - 1"
+                      @click.stop="moveColDown(index)"
+                      >↓</el-button
+                    >
+                  </template>
+                </li>
+              </ul>
+              <div style="display: flex; gap: 8px; margin-top: 10px">
+                <el-button @click="resetColumnSettings">恢复默认</el-button>
+                <el-button type="primary" @click="saveColumnSettings"
+                  >保存</el-button
+                >
+              </div>
+            </el-form-item>
+          </el-collapse-item>
+
+          <!-- 数据同步 -->
+          <el-collapse-item name="sync" class="settings-collapse-item">
+            <template #title>
+              <span class="collapse-section-title">数据同步</span>
+            </template>
+            <el-form-item label="Box Name">
+              <el-input
+                v-model="jsonboxName"
+                placeholder="fundhelper_xxxxxxxx"
+                clearable
+                minlength="20"
+                maxlength="64"
+                show-word-limit
+                @blur="handleJsonboxNameChange"
               />
-              <span class="col-label">{{ col.label }}</span>
-              <template v-if="col.key === 'name'">
-                <span class="col-fixed-tag">固定</span>
-              </template>
-              <template v-else>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  margin-top: 6px;
+                  flex-wrap: wrap;
+                  width: 100%;
+                "
+              >
+                <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    @click="handleSaveBoxName"
+                    :disabled="!jsonboxNameChanged"
+                    >保存</el-button
+                  >
+                  <el-button
+                    size="small"
+                    style="margin: 0"
+                    @click="handleCancelBoxName"
+                    :disabled="!jsonboxNameChanged"
+                    >取消</el-button
+                  >
+                  <el-button
+                    size="small"
+                    style="margin: 0"
+                    @click="handleRegenerateBoxName"
+                    >重新生成</el-button
+                  >
+                </div>
+                <div class="form-item-tip">
+                  仅允许输入字母、数字、下划线，至少20字符
+                </div>
+              </div>
+            </el-form-item>
+
+            <el-form-item label="同步操作">
+              <el-space wrap>
                 <el-button
-                  size="small"
-                  plain
-                  :disabled="index <= 1"
-                  @click.stop="moveColUp(index)"
-                  >↑</el-button
+                  type="primary"
+                  :icon="Upload"
+                  @click="handleSyncToCloud"
+                  :loading="isSyncing"
+                  :disabled="!jsonboxName"
                 >
+                  上传至云端
+                </el-button>
                 <el-button
-                  size="small"
-                  plain
-                  style="margin: 0"
-                  :disabled="index >= columnOrderDraft.length - 1"
-                  @click.stop="moveColDown(index)"
-                  >↓</el-button
+                  :icon="Download"
+                  @click="handleSyncFromCloud"
+                  :loading="isSyncing"
+                  :disabled="!jsonboxName"
                 >
-              </template>
-            </li>
-          </ul>
-          <div style="display: flex; gap: 8px; margin-top: 10px">
-            <el-button @click="resetColumnSettings">恢复默认</el-button>
-            <el-button type="primary" @click="saveColumnSettings"
-              >保存</el-button
-            >
-          </div>
-        </el-form-item>
+                  从云端同步
+                </el-button>
+                <el-button @click="showSyncDialog = true" :icon="Cellphone">
+                  扫码同步/查看二维码
+                </el-button>
+                <el-button @click="handleOpenJsonLink" :disabled="!jsonboxName">
+                  查看在线JSON
+                </el-button>
+                <el-button
+                  type="danger"
+                  plain
+                  @click="handleClearRemote"
+                  :disabled="!jsonboxName"
+                >
+                  清空云端数据
+                </el-button>
+              </el-space>
+            </el-form-item>
+          </el-collapse-item>
 
-        <el-divider content-position="left">数据同步</el-divider>
+          <!-- 数据管理 -->
+          <el-collapse-item name="data" class="settings-collapse-item">
+            <template #title>
+              <span class="collapse-section-title">数据管理</span>
+            </template>
+            <el-form-item label="导入导出">
+              <el-space wrap>
+                <el-button :icon="Download" @click="handleImportJson">
+                  导入 JSON
+                </el-button>
+                <el-button :icon="Upload" @click="handleExportJson">
+                  导出 JSON
+                </el-button>
+              </el-space>
+              <div class="form-item-tip">
+                支持导入 VSCode 版导出的 JSON 文件
+              </div>
+            </el-form-item>
 
-        <el-form-item label="Box Name">
-          <el-input
-            v-model="jsonboxName"
-            placeholder="fundhelper_xxxxxxxx"
-            clearable
-            minlength="20"
-            maxlength="64"
-            show-word-limit
-            @blur="handleJsonboxNameChange"
-          />
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin-top: 6px;
-              flex-wrap: wrap;
-              width: 100%;
-            "
-          >
-            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <el-form-item label="危险操作">
               <el-button
-                size="small"
-                type="primary"
-                @click="handleSaveBoxName"
-                :disabled="!jsonboxNameChanged"
-                >保存</el-button
+                type="danger"
+                :icon="Delete"
+                @click="handleClearAll"
+                plain
               >
-              <el-button
-                size="small"
-                style="margin: 0"
-                @click="handleCancelBoxName"
-                :disabled="!jsonboxNameChanged"
-                >取消</el-button
-              >
-              <el-button
-                size="small"
-                style="margin: 0"
-                @click="handleRegenerateBoxName"
-                >重新生成</el-button
-              >
-            </div>
-            <div class="form-item-tip">
-              仅允许输入字母、数字、下划线，至少20字符
-            </div>
-          </div>
-        </el-form-item>
+                清空本地数据
+              </el-button>
+            </el-form-item>
+          </el-collapse-item>
 
-        <el-form-item label="同步操作">
-          <el-space wrap>
-            <el-button
-              type="primary"
-              :icon="Upload"
-              @click="handleSyncToCloud"
-              :loading="isSyncing"
-              :disabled="!jsonboxName"
-            >
-              上传至云端
-            </el-button>
-            <el-button
-              :icon="Download"
-              @click="handleSyncFromCloud"
-              :loading="isSyncing"
-              :disabled="!jsonboxName"
-            >
-              从云端同步
-            </el-button>
-            <el-button @click="showSyncDialog = true" :icon="Cellphone">
-              扫码同步/查看二维码
-            </el-button>
-            <el-button @click="handleOpenJsonLink" :disabled="!jsonboxName">
-              查看在线JSON
-            </el-button>
-            <el-button
-              type="danger"
-              plain
-              @click="handleClearRemote"
-              :disabled="!jsonboxName"
-            >
-              清空云端数据
-            </el-button>
-          </el-space>
-        </el-form-item>
+          <!-- 关于我们 -->
+          <el-collapse-item name="about" class="settings-collapse-item">
+            <template #title>
+              <span class="collapse-section-title">关于我们</span>
+            </template>
+            <el-form-item label="版本" label-width="120px">
+              <span>1.0.0</span>
+            </el-form-item>
 
-        <el-divider content-position="left">数据管理</el-divider>
+            <el-form-item label="数据来源" label-width="120px">
+              <span>天天基金 / 东方财富</span>
+            </el-form-item>
 
-        <el-form-item label="导入导出">
-          <el-space wrap>
-            <el-button :icon="Download" @click="handleImportJson">
-              导入 JSON
-            </el-button>
-            <el-button :icon="Upload" @click="handleExportJson">
-              导出 JSON
-            </el-button>
-          </el-space>
-          <div class="form-item-tip">支持导入 VSCode 版导出的 JSON 文件</div>
-        </el-form-item>
+            <el-form-item label="项目仓库" label-width="120px">
+              <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 8px">
+                <div>
+                  <a
+                    href="https://github.com/crispyChicken999/fund-helper-vscode"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="cursor: pointer"
+                  >
+                    <img
+                      src="https://badgen.net/github/stars/crispyChicken999/fund-helper-vscode?icon=github&label=Stars&color=blue"
+                      alt="GitHub Stars"
+                      style="height: 100%; vertical-align: middle"
+                    />
+                  </a>
+                </div>
+                <el-button link type="primary" @click="openRepository">
+                  GitHub - fund-helper-vscode
+                </el-button>
+                <div class="form-item-tip" style="margin: 0px; text-align: justify">
+                  本项目已开源，欢迎大家点个Star支持一下！
+                </div>
+              </div>
+            </el-form-item>
 
-        <el-form-item label="危险操作">
-          <el-button type="danger" :icon="Delete" @click="handleClearAll" plain>
-            清空本地数据
-          </el-button>
-        </el-form-item>
-
-        <el-divider content-position="left">关于我们</el-divider>
-
-        <el-form-item label="版本">
-          <span>1.0.0</span>
-        </el-form-item>
-
-        <el-form-item label="数据来源">
-          <span>天天基金 / 东方财富</span>
-        </el-form-item>
-
-        <el-form-item label="项目仓库">
-          <div>
-            <div>
-              <a
-                href="https://github.com/crispyChicken999/fund-helper-vscode"
-                target="_blank"
-                rel="noopener noreferrer"
-                style="cursor: pointer"
-              >
-                <img
-                  src="https://badgen.net/github/stars/crispyChicken999/fund-helper-vscode?icon=github&label=Stars&color=blue"
-                  alt="GitHub Stars"
-                  style="height: 100%; vertical-align: middle"
-                />
-              </a>
-            </div>
-            <el-button link type="primary" @click="openRepository">
-              GitHub - fund-helper-vscode
-            </el-button>
-            <div class="form-item-tip">
-              本项目已开源，欢迎大家点个Star支持一下！
-            </div>
-          </div>
-        </el-form-item>
+            <el-form-item label="VSCode 插件" label-width="120px">
+              <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 8px">
+                <div class="form-item-tip" style="margin: 0px; text-align: justify">
+                  本项目同时提供 VSCode 插件版本，在编码的同时随时关注基金行情，支持与本页面云同步数据，欢迎使用！点击下方按钮前往插件市场下载。
+                </div>
+                <el-button
+                  type="primary"
+                  plain
+                  size="small"
+                  @click="openVscodeExtension"
+                >
+                  前往 VSCode 插件市场下载
+                </el-button>
+              </div>
+            </el-form-item>
+          </el-collapse-item>
+        </el-collapse>
       </el-form>
     </div>
 
@@ -331,10 +400,17 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 const columnSortRef = ref<HTMLElement | null>(null);
 let columnSortable: Sortable | null = null;
 
+// 默认全部展开
+const activeCollapseItems = ref([
+  "display",
+  "columns",
+  "sync",
+  "data",
+  "about",
+]);
+
 // 移动端label宽度适配
-const formLabelWidth = computed(() =>
-  document.documentElement.clientWidth < 500 ? "105px" : "120px",
-);
+const formLabelWidth = computed(() => "90px");
 
 const jsonboxNameChanged = computed(
   () => jsonboxName.value !== savedJsonboxName.value,
@@ -791,6 +867,13 @@ function openRepository() {
     "_blank",
   );
 }
+
+function openVscodeExtension() {
+  window.open(
+    "https://marketplace.visualstudio.com/items?itemName=CrispyChicken.fund-helper",
+    "_blank",
+  );
+}
 </script>
 
 <style scoped>
@@ -920,5 +1003,67 @@ function openRepository() {
   :deep(.el-space .el-button) {
     margin: 0;
   }
+}
+
+/* 使用说明 */
+.usage-guide {
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.usage-guide-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.usage-guide-list {
+  margin: 6px 0 0 0;
+  padding-left: 4px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 6px;
+}
+
+.usage-guide-list li {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+  line-height: 1.5;
+}
+
+/* Collapse 设置区 */
+.settings-collapse {
+  border: none;
+}
+
+.settings-collapse-item {
+  margin-bottom: 8px;
+  border: 1px solid var(--el-border-color) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+:deep(.settings-collapse-item .el-collapse-item__header) {
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--el-fill-color-light);
+  border-bottom: 1px solid var(--el-border-color);
+  height: 44px;
+}
+
+:deep(.settings-collapse-item .el-collapse-item__wrap) {
+  border-bottom: none;
+}
+
+:deep(.settings-collapse-item .el-collapse-item__content) {
+  padding: 12px 16px 4px;
+}
+
+.collapse-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
 }
 </style>

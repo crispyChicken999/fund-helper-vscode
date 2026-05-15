@@ -357,7 +357,6 @@ class SyncService {
    * 应用云端数据
    */
   private async applyCloudData(data: JsonboxData): Promise<void> {
-    console.log('data: ', data);
     const fundStore = useFundStore()
     const groupStore = useGroupStore()
     const settingStore = useSettingStore()

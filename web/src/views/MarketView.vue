@@ -448,18 +448,17 @@ async function renderPlateChart(
     xAxis: {
       type: "category",
       data: names,
-      axisLabel: { fontSize: 11, color: "var(--el-color-secondary)" },
-      axisLine: { lineStyle: { color: "var(--el-border-color)" } },
+      axisLabel: { fontSize: 11, },
+      axisLine: { lineStyle: { } },
     },
     yAxis: {
       type: "value",
       axisLabel: {
         fontSize: 11,
         formatter: "{value}亿",
-        color: "var(--text-secondary)",
       },
       splitLine: {
-        lineStyle: { color: "var(--border-color)", type: "dashed" },
+        lineStyle: {  type: "dashed" },
       },
     },
     dataZoom: [

@@ -783,7 +783,7 @@ export function setupAutoRefresh() {
   const config = vscode.workspace.getConfiguration("fund-helper");
   const interval = config.get<number>("refreshInterval", 60);
 
-  // interval 等于 0 或者小于 5 认为不开启自动刷新，但为了安全最低生效时间是 5 秒
+  // interval 等于 0 认为不开启自动刷新，但为了安全最低生效时间是 5 秒
   if (interval <= 0) {
     return;
   }

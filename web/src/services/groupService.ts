@@ -124,10 +124,16 @@ class GroupService {
   ): Promise<void> {
     const groupStore = useGroupStore()
     if (previousGroupKey && previousGroupKey !== nextGroupKey) {
-      await groupStore.removeFundFromGroup(fundCode, previousGroupKey)
+      // 检查分组是否存在，存在才移除（防止分组已删除导致错误）
+      if (groupStore.getGroup(previousGroupKey)) {
+        await groupStore.removeFundFromGroup(fundCode, previousGroupKey)
+      }
     }
     if (nextGroupKey && nextGroupKey !== previousGroupKey) {
-      await groupStore.addFundToGroup(fundCode, nextGroupKey)
+      // 检查分组是否存在，存在才添加
+      if (groupStore.getGroup(nextGroupKey)) {
+        await groupStore.addFundToGroup(fundCode, nextGroupKey)
+      }
     }
     this.saveGroups()
   }
