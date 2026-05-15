@@ -84,13 +84,13 @@
             </span>
           </div>
           <div class="grid-item">
-            <span class="g-label">日收益（估）</span>
+            <span class="g-label">今日收益（估）</span>
             <span class="g-value" :class="pctClass(estimatedDailyGain)">
               {{ fmtMoney(estimatedDailyGain) }}
             </span>
           </div>
           <div class="grid-item">
-            <span class="g-label">当日收益</span>
+            <span class="g-label">最新日收益</span>
             <span class="g-value" :class="pctClass(actualDailyGain)">
               {{ fmtMoney(actualDailyGain) }}
             </span>
@@ -103,6 +103,12 @@
                   ? fmtPrice(fundView.estimatedValue)
                   : "--"
               }}
+            </span>
+          </div>
+          <div class="grid-item">
+            <span class="g-label">估算涨跌幅</span>
+            <span class="g-value" :class="pctClass(fundView.estimatedChange)">
+              {{ fmtPct(fundView.estimatedChange) }}
             </span>
           </div>
           <div class="grid-item">
@@ -213,7 +219,14 @@
           <!-- 债券持仓 -->
           <div v-if="positionData.bonds.length" class="position-section">
             <div class="position-section-title">债券持仓</div>
-            <el-table :data="positionData.bonds" stripe size="small" border>
+            <el-table
+              :data="positionData.bonds"
+              stripe
+              size="small"
+              border
+              :cell-style="{ textAlign: 'center' }"
+              :header-cell-style="{ fontWeight: 'bold', textAlign: 'center' }"
+            >
               <el-table-column
                 prop="name"
                 label="债券名称（代码）"
@@ -417,9 +430,7 @@
                 class="manager-avatar"
                 :src="m.avatar"
                 :alt="m.name"
-                @error="
-                  ($event.target as HTMLImageElement).style.display = 'none'
-                "
+                referrerpolicy="no-referrer"
               />
               <div class="manager-info">
                 <div class="manager-name">{{ m.name }}</div>
@@ -452,9 +463,12 @@
             <div v-if="m.investmentIdea" class="manager-desc">
               <strong>投资理念：</strong>{{ m.investmentIdea }}
             </div>
-            <div v-if="m.resume" class="manager-resume">
-              <strong>个人简历：</strong>{{ m.resume }}
-            </div>
+            <el-scrollbar>
+              <div v-if="m.resume" class="manager-resume">
+                <strong>个人简历：</strong>
+                <div class="resume-content" v-html="m.resume"></div>
+              </div>
+            </el-scrollbar>
           </div>
         </div>
         <el-empty v-else-if="!tabLoading" description="暂无经理信息" />
@@ -523,6 +537,9 @@
       >
         <el-form-item label="基金代码">
           <el-input :model-value="code" disabled />
+        </el-form-item>
+        <el-form-item label="基金名称">
+          <el-input :model-value="displayName" disabled />
         </el-form-item>
         <el-form-item label="持有份额" prop="num">
           <el-input
@@ -933,7 +950,6 @@ async function renderNetValueChart(records: NetValueRecord[]) {
       },
       legend: {
         data: ["单位净值", "累计净值"],
-        top: 0,
         textStyle: { fontSize: 11 },
       },
       grid: { left: 50, right: 16, top: 16, bottom: 60, containLabel: false },
@@ -1318,7 +1334,7 @@ onUnmounted(() => {
 /* 持仓信息网格 */
 .info-grid-2col {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
 }
 
@@ -1329,16 +1345,16 @@ onUnmounted(() => {
   padding: 12px;
   border: 1px solid var(--el-border-color);
   border-radius: 8px;
-  background: var(--el-fill-color);
+  background: var(--el-fill-color-lighter);
 }
 
 .g-label {
-  font-size: 16px;
+  font-size: 12px;
   color: var(--el-text-color-secondary);
 }
 
 .g-value {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -1395,19 +1411,20 @@ onUnmounted(() => {
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .manager-header {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 12px;
   justify-content: center;
 }
 
 .manager-avatar {
-  width: 48px;
-  height: 48px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--el-border-color);
@@ -1427,7 +1444,7 @@ onUnmounted(() => {
 .manager-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .manager-tag {
@@ -1471,9 +1488,13 @@ onUnmounted(() => {
 .manager-resume {
   font-size: 12px;
   color: var(--el-text-color-secondary);
-  line-height: 1.6;
+  line-height: 1.8;
   max-height: 50vh;
-  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.resume-content {
+  text-align: left;
 }
 
 /* 关联板块 */
@@ -1602,10 +1623,6 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .info-grid-2col {
-    gap: 12px;
-  }
-
   .g-value {
     font-size: 14px;
   }

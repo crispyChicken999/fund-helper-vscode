@@ -9,10 +9,19 @@ import { proxyFetch } from '@/api/proxy'
 async function fetchFundInvestmentPosition(code: string): Promise<any> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
   try {
-    const res = await proxyFetch(url, { signal: AbortSignal.timeout(10000) })
-    if (!res.ok) return null
-    const data = await res.json().catch(() => null)
-    return data?.Datas ?? null
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
+    try {
+      const res = await proxyFetch(url, { signal: controller.signal })
+      clearTimeout(timeoutId)
+      if (!res.ok) return null
+      const data = await res.json().catch(() => null)
+      return data?.Datas ?? null
+    } catch (err) {
+      clearTimeout(timeoutId)
+      // Ignore abort and fetch errors
+      return null
+    }
   } catch {
     return null
   }
@@ -21,10 +30,19 @@ async function fetchFundInvestmentPosition(code: string): Promise<any> {
 async function fetchStockRealTimeData(secids: string): Promise<any[]> {
   const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fields=f1,f2,f3,f4,f12,f13,f14&fltt=2&secids=${secids}&_=${Date.now()}`
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) }).catch(() => null)
-    if (!res?.ok) return []
-    const data = await res.json().catch(() => null)
-    return data?.data?.diff ?? []
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
+    try {
+      const res = await fetch(url, { signal: controller.signal })
+      clearTimeout(timeoutId)
+      if (!res.ok) return []
+      const data = await res.json().catch(() => null)
+      return data?.data?.diff ?? []
+    } catch (err) {
+      clearTimeout(timeoutId)
+      // Ignore abort and fetch errors
+      return []
+    }
   } catch {
     return []
   }
@@ -324,30 +342,38 @@ export async function fetchFundRelateTheme(fundCodes: string[]): Promise<Record<
   })
 
   try {
-    const res = await fetch(RELATE_THEME_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Origin': 'https://h5.1234567.com.cn',
-        'Referer': 'https://servicewechat.com/'
-      },
-      body: params.toString(),
-      signal: AbortSignal.timeout(12000)
-    }).catch(() => null)
-    if (!res?.ok) return result
-    const json = await res.json().catch(() => null)
-    const themes: any[] = json?.data?.fundRelateTheme ?? []
-    const themeByFund: Record<string, any[]> = {}
-    themes.forEach((theme: any) => {
-      const fc = theme.FCODE
-      if (!themeByFund[fc]) themeByFund[fc] = []
-      themeByFund[fc].push(theme)
-    })
-    Object.keys(themeByFund).forEach(fcode => {
-      const arr = themeByFund[fcode]!
-      arr.sort((a, b) => (b.CORR_1Y || 0) - (a.CORR_1Y || 0))
-      result[fcode] = String(arr[0]?.SEC_NAME ?? '')
-    })
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 12000)
+    try {
+      const res = await fetch(RELATE_THEME_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Origin': 'https://h5.1234567.com.cn',
+          'Referer': 'https://servicewechat.com/'
+        },
+        body: params.toString(),
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+      if (!res.ok) return result
+      const json = await res.json().catch(() => null)
+      const themes: any[] = json?.data?.fundRelateTheme ?? []
+      const themeByFund: Record<string, any[]> = {}
+      themes.forEach((theme: any) => {
+        const fc = theme.FCODE
+        if (!themeByFund[fc]) themeByFund[fc] = []
+        themeByFund[fc].push(theme)
+      })
+      Object.keys(themeByFund).forEach(fcode => {
+        const arr = themeByFund[fcode]!
+        arr.sort((a, b) => (b.CORR_1Y || 0) - (a.CORR_1Y || 0))
+        result[fcode] = String(arr[0]?.SEC_NAME ?? '')
+      })
+    } catch (err) {
+      clearTimeout(timeoutId)
+      /* ignore fetch/abort errors */
+    }
   } catch {
     /* ignore */
   }

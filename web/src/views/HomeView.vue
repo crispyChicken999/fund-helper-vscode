@@ -1695,7 +1695,7 @@ function onHoverTooltipAdjust(isAdd: boolean) {
 function onHoverTooltipEdit() {
   if (!fundHoverRow.value) return;
   closeFundHover();
-  openTooltip(fundHoverRow.value);
+  editFundByRow(fundHoverRow.value);
 }
 
 function onHoverTooltipSetGroup() {

@@ -208,7 +208,7 @@ export async function fetchManagerAndThemes(code: string): Promise<{
         yieldSe: yieldSe.toFixed(2),
         fundCount: parseInt(sInfo.TOTALFUNDCOUNT) || 0,
         investmentIdea: pInfo.INVESTMENTIDEAR || '',
-        resume: pInfo.RESUME || ''
+        resume: pInfo.RESUME.replace(/。/g, '。<br/>&nbsp;&nbsp;&nbsp;&nbsp;').replace(/、/g, '、<br/>&nbsp;&nbsp;•&nbsp;') || ''
       })
     }
 
