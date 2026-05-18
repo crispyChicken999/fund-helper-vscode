@@ -663,9 +663,9 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
           try {
             const payload = buildExportPayload();
             await jsonboxUpload(boxName, payload);
-            this.postMessage({ command: "syncResult", success: true, message: "上传成功" });
+            this.postMessage({ command: "syncResult", success: true, message: "上传至云端成功" });
           } catch (e: any) {
-            this.postMessage({ command: "syncResult", success: false, message: `上传失败: ${e.message}` });
+            this.postMessage({ command: "syncResult", success: false, message: `上传至云端失败: ${e.message}` });
           }
         }
         break;
@@ -688,9 +688,9 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
             const data = records[records.length - 1];
             const messages = await applyImportPayload(data);
             await this._loadFundData();
-            this.postMessage({ command: "syncResult", success: true, message: `下载成功：${messages.join('、')}` });
+            this.postMessage({ command: "syncResult", success: true, message: `同步到本地成功：${messages.join('、')}` });
           } catch (e: any) {
-            this.postMessage({ command: "syncResult", success: false, message: `下载失败: ${e.message}` });
+            this.postMessage({ command: "syncResult", success: false, message: `同步到本地失败: ${e.message}` });
           }
         }
         break;
@@ -926,10 +926,10 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       '          <div class="sync-section">',
       '            <div class="sync-section-label">同步操作</div>',
       '            <div class="sync-btn-group">',
-      '              <button class="sync-btn primary" id="btnSyncUpload" disabled>⬆ 上传云端</button>',
-      '              <button class="sync-btn" id="btnSyncDownload" disabled>⬇ 下载云端</button>',
+      '              <button class="sync-btn primary" id="btnSyncUpload" disabled>⬆ 上传至云端</button>',
+      '              <button class="sync-btn" id="btnSyncDownload" disabled>⬇ 同步到本地</button>',
       '              <button class="sync-btn" id="btnSyncOpenJson" disabled>🔗 查看 JSON</button>',
-      '              <button class="sync-btn danger" id="btnSyncClearRemote" disabled>🗑 清空远程</button>',
+      '              <button class="sync-btn danger" id="btnSyncClearRemote" disabled>清空远程</button>',
       '            </div>',
       '          </div>',
       '          <!-- 状态消息 -->',
