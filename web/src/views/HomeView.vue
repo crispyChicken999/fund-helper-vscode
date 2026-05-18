@@ -1433,8 +1433,10 @@ function onGroupMouseEnter(group: Group, e: MouseEvent) {
 
     for (const row of rows) {
       estimatedGain += row.estimatedGain;
-      if (row.gszzl > 0) estUp++;
-      else if (row.gszzl < 0) estDown++;
+      if (row.shouldShowEstimated) {
+        if (row.gszzl > 0) estUp++;
+        else if (row.gszzl < 0) estDown++;
+      }
       dailyGain += row.dailyGain;
       if (row.navChgRt > 0) dailyUp++;
       else if (row.navChgRt < 0) dailyDown++;
@@ -1565,8 +1567,10 @@ function onAllGroupMouseEnter(e: MouseEvent) {
 
     for (const row of enrichedRows.value) {
       estimatedGain += row.estimatedGain;
-      if (row.gszzl > 0) estUp++;
-      else if (row.gszzl < 0) estDown++;
+      if (row.shouldShowEstimated) {
+        if (row.gszzl > 0) estUp++;
+        else if (row.gszzl < 0) estDown++;
+      }
       dailyGain += row.dailyGain;
       if (row.navChgRt > 0) dailyUp++;
       else if (row.navChgRt < 0) dailyDown++;
@@ -1630,8 +1634,10 @@ function showAllGroupStats() {
 
   for (const row of enrichedRows.value) {
     estimatedGain += row.estimatedGain;
-    if (row.gszzl > 0) estUp++;
-    else if (row.gszzl < 0) estDown++;
+    if (row.shouldShowEstimated) {
+      if (row.gszzl > 0) estUp++;
+      else if (row.gszzl < 0) estDown++;
+    }
     dailyGain += row.dailyGain;
     if (row.navChgRt > 0) dailyUp++;
     else if (row.navChgRt < 0) dailyDown++;

@@ -763,10 +763,15 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     const updateDate = getUpdateDate(fund.updateTime);
     const isDataUpdatedToday = updateDate === todayDate;
 
-    // 计算估算收益（基于 estimatedValue，与 tooltip 和详情项一致）
-    const estimatedGain = fund.estimatedValue !== null
-      ? (fund.estimatedValue - fund.netValue) * fund.shares
-      : 0;
+    // 计算估算收益（基于 estimatedValue 或 changePercent）
+    let estimatedGain = 0;
+    if (fund.estimatedValue !== null && fund.shares > 0) {
+      estimatedGain = (fund.estimatedValue - fund.netValue) * fund.shares;
+    } else if (fund.shares > 0 && fund.netValue > 0 && fund.changePercent !== 0) {
+      // 没有 estimatedValue 但有 changePercent 时，基于涨跌幅计算
+      const holdingAmount = fund.netValue * fund.shares;
+      estimatedGain = (holdingAmount * fund.changePercent) / 100;
+    }
 
     // 只有当 API 数据已更新到今天，才显示估算收益；否则为 0
     const displayEstimatedGain = isDataUpdatedToday ? estimatedGain : 0;

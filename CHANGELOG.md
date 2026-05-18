@@ -2,6 +2,21 @@
 
 本文档记录了"基金助手"(Fund Helper) VS Code 扩展的所有重要更改。
 
+## [Unreleased]
+
+### 问题修复 (Bug Fixes)
+
+- 🐛 **修复基金净值更新后估算收益为0的问题**：当基金收盘后净值更新为真实值时，估算收益不再错误地显示为0
+  - 移除了市场休市状态对估算收益计算的限制
+  - 现在即使市场关闭，只要有估算涨跌幅数据，就会根据涨跌幅百分比正确计算估算收益
+  - 影响文件：`web/src/utils/fundDisplay.ts`、`src/statusBar.ts`、`src/sidebar/treeview/index.ts`、`src/sidebar/webview/script.ts`
+
+- 🐛 **修复分组Tooltip中估算上涨/下跌数量计算错误**：市场未开盘时，不再显示上个交易日的残留数据
+  - 添加了 `shouldShowEstimated` 条件判断，只在有有效估算数据时才计数上涨/下跌基金
+  - 现在当市场未开盘且无新估算数据时，估算上涨/下跌正确显示为 0 / 0
+  - web 端和 VSCode 端分组数据现已保持一致
+  - 影响文件：`web/src/views/HomeView.vue`
+
 ## [0.3.5] - 2026-05-14
 
 ### 新增功能 (Features)

@@ -45,11 +45,15 @@ export function updateStatusBar(fundList: FundInfo[]): void {
   let totalEstimatedDown = 0;
 
   for (const fund of fundList) {
-    // 计算估算收益（盘中）
-    // 如果休市，估算收益为 0
+    // 计算估算收益
     let estimatedGain = 0;
-    if (!isClosed && fund.estimatedValue !== null && fund.shares > 0) {
+    if (fund.estimatedValue !== null && fund.shares > 0) {
+      // 有估算净值时，直接计算
       estimatedGain = (fund.estimatedValue - fund.netValue) * fund.shares;
+    } else if (fund.shares > 0 && fund.netValue > 0 && fund.changePercent !== 0) {
+      // 没有估算净值，但有估算涨跌幅时，基于涨跌幅计算
+      const holdingAmount = fund.netValue * fund.shares;
+      estimatedGain = (holdingAmount * fund.changePercent) / 100;
     }
     
     totalEstimatedGain += estimatedGain;
@@ -115,12 +119,13 @@ export function updateStatusBar(fundList: FundInfo[]): void {
   const hl = (text: string, color: string) =>
     `**<span style="color:${color};background-color:${color}33;">&nbsp;${text}&nbsp;</span>**`;
 
-  if (isClosed) {
-    // 休市时显示提示
-    md.appendMarkdown(`$(info) 当前为休市时间，估算数据不可用\n\n`);
+  // 无论休市或交易日，只要有估算收益就显示
+  if (totalEstimatedGain === 0 && upCount === 0 && downCount === 0 && isClosed) {
+    // 休市且无估算数据时显示提示
+    md.appendMarkdown(`$(info) 当前为休市时间，暂无估算数据\n\n`);
     md.appendMarkdown(`\n ___ \n\n`);
   } else {
-    // 交易日显示估算数据
+    // 有估算数据时显示详情
     md.appendMarkdown(`$(arrow-up) 上涨基金：**${upCount}** 只，共计：${hl("+" + totalEstimatedUp.toFixed(2), "#f56c6c")}\n\n`);
     md.appendMarkdown(`$(arrow-down) 下跌基金：**${downCount}** 只，共计：${hl(totalEstimatedDown.toFixed(2), "#4eb61b")}\n\n`);
     const dayColor = totalEstimatedGain > 0 ? "#f56c6c" : totalEstimatedGain < 0 ? "#4eb61b" : "#909399";

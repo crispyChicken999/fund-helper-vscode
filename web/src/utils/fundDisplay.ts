@@ -156,12 +156,10 @@ export function buildFundRowDisplay(
   const hasUpdatedData = isGzTimeUpdatedToday(info.updateTime, market)
 
   let estimatedGain = 0
-  if (!isMarketClosedNow) {
-    if (gsz > 0 && hasUpdatedData) {
-      estimatedGain = (gsz - dwjz) * num
-    } else if (gsz === 0 && gszzl !== 0) {
-      estimatedGain = (holdingAmount * gszzl) / 100
-    }
+  if (gsz > 0 && hasUpdatedData) {
+    estimatedGain = (gsz - dwjz) * num
+  } else if (gsz === 0 && gszzl !== 0) {
+    estimatedGain = (holdingAmount * gszzl) / 100
   }
 
   const dailyGain = (holdingAmount * navChgRt) / 100

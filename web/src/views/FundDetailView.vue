@@ -952,7 +952,7 @@ async function renderNetValueChart(records: NetValueRecord[]) {
         data: ["单位净值", "累计净值"],
         textStyle: { fontSize: 11 },
       },
-      grid: { left: 50, right: 16, top: 16, bottom: 60, containLabel: false },
+      grid: { left: 50, right: 16,  bottom: 60, containLabel: false },
       xAxis: { type: "category", data: dates, axisLabel: { fontSize: 10 } },
       yAxis: {
         type: "value",
@@ -1051,7 +1051,7 @@ async function renderProfitChart(records: YieldRecord[]) {
         top: 0,
         textStyle: { fontSize: 11 },
       },
-      grid: { left: 50, right: 16, top: 16, bottom: 60, containLabel: false },
+      grid: { left: 50, right: 16, bottom: 60, containLabel: false },
       xAxis: { type: "category", data: dates, axisLabel: { fontSize: 10 } },
       yAxis: {
         type: "value",
