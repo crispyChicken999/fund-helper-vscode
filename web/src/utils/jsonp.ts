@@ -51,7 +51,7 @@ export async function fetchJSON<T = any>(url: string, timeout = 12000): Promise<
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), timeout)
-    const res = await fetch(url, { signal: controller.signal })
+    const res = await fetch(url, { signal: controller.signal, mode: 'cors' })
     clearTimeout(timer)
     if (!res.ok) return null
     return await res.json()
