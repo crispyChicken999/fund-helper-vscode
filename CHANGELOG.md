@@ -2,6 +2,29 @@
 
 本文档记录了"基金助手"(Fund Helper) VS Code 扩展的所有重要更改。
 
+## [0.3.8] - 2026-05-18
+
+### 问题修复 (Bug Fixes)
+
+- 🐛 **修复基金净值更新后估算收益计算错误的问题**：当基金收盘后净值更新为真实值时，估算收益不再错误地显示为0
+  - **根本原因**：当基金净值更新后，`gsz`（估算净值）会被更新为与 `dwjz`（单位净值）相同的值，导致计算 `(gsz - dwjz) * shares = 0`
+  - **修复方案**：添加判断条件 `gsz !== dwjz`，当估算净值等于单位净值时，改用涨跌幅计算：`holdingAmount * gszzl / 100`
+  - **影响范围**：
+    - VSCode 端：TreeView 列表、排序、汇总统计、StatusBar、WebView 表格、分组统计
+    - Web 端：基金列表、分组统计、排序功能
+  - **修复文件**：
+    - `web/src/utils/fundDisplay.ts`
+    - `src/sidebar/treeview/index.ts`（4处）
+    - `src/sidebar/webview/script.ts`（3处）
+    - `src/statusBar.ts`
+  - **额外修复**：修复 `shouldShowEstimated` 判断逻辑，确保只要有估算数据就显示，不受休市状态影响
+
+### 技术优化 (Technical)
+
+- 🔍 **添加估算收益计算调试日志**：在关键位置添加详细的 console.log，方便排查估算收益计算问题
+  - 日志包含：原始数据（gsz, dwjz, gszzl, num等）、使用的计算分支、计算过程和结果
+  - 可通过开发者工具查看完整的计算流程
+
 ## [0.3.7] - 2026-05-18
 
 ### 新增功能 (Features)
