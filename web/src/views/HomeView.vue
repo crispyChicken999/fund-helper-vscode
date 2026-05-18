@@ -263,8 +263,11 @@
                     v-if="row.showRealValueIcon"
                     class="real-value-icon"
                     title="已更新实际净值"
-                    >✓</span
-                  >
+                    >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M14.431 3.323l-8.47 10-.79-.036-3.35-4.77.818-.574 2.978 4.24 8.051-9.506.764.646z"/>
+                    </svg>
+                  </span>
                   <span class="fund-name">{{ row.name }}</span>
                 </div>
                 <div class="fund-code-row">
@@ -2866,6 +2869,13 @@ html.dark .group-label {
   color: var(--color-primary);
   flex-shrink: 0;
   font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  vertical-align: text-bottom;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 1px;
 }
 
 .td-sub {

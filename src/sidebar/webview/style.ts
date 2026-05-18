@@ -634,6 +634,7 @@ export function getStyles(): string[] {
     '  border: 1px solid;',
     '  border-radius: 3px;',
     '  padding: 1px;',
+    '  margin-right: 1px;',
     '}',
     '',
     '.real-value-icon svg {',

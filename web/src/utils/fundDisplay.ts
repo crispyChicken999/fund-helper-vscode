@@ -155,11 +155,17 @@ export function buildFundRowDisplay(
   const isMarketClosedNow = market.isClosed
   const hasUpdatedData = isGzTimeUpdatedToday(info.updateTime, market)
 
+  // 估算收益：只要有估算涨幅数据就计算，不受净值是否更新的影响
   let estimatedGain = 0
-  if (gsz > 0 && hasUpdatedData) {
+  // 当 gsz === dwjz 时，说明估算净值已更新为真实净值，应该使用涨跌幅计算
+  if (gsz > 0 && gsz !== dwjz) {
+    // 有估算净值且与单位净值不同时，使用估算净值和单位净值的差值
     estimatedGain = (gsz - dwjz) * num
-  } else if (gsz === 0 && gszzl !== 0) {
+  } else if (gszzl !== 0) {
+    // 没有估算净值或估算净值等于单位净值时，基于涨跌幅计算
     estimatedGain = (holdingAmount * gszzl) / 100
+  } else {
+    console.log(`[fundDisplay] ${fund.code} 无估算数据，estimatedGain = 0`)
   }
 
   const dailyGain = (holdingAmount * navChgRt) / 100

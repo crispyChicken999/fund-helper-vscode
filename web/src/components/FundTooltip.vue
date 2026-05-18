@@ -122,6 +122,8 @@
                   <span class="info-label">持有份额</span>
                   <span>{{ fmtShares(row.fund.num) }}</span>
                 </div>
+              </div>
+              <div class="info-group">
                 <div class="info-row">
                   <span class="info-label">成本价</span>
                   <span>{{ fmt4(row.fund.cost) }}</span>
@@ -305,6 +307,7 @@ function handleCopy() {
     `持仓总额：${fmt4Price(r.fund.num * r.fund.cost)}`,
     `持有金额：${fmtMoney(r.holdingAmount)}`,
     `持有份额：${fmtShares(r.fund.num)}`,
+    SEP,
     `成本价：${fmt4(r.fund.cost)}`,
     `估算净值：${fmt4(r.displayGsz)}`,
     `单位净值：${fmt4(r.dwjz)}`,

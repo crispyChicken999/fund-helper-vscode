@@ -54,11 +54,12 @@ export function updateStatusBar(fundList: FundInfo[]): void {
   for (const fund of fundList) {
     // 计算估算收益
     let estimatedGain = 0;
-    if (fund.estimatedValue !== null && fund.shares > 0) {
-      // 有估算净值时，直接计算
+    // 当 estimatedValue === netValue 时，说明估算净值已更新为真实净值，应该使用涨跌幅计算
+    if (fund.estimatedValue !== null && fund.shares > 0 && fund.estimatedValue !== fund.netValue) {
+      // 有估算净值且与单位净值不同时，直接计算
       estimatedGain = (fund.estimatedValue - fund.netValue) * fund.shares;
     } else if (fund.shares > 0 && fund.netValue > 0 && fund.changePercent !== 0) {
-      // 没有估算净值，但有估算涨跌幅时，基于涨跌幅计算
+      // 没有估算净值或估算净值等于单位净值，但有估算涨跌幅时，基于涨跌幅计算
       const holdingAmount = fund.netValue * fund.shares;
       estimatedGain = (holdingAmount * fund.changePercent) / 100;
     }
