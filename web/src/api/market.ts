@@ -167,20 +167,20 @@ export const GLOBAL_INDEX_GROUPS: Record<string, IndexImageItem[]> = {
     { name: '黄金9999', nid: '1.518880' }
   ],
   港股: [
-    { name: '恒生指数', nid: '116.HSI' },
-    { name: '恒生科技', nid: '116.HSTECH' }
+    { name: '恒生指数', nid: '100.HSI' },
+    { name: '恒生科技', nid: '124.HSTECH' }
   ],
   美股: [
-    { name: '道琼斯', nid: '105.DJIA' },
-    { name: '纳斯达克', nid: '105.NDX' },
+    { name: '道琼斯', nid: '100.DJIA' },
+    { name: '纳斯达克', nid: '100.NDX' },
     { name: '纳斯达克100', nid: '105.NDAQ' },
-    { name: '标普500', nid: '105.SPX' },
+    { name: '标普500', nid: '100.SPX' },
     { name: 'COMEX黄金', nid: '101.GC00Y' }
   ],
   亚太: [
-    { name: '日经225', nid: '119.N225' },
-    { name: '越南胡志明', nid: '128.VNINDEX' },
-    { name: '印度孟买', nid: '134.BSE' }
+    { name: '日经225', nid: '100.N225' },
+    { name: '越南胡志明', nid: '100.VNINDEX' },
+    { name: '印度孟买', nid: '100.SENSEX' }
   ]
 }
 
