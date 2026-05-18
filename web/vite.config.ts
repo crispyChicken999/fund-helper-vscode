@@ -76,7 +76,7 @@ export default defineConfig({
           },
           // 基金数据接口
           {
-            urlPattern: /^https:\/\/(data\.eastmoney|fundmobapi\.eastmoney|dgs\.tiantianfunds|api\.fund\.eastmoney)\.com\/.*/i,
+            urlPattern: /^https:\/\/(push2\.eastmoney|data\.eastmoney|fundmobapi\.eastmoney|dgs\.tiantianfunds|api\.fund\.eastmoney)\.com\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'fund-data-cache',
