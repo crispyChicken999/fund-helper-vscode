@@ -9,7 +9,8 @@ const STORAGE_KEYS = {
   GROUP_ORDER: 'fund_helper_group_order',
   SETTINGS: 'fund_helper_settings',
   SYNC_META: 'fund_helper_sync_meta',
-  FUND_DETAILS_CACHE: 'fund_helper_fund_details_cache'
+  FUND_DETAILS_CACHE: 'fund_helper_fund_details_cache',
+  PENDING_BUYS: 'fund_helper_pending_buys'
 }
 
 export const FUND_HELPER_BOX_NAME_KEY = 'fund_helper_box_name'

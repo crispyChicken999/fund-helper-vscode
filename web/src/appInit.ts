@@ -3,10 +3,25 @@ import { fundService, groupService, syncService } from '@/services'
 import { storageService } from '@/services/storageService'
 import { initHolidayData } from '@/utils/holiday'
 import { getChinaMarketStatus } from '@/utils/marketChina'
+import { getReadyPendingBuys } from '@/services/pendingBuyService'
 
 let initialized = false
 let initPromise: Promise<void> | null = null
 let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+/** 全局 pending 确认弹窗回调，由 HomeView 注册 */
+let pendingCheckCallback: ((readyList: ReturnType<typeof getReadyPendingBuys>) => void) | null = null
+
+export function registerPendingCheckCallback(cb: typeof pendingCheckCallback) {
+  pendingCheckCallback = cb
+}
+
+export function triggerPendingCheck() {
+  const readyList = getReadyPendingBuys()
+  if (readyList.length > 0 && pendingCheckCallback) {
+    pendingCheckCallback(readyList)
+  }
+}
 
 export async function initApp(): Promise<void> {
   if (initialized) return
@@ -54,13 +69,14 @@ export async function initApp(): Promise<void> {
         if (!hasCachedDetails) {
           // 无缓存时无论是否休市都强制刷新一次，确保列表显示基金名称等基本信息
           console.log('[AppInit] 无本地缓存，强制刷新一次基金数据')
-          fundService.refreshAllFunds().catch(console.error)
+          fundService.refreshAllFunds().then(() => triggerPendingCheck()).catch(console.error)
         } else if (isClosed) {
           // 有缓存且当前休市，跳过刷新，直接使用缓存数据
           console.log('[AppInit] 当前休市，跳过自动刷新，使用缓存数据')
+          triggerPendingCheck()
         } else {
           // 有缓存且开市，立即刷新一次
-          fundService.refreshAllFunds().catch(console.error)
+          fundService.refreshAllFunds().then(() => triggerPendingCheck()).catch(console.error)
         }
 
         // 只在开市状态下启动定时刷新

@@ -5,7 +5,10 @@
     </div>
 
     <div class="layout-content">
-      <el-scrollbar>
+      <template v-if="route.path === '/'">
+        <slot />
+      </template>
+      <el-scrollbar v-else>
         <slot />
       </el-scrollbar>
     </div>

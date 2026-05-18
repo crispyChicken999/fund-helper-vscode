@@ -80,6 +80,18 @@
                 <el-icon v-else><Moon /></el-icon>
               </button>
               <span class="stat-label-spacer"></span>
+              <el-badge :value="batchPendingCount" :hidden="batchPendingCount === 0" type="danger">
+                <el-button
+                  type="primary"
+                  size="small"
+                  round
+                  plain
+                  @click="showBatchAdjust = true"
+                  title="批量加减仓"
+                >
+                  <el-icon><Edit /></el-icon>
+                </el-button>
+              </el-badge>
               <el-button
                 type="primary"
                 size="small"
@@ -604,6 +616,21 @@
     <!-- 列设置对话框 -->
     <ColumnSettingsDialog v-model:visible="showColumnSettings" />
 
+    <!-- 批量加减仓弹窗 -->
+    <BatchAdjustModal
+      :visible="showBatchAdjust"
+      @close="showBatchAdjust = false; refreshBatchPendingCount()"
+      @confirmed="refreshBatchPendingCount"
+    />
+
+    <!-- Pending 加仓确认弹窗 -->
+    <PendingConfirmDialog
+      :visible="showPendingConfirm"
+      :ready-list="pendingReadyList"
+      @dismiss="showPendingConfirm = false"
+      @confirmed="showPendingConfirm = false; refreshBatchPendingCount()"
+    />
+
     <!-- 加仓/减仓对话框 -->
     <el-dialog
       v-model="showPositionDialog"
@@ -725,6 +752,7 @@ import {
   Setting,
   Moon,
   Sunny,
+  Edit,
 } from "@element-plus/icons-vue";
 import { useDebounceFn, useMediaQuery } from "@vueuse/core";
 import Sortable from "sortablejs";
@@ -735,6 +763,8 @@ import GroupTooltip from "@/components/GroupTooltip.vue";
 import GroupManageDialog from "@/components/GroupManageDialog.vue";
 import FundHoverTooltip from "@/components/FundHoverTooltip.vue";
 import GroupHoverTooltip from "@/components/GroupHoverTooltip.vue";
+import BatchAdjustModal from "@/components/BatchAdjustModal.vue";
+import PendingConfirmDialog from "@/components/PendingConfirmDialog.vue";
 import type { GroupStats } from "@/components/GroupTooltip.vue";
 import { useFundStore, useGroupStore, useSettingStore } from "@/stores";
 import { fundService, groupService } from "@/services";
@@ -746,6 +776,8 @@ import { validateFundCode, validateGroupName } from "@/utils/validate";
 import { getChinaMarketStatus } from "@/utils/marketChina";
 import type { Group, FundView } from "@/types";
 import type { FundRowDisplay } from "@/utils/fundDisplay";
+import { registerPendingCheckCallback } from "@/appInit";
+import { getPendingCount, type BuyRecord } from "@/services/pendingBuyService";
 
 type TableColMeta = {
   title: string;
@@ -2146,6 +2178,16 @@ function onGroupManageSaved() {
   fundService.refreshAllFunds().catch(() => {});
 }
 
+// ---- 批量加减仓 ----
+const showBatchAdjust = ref(false);
+const showPendingConfirm = ref(false);
+const pendingReadyList = ref<BuyRecord[]>([]);
+const batchPendingCount = ref(0);
+
+function refreshBatchPendingCount() {
+  batchPendingCount.value = getPendingCount();
+}
+
 // --- Sortable: fund table row drag-and-drop ---
 // Enabled when: default sort + no search + (all group OR specific group selected)
 const canDragFundRows = computed(
@@ -2220,6 +2262,14 @@ onMounted(async () => {
   if (canDragFundRows.value) {
     initFundTableSortable();
   }
+
+  // 注册 pending 检查回调（appInit 刷新完成后触发）
+  registerPendingCheckCallback((readyList) => {
+    pendingReadyList.value = readyList;
+    showPendingConfirm.value = true;
+  });
+  // 初始化 pending 角标数量
+  refreshBatchPendingCount();
 });
 
 onUnmounted(() => {
@@ -2775,4 +2825,5 @@ html.dark .group-label {
   gap: 4px;
   margin-top: 8px;
 }
+
 </style>
