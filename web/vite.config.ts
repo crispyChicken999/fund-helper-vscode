@@ -1,10 +1,140 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icon-*.png'],
+      manifest: {
+        name: '基金助手',
+        short_name: '基金助手',
+        description: '基金投资助手，帮助您管理和分析基金投资',
+        theme_color: '#20c997',
+        background_color: '#ffffff',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        scope: '/',
+        start_url: '/',
+        icons: [
+          {
+            src: '/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/icon-192-maskable.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: '/icon-512-maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ],
+        categories: ['finance', 'productivity'],
+        screenshots: [
+          {
+            src: '/screenshot-1.png',
+            sizes: '540x720',
+            type: 'image/png',
+            form_factor: 'narrow'
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,gif,webp,woff,woff2,ttf,eot}'],
+        runtimeCaching: [
+          // API 缓存策略：网络优先，确保数据最新
+          {
+            urlPattern: /^https:\/\/api\.|^https:\/\/.*\.(api|proxy).*|^\/api-proxy\//i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          // 基金数据接口
+          {
+            urlPattern: /^https:\/\/(data\.eastmoney|fundmobapi\.eastmoney|dgs\.tiantianfunds|api\.fund\.eastmoney)\.com\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'fund-data-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 // 1 hour
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          // 图片资源：缓存优先
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'image-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              }
+            }
+          },
+          // 字体资源：缓存优先
+          {
+            urlPattern: /\.(?:woff|woff2|ttf|eot)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'font-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              }
+            }
+          },
+          // Google 字体：过期后重新验证
+          {
+            urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'google-fonts',
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              }
+            }
+          }
+        ],
+        skipWaiting: true,
+        clientsClaim: true,
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // 5MB
+      },
+      devOptions: {
+        enabled: false // 禁用开发环境 PWA，避免缓存干扰调试
+      }
+    })
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -14,6 +144,9 @@ export default defineConfig({
     port: 5173,
     open: true,
     host: '0.0.0.0',
+    headers: {
+      'Service-Worker-Allowed': '/'
+    },
     proxy: {
       // 东方财富板块数据（CORS 限制）
       '/api-proxy/bkzj': {

@@ -352,6 +352,48 @@
                 </el-button>
               </div>
             </el-form-item>
+
+            <el-form-item label="安装应用" label-width="120px">
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                  align-items: flex-start;
+                  gap: 8px;
+                "
+              >
+                <div
+                  class="form-item-tip"
+                  style="margin: 0px; text-align: justify"
+                >
+                  <template v-if="isPWAInstalled">
+                    ✓ 应用已安装为本地应用，您可以像使用原生应用一样使用本工具。
+                  </template>
+                  <template v-else>
+                    将本应用保存到本地，支持离线使用，随时随地管理您的基金投资。
+                  </template>
+                </div>
+                <el-button
+                  v-if="!isPWAInstalled && canInstallPWAComputed"
+                  type="primary"
+                  size="small"
+                  plain
+                  @click="handleInstallPWA"
+                  :loading="isInstallingPWA"
+                >
+                  保存到本地应用
+                </el-button>
+                <el-button
+                  v-else-if="!isPWAInstalled"
+                  plain
+                  size="small"
+                  disabled
+                >
+                  当前浏览器不支持应用安装
+                </el-button>
+              </div>
+            </el-form-item>
           </el-collapse-item>
         </el-form>
       </el-collapse>
@@ -387,13 +429,21 @@ import {
 import { syncService } from "@/services";
 import { storageService } from "@/services/storageService";
 import { generateJsonboxName } from "@/utils/validate";
+import {
+  triggerInstallPrompt,
+  canInstallPWA,
+  isPWAInstalled as checkPWAInstalled,
+} from "@/utils/pwa";
 
 const settingStore = useSettingStore();
 const fundStore = useFundStore();
 const groupStore = useGroupStore();
 const syncStore = useSyncStore();
 
-// ==================== 响应式数据 ====================
+// ==================== PWA 相关 ====================
+
+const isPWAInstalled = ref(false);
+const isInstallingPWA = ref(false);
 
 const privacyMode = computed({
   get: () => settingStore.privacyMode,
@@ -489,6 +539,9 @@ onMounted(async () => {
     settingStore.grayscaleMode,
   );
   document.documentElement.dataset.theme = settingStore.theme;
+
+  // 初始化PWA状态
+  isPWAInstalled.value = checkPWAInstalled();
 
   buildColumnDraft();
 
@@ -914,6 +967,29 @@ function openVscodeExtension() {
     "https://marketplace.visualstudio.com/items?itemName=CrispyChicken.fund-helper",
     "_blank",
   );
+}
+
+// ==================== PWA 相关 ====================
+
+const canInstallPWAComputed = computed(() => canInstallPWA());
+
+async function handleInstallPWA() {
+  try {
+    isInstallingPWA.value = true;
+    const success = await triggerInstallPrompt();
+
+    if (success) {
+      ElMessage.success("✓ 应用已保存到本地！");
+      isPWAInstalled.value = true;
+    } else {
+      ElMessage.info("✓ 应用安装已取消");
+    }
+  } catch (error) {
+    console.error("✗ PWA installation failed:", error);
+    ElMessage.error("✗ 应用安装失败，请重试");
+  } finally {
+    isInstallingPWA.value = false;
+  }
 }
 </script>
 
