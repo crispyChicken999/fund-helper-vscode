@@ -462,11 +462,11 @@ function onBuyDateChange(item: BuyItem, val: string) {
 }
 
 function calcOldShares(item: BuyItem): number {
-  return fundStore.getFund(item.code)?.num ?? 0
+  return Number(fundStore.getFund(item.code)?.num) ?? 0
 }
 
 function calcOldCost(item: BuyItem): number {
-  return fundStore.getFund(item.code)?.cost ?? 0
+  return Number(fundStore.getFund(item.code)?.cost) ?? 0
 }
 
 function calcNewShares(item: BuyItem): number {
@@ -949,7 +949,7 @@ function formatTime(ts: number): string {
 /* 隐藏 number input spinner */
 .amount-input::-webkit-outer-spin-button,
 .amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
-.amount-input[type=number] { -moz-appearance: textfield; }
+.amount-input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 
 .amount-unit {
   padding: 0 8px;

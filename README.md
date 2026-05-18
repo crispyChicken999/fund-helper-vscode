@@ -8,7 +8,7 @@
 
 ![License](https://badgen.net/badge/License/MIT/red)
 ![VSCode](https://badgen.net/badge/VSCode/1.82.0+/blue?icon=visualstudio)
-![Version](https://badgen.net/badge/Version/0.3.5/orange?icon=git)
+![Version](https://badgen.net/badge/Version/0.3.6/orange?icon=git)
 ![Platform](https://badgen.net/badge/Platform/Windows|MacOS|Linux/purple?icon=windows)
 
 ![Downloads](https://badgen.net/vs-marketplace/d/CrispyChicken.fund-helper?label=Downloads&color=blue)
@@ -95,7 +95,10 @@
 8. ➕ **加仓操作**：选择历史净值日期买入，直接输入买入金额自动精算持有份额
 9. ➖ **减仓操作**：按照卖出金额快速减仓，自动计算剩余份额
 10. ✏️ **修改持仓**：自由修改总份额和成本价；份额清仓记为 0 时自动跳过成本价输入
-11. 📤 **导入/导出增强**：JSON 格式导入导出，支持合并或覆盖；导出包含分组顺序、排序方式、刷新间隔、默认视图等全部用户设置，一键备份恢复更完整
+11. 🔄 **批量加减仓**：全新批量操作面板，支持同时对多只基金加仓/减仓，内置实时预览（新增份额、新总份额、新成本价、持仓总额前后对比）
+    - **Pending 加仓**：当日净值未更新时自动记录待确认操作，下次打开插件时检测到净值已更新，弹窗提示确认入账
+    - **进行中 Tab**：随时查看待确认的加仓记录，支持单条取消
+12. 📤 **导入/导出增强**：JSON 格式导入导出，支持合并或覆盖；导出包含分组顺序、排序方式、刷新间隔、默认视图等全部用户设置，一键备份恢复更完整
 
 ### 分组与筛选
 
@@ -376,7 +379,8 @@ VSCode 版 → 上传云端 → [jsonbox.io](https://jsonbox.cloud.exo-imaging.c
 - [x] 云同步：通过 [jsonbox.io](https://jsonbox.cloud.exo-imaging.com) 实现跨设备配置同步
 - [x] 网页版：无需安装，浏览器直接使用
 - [x] 持仓明细：基金详情页展示十大持仓股票和债券
-- [ ] 支持自定义涨跌颜色主题
+- [x] 支持自定义涨跌颜色主题
+- [x] 批量加减仓：一次操作对多只基金加仓/减仓，支持当日 Pending 净值待更新机制
 - [ ] 支持多组合切换（如：A股组合、港股组合）
 - [ ] 支持基金对比功能
 - [ ] 支持基金提醒功能（涨跌幅达到阈值时提醒）

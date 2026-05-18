@@ -108,6 +108,10 @@
           <!-- 持仓信息 -->
           <div class="info-group">
             <div class="info-row">
+              <span class="info-label">持仓总额</span>
+              <span>{{ fmt4Price(row.fund.num * row.fund.cost) }}</span>
+            </div>
+            <div class="info-row">
               <span class="info-label">持有金额</span>
               <span>{{ fmtMoney(row.holdingAmount) }}</span>
             </div>
@@ -335,6 +339,10 @@ function fmt4(v: unknown) {
   return safeNum(v).toFixed(4);
 }
 
+function fmt4Price(v: unknown) {
+  return formatCurrency(safeNum(v));
+}
+
 function fmtShares(v: unknown) {
   return formatNumber(safeNum(v), 2);
 }
@@ -385,6 +393,7 @@ function handleCopy() {
     `持有收益：${fmtMoney(r.holdingGain)}`,
     `总收益率：${rawPct(r.holdingGainRate, true)}`,
     SEP,
+    `持仓总额：${fmt4Price(r.fund.num * r.fund.cost)}`,
     `持有金额：${fmtMoney(r.holdingAmount)}`,
     `持有份额：${fmtShares(r.fund.num)}`,
     `成本价：${fmt4(r.fund.cost)}`,

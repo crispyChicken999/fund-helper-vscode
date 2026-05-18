@@ -950,7 +950,7 @@ async function renderNetValueChart(records: NetValueRecord[]) {
       },
       legend: {
         data: ["单位净值", "累计净值"],
-        textStyle: { fontSize: 11 },
+        textStyle: { fontSize: 11, color: "var(--el-color-primary)" },
       },
       grid: { left: 50, right: 16,  bottom: 60, containLabel: false },
       xAxis: { type: "category", data: dates, axisLabel: { fontSize: 10 } },
@@ -1049,7 +1049,7 @@ async function renderProfitChart(records: YieldRecord[]) {
       legend: {
         data: ["涨幅", "沪深300", "同类平均"],
         top: 0,
-        textStyle: { fontSize: 11 },
+        textStyle: { fontSize: 11, color: "var(--el-color-primary)" },
       },
       grid: { left: 50, right: 16, bottom: 60, containLabel: false },
       xAxis: { type: "category", data: dates, axisLabel: { fontSize: 10 } },

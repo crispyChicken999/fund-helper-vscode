@@ -8,6 +8,8 @@ import { FundDataManager, ExtendedFundInfo } from "../../fundDataManager";
 import { getStyles } from "./style";
 import { getGroupScripts } from "./group";
 import { getScripts } from "./script";
+import { getBatchAdjustScript, getBatchAdjustScript2, getBatchAdjustScript3 } from "./batchAdjust";
+import { getBatchAdjustStyles } from "./batchAdjustStyle";
 import { getFundGroups, saveFundGroups, getFundGroupOrder, saveFundGroupOrder } from "../../core";
 
 export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
@@ -167,6 +169,9 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
     this._sendPrivacyMode();
     this._sendGrayscaleMode();
     this._sendJsonboxName();
+
+    // 刷新完成后检查 pending 买入记录
+    this._checkPendingBuys(fundDataList);
   }
 
   private _sendMarketStatus(): void {
@@ -216,6 +221,25 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       command: "initJsonboxName",
       value: jsonboxName,
     });
+  }
+
+  private _checkPendingBuys(fundDataList: ExtendedFundInfo[]): void {
+    try {
+      const { getReadyPendingBuys } = require("../../batchAdjust");
+      const netValueDates = new Map<string, string>();
+      const netValues = new Map<string, number>();
+      for (const f of fundDataList) {
+        if (f.netValueDate) netValueDates.set(f.code, f.netValueDate);
+        netValues.set(f.code, f.netValue);
+      }
+      const readyList = getReadyPendingBuys(netValueDates, netValues);
+      if (readyList.length > 0) {
+        this.postMessage({ command: "batchAdjust_pendingReady", list: readyList });
+      }
+      // 始终更新 pending 列表（角标）
+      const { loadPendingBuys } = require("../../batchAdjust");
+      this.postMessage({ command: "batchAdjust_pendingList", list: loadPendingBuys() });
+    } catch { /* ignore */ }
   }
 
   private _sendColumnSettings(): void {
@@ -702,6 +726,136 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
         vscode.env.openExternal(vscode.Uri.parse("https://fund-helper.netlify.app"));
         break;
 
+      case "batchAdjust_loadPending": {
+        const { loadPendingBuys } = require("../../batchAdjust");
+        const list = loadPendingBuys();
+        this.postMessage({ command: "batchAdjust_pendingList", list });
+        break;
+      }
+
+      case "batchAdjust_searchFund": {
+        const { searchFund } = require("../../fundService");
+        try {
+          const results = await searchFund(message.keyword || "");
+          this.postMessage({ command: "batchAdjust_searchResult", results, target: message.target });
+        } catch {
+          this.postMessage({ command: "batchAdjust_searchResult", results: [], target: message.target });
+        }
+        break;
+      }
+
+      case "batchAdjust_getNavHistory": {
+        const { getNetValueHistory } = require("../../fundService");
+        try {
+          const rawList = await getNetValueHistory(message.code, 15);
+          this.postMessage({ command: "batchAdjust_navHistory", code: message.code, list: rawList });
+        } catch {
+          this.postMessage({ command: "batchAdjust_navHistory", code: message.code, list: [], error: true });
+        }
+        break;
+      }
+
+      case "batchAdjust_cancelPending": {
+        const { cancelPendingBuy } = require("../../batchAdjust");
+        cancelPendingBuy(message.id);
+        break;
+      }
+
+      case "batchAdjust_confirmBuy": {
+        const { addPendingBuy } = require("../../batchAdjust");
+        const config = vscode.workspace.getConfiguration("fund-helper");
+        const funds = config.get<Array<{ code: string; num: string; cost: string }>>("funds", []);
+        const items: Array<{ code: string; name: string; buyDate: string; amount: number; nav: number | null; isPending: boolean }> = message.items || [];
+
+        const immediateItems = items.filter((i: any) => !i.isPending && i.nav);
+        const pendingItems = items.filter((i: any) => i.isPending);
+
+        try {
+          // 即时加仓
+          for (const item of immediateItems) {
+            const nav = item.nav!;
+            const addNum = item.amount / nav;
+            const existing = funds.find((f: any) => f.code === item.code);
+            const oldNum = existing ? parseFloat(existing.num) || 0 : 0;
+            const oldCost = existing ? parseFloat(existing.cost) || 0 : 0;
+            const newNum = oldNum + addNum;
+            const newCost = newNum > 0 ? (oldCost * oldNum + nav * addNum) / newNum : nav;
+            if (existing) {
+              existing.num = String(newNum);
+              existing.cost = String(newCost);
+            } else {
+              funds.push({ code: item.code, num: String(addNum), cost: String(nav) });
+            }
+          }
+          if (immediateItems.length > 0) {
+            await config.update("funds", funds, vscode.ConfigurationTarget.Global);
+          }
+
+          // Pending 加仓
+          for (const item of pendingItems) {
+            addPendingBuy({ code: item.code, name: item.name, buyDate: item.buyDate, amount: item.amount, navOnBuyDate: null, status: 'pending' });
+          }
+
+          await this._loadFundData();
+          const msgs: string[] = [];
+          if (immediateItems.length > 0) msgs.push(`${immediateItems.length} 笔加仓已完成`);
+          if (pendingItems.length > 0) msgs.push(`${pendingItems.length} 笔已记录，等待净值更新后确认`);
+          this.postMessage({ command: "batchAdjust_buyDone", message: msgs.join("，") });
+        } catch (e: any) {
+          this.postMessage({ command: "batchAdjust_error", message: e?.message || "加仓失败" });
+        }
+        break;
+      }
+
+      case "batchAdjust_confirmSell": {
+        const config = vscode.workspace.getConfiguration("fund-helper");
+        const funds = config.get<Array<{ code: string; num: string; cost: string }>>("funds", []);
+        const items: Array<{ code: string; sellShares: number }> = message.items || [];
+
+        try {
+          for (const item of items) {
+            const fund = funds.find((f: any) => f.code === item.code);
+            if (!fund) continue;
+            const newNum = (parseFloat(fund.num) || 0) - item.sellShares;
+            if (newNum < 0) continue;
+            fund.num = String(newNum);
+          }
+          await config.update("funds", funds, vscode.ConfigurationTarget.Global);
+          await this._loadFundData();
+          this.postMessage({ command: "batchAdjust_sellDone", message: `${items.length} 笔减仓已完成` });
+        } catch (e: any) {
+          this.postMessage({ command: "batchAdjust_error", message: e?.message || "减仓失败" });
+        }
+        break;
+      }
+
+      case "batchAdjust_confirmPending": {
+        const { loadPendingBuys, buildPositionUpdates, removePendingBuys } = require("../../batchAdjust");
+        const config = vscode.workspace.getConfiguration("fund-helper");
+        const funds = config.get<Array<{ code: string; num: string; cost: string }>>("funds", []);
+        const ids: string[] = message.ids || [];
+        const allPending = loadPendingBuys();
+        const readyList = allPending.filter((r: any) => ids.includes(r.id));
+
+        try {
+          const updates = buildPositionUpdates(readyList, funds);
+          for (const upd of updates) {
+            const fund = funds.find((f: any) => f.code === upd.code);
+            if (fund) { fund.num = String(upd.newNum); fund.cost = String(upd.newCost); }
+            else { funds.push({ code: upd.code, num: String(upd.newNum), cost: String(upd.newCost) }); }
+          }
+          await config.update("funds", funds, vscode.ConfigurationTarget.Global);
+          removePendingBuys(ids);
+          await this._loadFundData();
+          // 更新 pending 角标
+          const { loadPendingBuys: lpb } = require("../../batchAdjust");
+          this.postMessage({ command: "batchAdjust_pendingList", list: lpb() });
+        } catch (e: any) {
+          this.postMessage({ command: "batchAdjust_error", message: e?.message || "确认失败" });
+        }
+        break;
+      }
+
       default:
         console.log("未知消息:", message);
     }
@@ -719,6 +873,7 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       `  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} data:; script-src 'nonce-${nonce}';">`,
       '  <style>',
       ...getStyles(),
+      ...getBatchAdjustStyles(),
       '  </style>',
       '  <title>基金助手</title>',
       '</head>',
@@ -820,6 +975,11 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       '                <g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h20"/></g>',
       '              </svg>',
       '            </button>',
+      '            <button class="btn-toggle-web" id="btnBatchAdjust" title="批量加减仓" style="position:relative;">',
+      '              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">',
+      '                <path fill="currentColor" d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h8.925l-2 2H5v14h14v-6.95l2-2V19q0 .825-.587 1.413T19 21zm4-6v-4.25l9.175-9.175q.3-.3.675-.45t.75-.15q.4 0 .763.15t.662.45L22.425 3q.275.3.425.663T23 4.4t-.137.738t-.438.662L13.25 15zM21.025 4.4l-1.4-1.4zM11 13h1.4l5.8-5.8l-.7-.7l-.725-.7L11 11.575zm6.5-6.5l-.725-.7zl.7.7z"/>',
+      '              </svg>',
+      '            </button>',
       '          </div>',
       '          <div class="stat-value-large" id="totalAssets">0.00</div>',
       '        </div>',
@@ -872,8 +1032,19 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       '      </div>',
       '    </div>',
       '  </div>',
+      '  <!-- 批量加减仓弹窗 -->',
+      '  <div id="batchAdjustOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:flex-end;justify-content:center;">',
+      '    <div id="batchAdjustPanel" style="background:var(--vscode-editor-background);width:100%;max-width:520px;max-height:82vh;border-radius:12px 12px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -4px 24px rgba(0,0,0,.2);"></div>',
+      '  </div>',
+      '  <!-- Pending 确认弹窗 -->',
+      '  <div id="pendingConfirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2100;align-items:flex-end;justify-content:center;">',
+      '    <div id="pendingConfirmPanel" style="background:var(--vscode-editor-background);width:100%;max-width:520px;max-height:80vh;border-radius:12px 12px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -4px 24px rgba(0,0,0,.2);"></div>',
+      '  </div>',
       `  <script nonce="${nonce}">`,
       ...getGroupScripts(),
+      ...getBatchAdjustScript(),
+      ...getBatchAdjustScript2(),
+      ...getBatchAdjustScript3(),
       ...getScripts(),
       '  </script>',
       '</body>',

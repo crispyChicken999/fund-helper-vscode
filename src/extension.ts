@@ -45,6 +45,10 @@ export async function activate(context: vscode.ExtensionContext) {
   // 0️⃣ 初始化节假日数据
   await initHolidayData(context);
 
+  // 0.1️⃣ 初始化批量加减仓模块
+  const { initBatchAdjust } = require("./batchAdjust");
+  initBatchAdjust(context);
+
   // 0.5️⃣ 创建共享数据管理器
   fundDataManager = new FundDataManager();
 
