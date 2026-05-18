@@ -345,7 +345,11 @@ async function renderFlowChart(
       formatter(params: any[]) {
         let html = `<div style="font-size:12px">${params[0]?.axisValue}<br/>`;
         params.forEach((p: any) => {
-          const color = isGrayScale ? "var(--el-text-color)" : p.value >= 0 ? "var(--color-up)" : "var(--color-down)";
+          const color = isGrayScale
+            ? "var(--el-text-color)"
+            : p.value >= 0
+              ? "var(--color-up)"
+              : "var(--color-down)";
           html += `<span style="color:${color}">${p.seriesName}: ${p.value.toFixed(2)} 亿</span><br/>`;
         });
         return html + "</div>";
@@ -457,8 +461,8 @@ async function renderPlateChart(
     xAxis: {
       type: "category",
       data: names,
-      axisLabel: { fontSize: 11, },
-      axisLine: { lineStyle: { } },
+      axisLabel: { fontSize: 11 },
+      axisLine: { lineStyle: {} },
     },
     yAxis: {
       type: "value",
@@ -467,7 +471,7 @@ async function renderPlateChart(
         formatter: "{value}亿",
       },
       splitLine: {
-        lineStyle: {  type: "dashed" },
+        lineStyle: { type: "dashed" },
       },
     },
     dataZoom: [
@@ -659,7 +663,7 @@ onUnmounted(() => {
 /* 指数卡片 */
 .index-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px,1fr));
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
 }
 
@@ -779,7 +783,8 @@ onUnmounted(() => {
 }
 
 html.dark .index-img-wrap img {
-  filter: invert(1) grayscale(1) brightness(0.8);
+  filter: invert(1) hue-rotate(173deg) brightness(0.9);
+  border: 1px solid #c0c0c0;
 }
 
 .index-img-wrap img {
@@ -816,6 +821,5 @@ html.dark .index-img-wrap img {
     font-size: 12px;
     gap: 8px;
   }
-
 }
 </style>
