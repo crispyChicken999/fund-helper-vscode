@@ -123,7 +123,7 @@
 
         <!-- 操作按钮 -->
         <div class="action-row" v-if="fundView">
-          <el-button type="primary" @click="showEditDialog = true"
+          <el-button type="primary" @click="handleOpenEditDialog" plain
             >编辑持仓</el-button
           >
           <el-button type="danger" plain @click="confirmDelete"
@@ -528,6 +528,8 @@
       title="编辑基金"
       width="90%"
       :close-on-click-modal="true"
+      destroy-on-close
+      @close="isEditingTotalAmount = false"
     >
       <el-form
         :model="editForm"
@@ -555,9 +557,51 @@
             placeholder="成本价"
           />
         </el-form-item>
+        <el-form-item label="总金额">
+          <el-alert
+            v-if="!isEditingTotalAmount"
+            title="提示：修改总金额会影响成本价的计算方式，修改后会根据新的总金额和持有份额倒推新的成本价"
+            type="warning"
+            :closable="false"
+          />
+          <div
+            style="display: flex; gap: 8px; align-items: center; width: 100%"
+          >
+            <div v-if="!isEditingTotalAmount" style="flex: 1">
+              <span>{{ (editForm.num * editForm.cost).toFixed(2) }} 元</span>
+            </div>
+            <el-input
+              v-else
+              v-model.number="editTotalAmount"
+              type="number"
+              placeholder="输入新的总金额"
+              style="flex: 1"
+            />
+            <el-button
+              v-if="!isEditingTotalAmount"
+              link
+              type="primary"
+              @click="startEditTotalAmount"
+            >
+              修改
+            </el-button>
+            <div v-else style="display: flex; gap: 4px">
+              <el-button
+                type="primary"
+                size="small"
+                @click="confirmEditTotalAmount"
+              >
+                确定
+              </el-button>
+              <el-button size="small" @click="cancelEditTotalAmount">
+                取消
+              </el-button>
+            </div>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditDialog = false">取消</el-button>
+        <el-button @click="handleCancelEdit">取消</el-button>
         <el-button type="primary" @click="handleEdit" :loading="submitting"
           >保存</el-button
         >
@@ -672,6 +716,10 @@ const editFormRules: FormRules = {
     { type: "number", min: 0.0001, message: "成本价>0", trigger: "blur" },
   ],
 };
+
+// 编辑基金总金额相关状态
+const isEditingTotalAmount = ref(false);
+const editTotalAmount = ref(0);
 
 // ==================== 基金列表导航 ====================
 
@@ -952,7 +1000,7 @@ async function renderNetValueChart(records: NetValueRecord[]) {
         data: ["单位净值", "累计净值"],
         textStyle: { fontSize: 11, color: "var(--el-color-primary)" },
       },
-      grid: { left: 50, right: 16,  bottom: 60, containLabel: false },
+      grid: { left: 50, right: 16, bottom: 60, containLabel: false },
       xAxis: { type: "category", data: dates, axisLabel: { fontSize: 10 } },
       yAxis: {
         type: "value",
@@ -1136,6 +1184,62 @@ async function handleEdit() {
   });
 }
 
+// 开始编辑总金额
+function startEditTotalAmount() {
+  editTotalAmount.value = Number(
+    (editForm.value.num * editForm.value.cost).toFixed(2),
+  );
+  isEditingTotalAmount.value = true;
+}
+
+// 确认修改总金额并倒推成本价
+function confirmEditTotalAmount() {
+  const newTotalAmount = editTotalAmount.value;
+  const num = editForm.value.num;
+
+  if (num <= 0) {
+    ElMessage.error("份额必须大于0才能计算成本价");
+    return;
+  }
+
+  if (newTotalAmount < 0) {
+    ElMessage.error("总金额不能为负");
+    return;
+  }
+
+  // 倒推计算新的成本价
+  const newCost = newTotalAmount / num;
+  editForm.value.cost = parseFloat(newCost.toFixed(4));
+
+  isEditingTotalAmount.value = false;
+  ElMessage.success(
+    `已根据总金额 ${newTotalAmount.toFixed(2)} 元重新计算成本价`,
+  );
+}
+
+// 取消编辑总金额
+function cancelEditTotalAmount() {
+  isEditingTotalAmount.value = false;
+  // 重置编辑的总金额值
+  editTotalAmount.value = editForm.value.num * editForm.value.cost;
+}
+
+// 取消编辑基金对话框
+function handleCancelEdit() {
+  isEditingTotalAmount.value = false;
+  editFormRef.value?.resetFields();
+  showEditDialog.value = false;
+}
+
+// 打开编辑基金对话框
+function handleOpenEditDialog() {
+  isEditingTotalAmount.value = false;
+  nextTick(() => {
+    editFormRef.value?.clearValidate();
+  });
+  showEditDialog.value = true;
+}
+
 async function confirmDelete() {
   try {
     await ElMessageBox.confirm(`确定删除基金 ${displayName.value}？`, "确认", {
@@ -1187,6 +1291,9 @@ watch(
     }
     if (fundView.value) {
       editForm.value = { num: fundView.value.num, cost: fundView.value.cost };
+      // 重置总金额编辑状态
+      isEditingTotalAmount.value = false;
+      editTotalAmount.value = fundView.value.num * fundView.value.cost;
     }
     // 加载当前 tab 的数据（loadedTabs 已清空）并滚动居中
     await loadTabOnce(activeTab.value);
@@ -1204,6 +1311,9 @@ onMounted(async () => {
   // 初始化编辑表单
   if (fundView.value) {
     editForm.value = { num: fundView.value.num, cost: fundView.value.cost };
+    // 初始化总金额编辑状态
+    isEditingTotalAmount.value = false;
+    editTotalAmount.value = fundView.value.num * fundView.value.cost;
   }
   // 初始 tab 滚动居中
   scrollTabIntoCenter(activeTab.value);

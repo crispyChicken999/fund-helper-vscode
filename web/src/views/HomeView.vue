@@ -76,11 +76,17 @@
                 @click="toggleDarkMode($event)"
                 title="主题切换"
               >
-                <el-icon v-if="settingStore.theme === 'light'"><Sunny /></el-icon>
+                <el-icon v-if="settingStore.theme === 'light'"
+                  ><Sunny
+                /></el-icon>
                 <el-icon v-else><Moon /></el-icon>
               </button>
               <span class="stat-label-spacer"></span>
-              <el-badge :value="batchPendingCount" :hidden="batchPendingCount === 0" type="danger">
+              <el-badge
+                :value="batchPendingCount"
+                :hidden="batchPendingCount === 0"
+                type="danger"
+              >
                 <el-button
                   type="primary"
                   size="small"
@@ -440,6 +446,8 @@
       title="添加基金"
       width="90%"
       :close-on-click-modal="true"
+      destroy-on-close
+      @close="isEditingAddFundTotalAmount = false"
     >
       <el-form
         :model="fundForm"
@@ -486,6 +494,49 @@
             placeholder="请输入成本价"
           />
         </el-form-item>
+        <el-form-item label="总金额">
+          <el-alert
+            v-if="!isEditingAddFundTotalAmount"
+            title="提示：修改总金额会影响成本价的计算方式，修改后会根据新的总金额和持有份额倒推新的成本价"
+            type="warning"
+            style="margin-bottom: 8px"
+            :closable="false"
+          />
+          <div
+            style="display: flex; gap: 8px; align-items: center; width: 100%"
+          >
+            <div v-if="!isEditingAddFundTotalAmount" style="flex: 1">
+              <span>{{ (fundForm.num * fundForm.cost).toFixed(2) }} 元</span>
+            </div>
+            <el-input
+              v-else
+              v-model.number="addFundTotalAmount"
+              type="number"
+              placeholder="输入新的总金额"
+              style="flex: 1"
+            />
+            <el-button
+              v-if="!isEditingAddFundTotalAmount"
+              link
+              type="primary"
+              @click="startEditAddFundTotalAmount"
+            >
+              修改
+            </el-button>
+            <div v-else style="display: flex; gap: 4px">
+              <el-button
+                type="primary"
+                size="small"
+                @click="confirmEditAddFundTotalAmount"
+              >
+                确定
+              </el-button>
+              <el-button size="small" @click="cancelEditAddFundTotalAmount">
+                取消
+              </el-button>
+            </div>
+          </div>
+        </el-form-item>
         <el-form-item label="所属分组" prop="groupKey">
           <el-select
             v-model="fundForm.groupKey"
@@ -502,7 +553,7 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddFundDialog = false">取消</el-button>
+        <el-button @click="handleCancelAddFund">取消</el-button>
         <el-button type="primary" @click="handleAddFund" :loading="submitting"
           >确定</el-button
         >
@@ -516,6 +567,7 @@
       width="90%"
       :close-on-click-modal="true"
       destroy-on-close
+      @close="isEditingFundTotalAmount = false"
     >
       <el-form
         :model="editFundForm"
@@ -543,9 +595,56 @@
             placeholder="请输入成本价"
           />
         </el-form-item>
+        <el-form-item label="总金额">
+          <el-alert
+            v-if="!isEditingFundTotalAmount"
+            title="提示：修改总金额会影响成本价的计算方式，修改后会根据新的总金额和持有份额倒推新的成本价"
+            type="warning"
+            :closable="false"
+          />
+          <div
+            style="display: flex; gap: 8px; align-items: center; width: 100%"
+          >
+            <div v-if="!isEditingFundTotalAmount" style="flex: 1">
+              <span
+                >{{
+                  (editFundForm.num * editFundForm.cost).toFixed(2)
+                }}
+                元</span
+              >
+            </div>
+            <el-input
+              v-else
+              v-model.number="editFundTotalAmount"
+              type="number"
+              placeholder="输入新的总金额"
+              style="flex: 1"
+            />
+            <el-button
+              v-if="!isEditingFundTotalAmount"
+              link
+              type="primary"
+              @click="startEditTotalAmount"
+            >
+              修改
+            </el-button>
+            <div v-else style="display: flex; gap: 4px">
+              <el-button
+                type="primary"
+                size="small"
+                @click="confirmEditTotalAmount"
+              >
+                确定
+              </el-button>
+              <el-button size="small" @click="cancelEditTotalAmount">
+                取消
+              </el-button>
+            </div>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditFundDialog = false">取消</el-button>
+        <el-button @click="handleCancelEditFund">取消</el-button>
         <el-button type="primary" @click="handleEditFund" :loading="submitting"
           >保存</el-button
         >
@@ -619,7 +718,10 @@
     <!-- 批量加减仓弹窗 -->
     <BatchAdjustModal
       :visible="showBatchAdjust"
-      @close="showBatchAdjust = false; refreshBatchPendingCount()"
+      @close="
+        showBatchAdjust = false;
+        refreshBatchPendingCount();
+      "
       @confirmed="refreshBatchPendingCount"
     />
 
@@ -628,7 +730,10 @@
       :visible="showPendingConfirm"
       :ready-list="pendingReadyList"
       @dismiss="showPendingConfirm = false"
-      @confirmed="showPendingConfirm = false; refreshBatchPendingCount()"
+      @confirmed="
+        showPendingConfirm = false;
+        refreshBatchPendingCount();
+      "
     />
 
     <!-- 加仓/减仓对话框 -->
@@ -888,6 +993,14 @@ const fundFormRef = ref<FormInstance>();
 const editFundFormRef = ref<FormInstance>();
 const groupFormRef = ref<FormInstance>();
 const editGroupFormRef = ref<FormInstance>();
+
+// 编辑基金总金额相关状态
+const isEditingFundTotalAmount = ref(false);
+const editFundTotalAmount = ref(0);
+
+// 添加基金总金额相关状态
+const isEditingAddFundTotalAmount = ref(false);
+const addFundTotalAmount = ref(0);
 
 const fundSearchResults = ref<{ code: string; name: string }[]>([]);
 const fundPickName = ref("");
@@ -1215,10 +1328,10 @@ function computeMaxRadius(x: number, y: number): number {
 async function toggleDarkMode(event: MouseEvent) {
   const isSupported =
     (document.startViewTransition as any) &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   if (!isSupported) {
-    const newTheme = settingStore.theme === 'light' ? 'dark' : 'light';
+    const newTheme = settingStore.theme === "light" ? "dark" : "light";
     settingStore.setTheme(newTheme);
     return;
   }
@@ -1227,16 +1340,14 @@ async function toggleDarkMode(event: MouseEvent) {
   const y = event.clientY;
   const endRadius = computeMaxRadius(x, y);
 
-  const transition = (document.startViewTransition as any)(
-    async () => {
-      const newTheme = settingStore.theme === 'light' ? 'dark' : 'light';
-      settingStore.setTheme(newTheme);
-      await nextTick();
-    }
-  );
+  const transition = (document.startViewTransition as any)(async () => {
+    const newTheme = settingStore.theme === "light" ? "dark" : "light";
+    settingStore.setTheme(newTheme);
+    await nextTick();
+  });
 
   transition.ready.then(() => {
-    const isDark = settingStore.theme === 'dark';
+    const isDark = settingStore.theme === "dark";
     const clipPath = [
       `circle(0px at ${x}px ${y}px)`,
       `circle(${endRadius}px at ${x}px ${y}px)`,
@@ -1248,11 +1359,11 @@ async function toggleDarkMode(event: MouseEvent) {
       },
       {
         duration: 700,
-          easing: "cubic-bezier(0.645, 0.045, 0.355, 1)",
+        easing: "cubic-bezier(0.645, 0.045, 0.355, 1)",
         pseudoElement: isDark
-          ? '::view-transition-new(root)'
-          : '::view-transition-old(root)',
-      } as any
+          ? "::view-transition-new(root)"
+          : "::view-transition-old(root)",
+      } as any,
     );
   });
 }
@@ -1353,11 +1464,109 @@ function editFund(fund: FundView) {
     cost: fund.cost,
     groupKey: fund.groupKey || "",
   };
+  // 重置总金额编辑状态
+  isEditingFundTotalAmount.value = false;
+  editFundTotalAmount.value = Number((fund.num * fund.cost).toFixed(2));
+  // 清除表单验证状态
+  nextTick(() => {
+    editFundFormRef.value?.clearValidate();
+  });
   showEditFundDialog.value = true;
 }
 
 function editFundByRow(row: FundRowDisplay) {
   editFund({ ...row.fund, name: row.name } as FundView);
+}
+
+// 开始编辑总金额
+function startEditTotalAmount() {
+  editFundTotalAmount.value = Number(
+    (editFundForm.value.num * editFundForm.value.cost).toFixed(2),
+  );
+  isEditingFundTotalAmount.value = true;
+}
+
+// 确认修改总金额并倒推成本价
+function confirmEditTotalAmount() {
+  const newTotalAmount = editFundTotalAmount.value;
+  const num = editFundForm.value.num;
+
+  if (num <= 0) {
+    ElMessage.error("份额必须大于0才能计算成本价");
+    return;
+  }
+
+  if (newTotalAmount < 0) {
+    ElMessage.error("总金额不能为负");
+    return;
+  }
+
+  // 倒推计算新的成本价
+  const newCost = newTotalAmount / num;
+  editFundForm.value.cost = parseFloat(newCost.toFixed(4));
+
+  isEditingFundTotalAmount.value = false;
+  ElMessage.success(
+    `已根据总金额 ${newTotalAmount.toFixed(2)} 元重新计算成本价`,
+  );
+}
+
+// 取消编辑总金额
+function cancelEditTotalAmount() {
+  isEditingFundTotalAmount.value = false;
+  // 重置编辑的总金额值
+  editFundTotalAmount.value = editFundForm.value.num * editFundForm.value.cost;
+}
+
+// 取消编辑基金对话框
+function handleCancelEditFund() {
+  isEditingFundTotalAmount.value = false;
+  editFundFormRef.value?.resetFields();
+  showEditFundDialog.value = false;
+}
+
+// 开始编辑添加基金的总金额
+function startEditAddFundTotalAmount() {
+  addFundTotalAmount.value = fundForm.value.num * fundForm.value.cost;
+  isEditingAddFundTotalAmount.value = true;
+}
+
+// 确认修改添加基金的总金额并倒推成本价
+function confirmEditAddFundTotalAmount() {
+  const newTotalAmount = addFundTotalAmount.value;
+  const num = fundForm.value.num;
+
+  if (num <= 0) {
+    ElMessage.error("份额必须大于0才能计算成本价");
+    return;
+  }
+
+  if (newTotalAmount < 0) {
+    ElMessage.error("总金额不能为负");
+    return;
+  }
+
+  // 倒推计算新的成本价
+  const newCost = newTotalAmount / num;
+  fundForm.value.cost = parseFloat(newCost.toFixed(4));
+
+  isEditingAddFundTotalAmount.value = false;
+  ElMessage.success(
+    `已根据总金额 ${newTotalAmount.toFixed(2)} 元重新计算成本价`,
+  );
+}
+
+// 取消编辑添加基金的总金额
+function cancelEditAddFundTotalAmount() {
+  isEditingAddFundTotalAmount.value = false;
+  addFundTotalAmount.value = fundForm.value.num * fundForm.value.cost;
+}
+
+// 取消添加基金对话框
+function handleCancelAddFund() {
+  isEditingAddFundTotalAmount.value = false;
+  fundFormRef.value?.resetFields();
+  showAddFundDialog.value = false;
 }
 
 async function confirmDeleteFund(fund: FundView) {
@@ -1400,7 +1609,11 @@ function onFundMouseEnter(row: FundRowDisplay, e: MouseEvent) {
   fundHoverTimer = setTimeout(() => {
     fundHoverRow.value = row;
     // 基于基金名称元素位置，显示在名称右上角
-    const fundNameEl = (e.target as HTMLElement).querySelector('.fund-name') || (e.target as HTMLElement).closest('.fund-name-cell')?.querySelector('.fund-name');
+    const fundNameEl =
+      (e.target as HTMLElement).querySelector(".fund-name") ||
+      (e.target as HTMLElement)
+        .closest(".fund-name-cell")
+        ?.querySelector(".fund-name");
     if (fundNameEl) {
       const rect = fundNameEl.getBoundingClientRect();
       fundHoverX.value = rect.right + 8; // 名称右侧，留小边距
@@ -1506,13 +1719,13 @@ function onGroupMouseEnter(group: Group, e: MouseEvent) {
       totalCost,
     };
     // 基于分组元素位置，智能显示在左下角或右下角
-    const groupTagEl = (e.target as HTMLElement).closest('.group-tag-item');
+    const groupTagEl = (e.target as HTMLElement).closest(".group-tag-item");
     if (groupTagEl) {
       const rect = groupTagEl.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
       // 判断分组item是否在右侧（中心点在视口右半部分）
       const isRightSide = rect.left + rect.width / 2 > viewportWidth / 2;
-      
+
       if (isRightSide) {
         // 右侧item：显示在right bottom
         groupHoverX.value = rect.right;
@@ -1639,13 +1852,13 @@ function onAllGroupMouseEnter(e: MouseEvent) {
       totalAsset,
       totalCost,
     };
-    
+
     // "全部"项在左侧，显示在right bottom
-    const allGroupEl = (e.target as HTMLElement);
+    const allGroupEl = e.target as HTMLElement;
     const rect = allGroupEl.getBoundingClientRect();
     groupHoverX.value = rect.right;
     groupHoverY.value = rect.bottom + 8;
-    
+
     groupHoverVisible.value = true;
   }, HOVER_SHOW_DELAY);
 }
@@ -2825,5 +3038,4 @@ html.dark .group-label {
   gap: 4px;
   margin-top: 8px;
 }
-
 </style>

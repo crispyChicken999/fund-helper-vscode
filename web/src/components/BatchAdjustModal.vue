@@ -631,8 +631,9 @@ function formatTime(ts: number): string {
   border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 -4px 24px var(--el-color-shadow);
   overflow: hidden;
+
 }
 
 /* PC 端居中显示 */

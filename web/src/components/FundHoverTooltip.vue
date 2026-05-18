@@ -149,53 +149,45 @@
         <!-- 操作栏 -->
         <footer class="tooltip-footer">
           <el-button
-            plain
             size="small"
-            type="primary"
-            class="action-btn-sm"
-            @click="$emit('detail')"
-            title="查看详情"
-            >详情</el-button
-          >
-          <el-button
+            type="success"
             plain
-            size="small"
-            class="action-btn-sm"
+            :icon="Plus"
             @click="$emit('addShares')"
-            title="加仓"
             >加仓</el-button
           >
           <el-button
-            plain
             size="small"
-            class="action-btn-sm"
+            type="warning"
+            plain
+            :icon="Minus"
             @click="$emit('reduceShares')"
-            title="减仓"
             >减仓</el-button
           >
-          <el-button
-            plain
-            size="small"
-            class="action-btn-sm"
-            @click="$emit('edit')"
-            title="编辑持仓"
+          <el-button size="small" :icon="Edit" @click="$emit('edit')"
             >编辑</el-button
           >
           <el-button
+            type="primary"
+            :icon="Document"
             plain
             size="small"
-            class="action-btn-sm"
+            @click="$emit('detail')"
+            >详情</el-button
+          >
+          <el-button
+            size="small"
             @click="$emit('setGroup')"
-            title="设置分组"
+            plain
+            :icon="Folder"
             >分组</el-button
           >
           <el-button
-            plain
-            size="small"
             type="danger"
-            class="action-btn-sm"
+            size="small"
+            plain
+            :icon="Delete"
             @click="$emit('delete')"
-            title="删除"
             >删除</el-button
           >
         </footer>
@@ -209,6 +201,14 @@ import { ref, computed, watch, nextTick } from "vue";
 import type { FundRowDisplay } from "@/utils/fundDisplay";
 import { formatCurrency, formatNumber } from "@/utils/format";
 import { ElMessage } from "element-plus";
+import {
+  Plus,
+  Minus,
+  Edit,
+  Document,
+  Folder,
+  Delete,
+} from "@element-plus/icons-vue";
 
 const props = defineProps<{
   visible: boolean;
@@ -532,7 +532,7 @@ function handleCopy() {
   border-top: 1px solid var(--el-border-color-lighter);
 }
 
-.action-btn-sm {
+.el-button {
   margin: 0;
 }
 

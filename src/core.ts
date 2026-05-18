@@ -295,6 +295,27 @@ export async function addFund() {
           cost = costInput.trim();
         }
 
+        // 显示当前总金额并询问是否要修改
+        if (num !== "0" && cost !== "0") {
+          const numVal = parseFloat(num);
+          const costVal = parseFloat(cost);
+          const currentTotalAmount = numVal * costVal;
+          
+          const totalAmountStr = await vscode.window.showInputBox({
+            prompt: `请输入 ${s.label} 的总金额（当前: ${currentTotalAmount.toFixed(2)} 元，可选）`,
+            placeHolder: `默认: ${currentTotalAmount.toFixed(2)}`,
+          });
+          
+          if (totalAmountStr !== undefined && totalAmountStr.trim() !== "") {
+            // 用户修改了总金额，倒推计算成本价
+            const newTotalAmount = parseFloat(totalAmountStr);
+            if (numVal > 0) {
+              const newCost = newTotalAmount / numVal;
+              cost = newCost.toFixed(4);
+            }
+          }
+        }
+
         funds.push({ code: s.code, num, cost });
         addedCount++;
       }
@@ -397,9 +418,23 @@ export async function addPosition(code: string, name: string) {
     const totalCost = oldCost * oldNum + buyPrice * addNum;
     const newNum = oldNum + addNum;
     const newCost = newNum > 0 ? totalCost / newNum : 0;
+    
+    // 4.1 询问是否要调整总金额
+    const currentTotalAmount = newNum * newCost;
+    const adjustTotalAmountStr = await vscode.window.showInputBox({
+      prompt: `加仓 ${name} — 新持仓总金额: ${currentTotalAmount.toFixed(2)} 元（可选修改以调整成本价）`,
+      placeHolder: `留空使用计算值: ${currentTotalAmount.toFixed(2)} 元`,
+    });
+    
+    let finalCost = newCost;
+    if (adjustTotalAmountStr !== undefined && adjustTotalAmountStr.trim() !== "") {
+      // 用户修改了总金额，倒推计算新的成本价
+      const adjustedTotal = parseFloat(adjustTotalAmountStr);
+      finalCost = newNum > 0 ? adjustedTotal / newNum : 0;
+    }
 
     fund.num = newNum.toFixed(2);
-    fund.cost = newCost.toFixed(4);
+    fund.cost = finalCost.toFixed(4);
     await saveFundConfigs(funds);
     await refreshData();
     vscode.window.showInformationMessage(
@@ -507,6 +542,29 @@ export async function editPosition(code: string, name: string) {
       return;
     }
     costStr = inputCost;
+    
+    // 计算当前总金额
+    const currentCost = parseFloat(costStr);
+    const currentTotalAmount = numVal * currentCost;
+    
+    // 显示当前总金额，并询问是否要修改
+    const totalAmountStr = await vscode.window.showInputBox({
+      prompt: `修改 ${title} — 当前总金额: ${currentTotalAmount.toFixed(2)} 元（可选，留空/不修改则使用成本价计算，否则使用新总金额和份额来倒推成本价）`,
+      value: currentTotalAmount.toFixed(2),
+      validateInput: (v) => {
+        if (v === "") return undefined; // 允许空值，表示不修改总金额
+        return isNaN(Number(v)) || Number(v) < 0 ? "请输入非负数" : undefined;
+      },
+    });
+    
+    if (totalAmountStr !== undefined && totalAmountStr.trim() !== "") {
+      // 用户修改了总金额，倒推计算成本价
+      const newTotalAmount = parseFloat(totalAmountStr);
+      if (numVal > 0) {
+        const newCost = newTotalAmount / numVal;
+        costStr = newCost.toFixed(4);
+      }
+    }
   } else {
     costStr = "0";
   }

@@ -15,10 +15,38 @@
               </div>
               <div class="head-actions">
                 <button class="action-btn" @click="handleCopy" title="复制">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path
+                      d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                    />
+                  </svg>
                 </button>
                 <button class="action-btn" @click="$emit('close')" title="关闭">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
                 </button>
               </div>
             </header>
@@ -27,24 +55,40 @@
               <!-- 估算数据 -->
               <div class="info-group">
                 <div class="info-row">
-                  <span class="info-label">估算涨幅 ({{ row.estimatedDateLabel }})</span>
-                  <span :class="estClass(row.gszzl)">{{ fmtPct(row.gszzl, row.shouldShowEstimated) }}</span>
+                  <span class="info-label"
+                    >估算涨幅 ({{ row.estimatedDateLabel }})</span
+                  >
+                  <span :class="estClass(row.gszzl)">{{
+                    fmtPct(row.gszzl, row.shouldShowEstimated)
+                  }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">估算收益 ({{ row.estimatedDateLabel }})</span>
-                  <span :class="estClass(row.estimatedGain)">{{ fmtEst(row.estimatedGain, row.shouldShowEstimated) }}</span>
+                  <span class="info-label"
+                    >估算收益 ({{ row.estimatedDateLabel }})</span
+                  >
+                  <span :class="estClass(row.estimatedGain)">{{
+                    fmtEst(row.estimatedGain, row.shouldShowEstimated)
+                  }}</span>
                 </div>
               </div>
 
               <!-- 当日数据 -->
               <div class="info-group">
                 <div class="info-row">
-                  <span class="info-label">当日涨幅 ({{ row.navDateLabel }})</span>
-                  <span :class="pctClass(row.navChgRt)">{{ fmtPct(row.navChgRt, true) }}</span>
+                  <span class="info-label"
+                    >当日涨幅 ({{ row.navDateLabel }})</span
+                  >
+                  <span :class="pctClass(row.navChgRt)">{{
+                    fmtPct(row.navChgRt, true)
+                  }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">当日收益 ({{ row.navDateLabel }})</span>
-                  <span :class="moneyClass(row.dailyGain)">{{ fmtMoney(row.dailyGain) }}</span>
+                  <span class="info-label"
+                    >当日收益 ({{ row.navDateLabel }})</span
+                  >
+                  <span :class="moneyClass(row.dailyGain)">{{
+                    fmtMoney(row.dailyGain)
+                  }}</span>
                 </div>
               </div>
 
@@ -52,11 +96,15 @@
               <div class="info-group">
                 <div class="info-row">
                   <span class="info-label">持有收益</span>
-                  <span :class="moneyClass(row.holdingGain)">{{ fmtMoney(row.holdingGain) }}</span>
+                  <span :class="moneyClass(row.holdingGain)">{{
+                    fmtMoney(row.holdingGain)
+                  }}</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">总收益率</span>
-                  <span :class="pctClass(row.holdingGainRate)">{{ fmtPct(row.holdingGainRate, true) }}</span>
+                  <span :class="pctClass(row.holdingGainRate)">{{
+                    fmtPct(row.holdingGainRate, true)
+                  }}</span>
                 </div>
               </div>
 
@@ -102,12 +150,48 @@
             </section>
 
             <footer class="fund-tooltip-actions">
-              <el-button type="primary" plain size="small" @click="$emit('detail')">查看详情</el-button>
-              <el-button size="small" @click="$emit('addShares')">加仓</el-button>
-              <el-button size="small" @click="$emit('reduceShares')">减仓</el-button>
-              <el-button size="small" @click="$emit('edit')">编辑持仓</el-button>
-              <el-button size="small" @click="$emit('setGroup')">设置分组</el-button>
-              <el-button type="danger" size="small" plain @click="$emit('delete')">删除</el-button>
+              <el-button
+                size="small"
+                type="success"
+                plain
+                :icon="Plus"
+                @click="$emit('addShares')"
+                >加仓</el-button
+              >
+              <el-button
+                size="small"
+                type="warning"
+                plain
+                :icon="Minus"
+                @click="$emit('reduceShares')"
+                >减仓</el-button
+              >
+              <el-button size="small" :icon="Edit" @click="$emit('edit')"
+                >编辑</el-button
+              >
+              <el-button
+                type="primary"
+                :icon="Document"
+                plain
+                size="small"
+                @click="$emit('detail')"
+                >详情</el-button
+              >
+              <el-button
+                size="small"
+                @click="$emit('setGroup')"
+                plain
+                :icon="Folder"
+                >分组</el-button
+              >
+              <el-button
+                type="danger"
+                size="small"
+                plain
+                :icon="Delete"
+                @click="$emit('delete')"
+                >删除</el-button
+              >
             </footer>
           </div>
         </Transition>
@@ -120,6 +204,14 @@
 import type { FundRowDisplay } from "@/utils/fundDisplay";
 import { formatCurrency, formatNumber } from "@/utils/format";
 import { ElMessage } from "element-plus";
+import {
+  Plus,
+  Minus,
+  Edit,
+  Document,
+  Folder,
+  Delete,
+} from "@element-plus/icons-vue";
 
 const props = defineProps<{
   visible: boolean;
