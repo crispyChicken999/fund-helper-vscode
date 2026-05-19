@@ -1,13 +1,24 @@
 /**
  * 节假日数据服务 — 从远程加载中国 A 股节假日数据
- * 使用 JSONP 方式获取（绕过 CORS）
- * 数据格式: { data: { "2026": { "01-01": { "holiday": true, "name": "元旦" } } } }
+ * 使用 fetch 直接获取（新接口支持 CORS）
+ * 数据格式: { year: 2026, days: [{ name: "元旦", date: "2026-01-01", isOffDay: true }] }
  */
 
-import { loadJSONP } from './jsonp'
+import { fetchJSON } from './jsonp'
 
 const HOLIDAY_CACHE_KEY = 'fund_helper_holiday_data'
-const HOLIDAY_URL = 'https://funds.rabt.top/funds/holiday.json'
+const HOLIDAY_URL = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/'+ new Date().getFullYear() + '.json'
+
+interface HolidayDay {
+  name: string
+  date: string
+  isOffDay: boolean
+}
+
+interface HolidayResponse {
+  year: number
+  days: HolidayDay[]
+}
 
 interface HolidayEntry {
   holiday: boolean
@@ -41,16 +52,42 @@ async function doInit(): Promise<void> {
     }
   } catch { /* ignore */ }
 
-  // 异步通过 JSONP 更新
+  // 异步通过 fetch 更新
   try {
-    const json: any = await loadJSONP(HOLIDAY_URL, 10000)
-    if (json && json.data) {
-      holidayMap = json.data
+    const json = await fetchJSON<HolidayResponse>(HOLIDAY_URL, 10000)
+    if (json && json.days) {
+      // 转换新格式到旧格式
+      holidayMap = convertToHolidayMap(json)
       localStorage.setItem(HOLIDAY_CACHE_KEY, JSON.stringify(holidayMap))
     }
   } catch {
     // 网络失败时使用缓存，静默处理
   }
+}
+
+/**
+ * 将新接口格式转换为内部使用的格式
+ * 新格式: { year: 2026, days: [{ name: "元旦", date: "2026-01-01", isOffDay: true }] }
+ * 旧格式: { "2026": { "01-01": { "holiday": true, "name": "元旦" } } }
+ */
+function convertToHolidayMap(response: HolidayResponse): HolidayData {
+  const result: HolidayData = {}
+  const year = response.year.toString()
+  result[year] = {}
+
+  for (const day of response.days) {
+    // date 格式: "2026-01-01"
+    const dateParts = day.date.split('-')
+    if (dateParts.length === 3) {
+      const monthDay = `${dateParts[1]}-${dateParts[2]}` // "01-01"
+      result[year][monthDay] = {
+        holiday: day.isOffDay,
+        name: day.name
+      }
+    }
+  }
+
+  return result
 }
 
 /**
