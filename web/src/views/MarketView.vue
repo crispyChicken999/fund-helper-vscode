@@ -167,6 +167,7 @@ import {
   type PlateRankField,
 } from "@/api/market";
 import { loadEcharts } from "@/utils/echarts";
+import { useSettingStore } from "@/stores";
 
 // ==================== 常量 ====================
 
@@ -219,6 +220,8 @@ const plateChartInstances: Record<string, any> = {};
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 const countdown = ref(0);
 let countdownInterval: ReturnType<typeof setInterval> | null = null;
+
+const isDarkMode = computed(() => useSettingStore().theme === "dark");
 
 // ==================== 计算属性 ====================
 
@@ -357,10 +360,10 @@ async function renderFlowChart(
     },
     legend: {
       data: ["主力", "超大单", "大单", "中单", "小单"],
-      bottom: 0,
-      textStyle: { fontSize: 11 },
+      top: 0,
+      textStyle: { fontSize: 11, color: isDarkMode.value ? "#fff" : "#000" },
     },
-    grid: { left: 50, right: 16, top: 12, bottom: 40 },
+    grid: { left: 50, right: 16, top: 30, bottom: 40 },
     xAxis: {
       type: "category",
       data: times,
