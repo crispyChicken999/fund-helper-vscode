@@ -96,7 +96,7 @@ export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, an
   if (!codes.length) return map
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=web&Fcodes=${codes.join(',')}`
   try {
-    const res = await proxyFetch(url, { signal: AbortSignal.timeout(12000) })
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) })
     if (!res.ok) return map
     const data = await res.json().catch(() => null)
     const gztime = data?.Expansion?.GZTIME ?? ''
@@ -117,7 +117,7 @@ export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, an
 async function fetchFundFromMNFInfo(code: string): Promise<any | null> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=web&Fcodes=${code}`
   try {
-    const res = await proxyFetch(url, { signal: AbortSignal.timeout(12000) })
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) })
     if (!res.ok) return null
     const data = await res.json().catch(() => null)
     if (!data?.Datas?.length) return null
