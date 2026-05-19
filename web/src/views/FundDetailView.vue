@@ -330,7 +330,7 @@
                   : "--"
               }}{{
                 periodIncrease.monthRank
-                  ? " (" + periodIncrease.monthRank + ")"
+                  ? " (第" + periodIncrease.monthRank + "名)"
                   : ""
               }}</span
             >
@@ -344,7 +344,7 @@
                   : "--"
               }}{{
                 periodIncrease.threeMonthRank
-                  ? " (" + periodIncrease.threeMonthRank + ")"
+                  ? " (第" + periodIncrease.threeMonthRank + "名)"
                   : ""
               }}</span
             >
@@ -358,7 +358,7 @@
                   : "--"
               }}{{
                 periodIncrease.sixMonthRank
-                  ? " (" + periodIncrease.sixMonthRank + ")"
+                  ? " (第" + periodIncrease.sixMonthRank + "名)"
                   : ""
               }}</span
             >
@@ -370,7 +370,7 @@
                 periodIncrease.yearRate ? periodIncrease.yearRate + "%" : "--"
               }}{{
                 periodIncrease.yearRank
-                  ? " (" + periodIncrease.yearRank + ")"
+                  ? " (第" + periodIncrease.yearRank + "名)"
                   : ""
               }}</span
             >
@@ -384,7 +384,7 @@
                   : "--"
               }}{{
                 periodIncrease.threeYearRank
-                  ? " (" + periodIncrease.threeYearRank + ")"
+                  ? " (第" + periodIncrease.threeYearRank + "名)"
                   : ""
               }}</span
             >
@@ -398,7 +398,7 @@
                   : "--"
               }}{{
                 periodIncrease.fiveYearRank
-                  ? " (" + periodIncrease.fiveYearRank + ")"
+                  ? " (第" + periodIncrease.fiveYearRank + "名)"
                   : ""
               }}</span
             >

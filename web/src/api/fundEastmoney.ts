@@ -4,7 +4,6 @@
 
 import type { Fund, FundInfo } from '@/types'
 import { fetchFundgzRawViaJsonp } from '@/api/fundgz'
-import { proxyFetch } from '@/api/proxy'
 
 async function fetchFundInvestmentPosition(code: string): Promise<any> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
@@ -12,7 +11,7 @@ async function fetchFundInvestmentPosition(code: string): Promise<any> {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000)
     try {
-      const res = await proxyFetch(url, { signal: controller.signal })
+      const res = await fetch(url, { signal: controller.signal })
       clearTimeout(timeoutId)
       if (!res.ok) return null
       const data = await res.json().catch(() => null)
@@ -90,7 +89,7 @@ async function fetchFundEstimateChange(code: string): Promise<number | null> {
   }
 }
 
-/** 批量 MNFInfo — 通过 proxyFetch 走代理（开发=Vite proxy，生产=Netlify Function） */
+/** 批量 MNFInfo — 通过  */
 export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, any>> {
   const map = new Map<string, any>()
   if (!codes.length) return map

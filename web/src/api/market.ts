@@ -3,7 +3,6 @@
  */
 
 import { fetchJSON } from '@/utils/jsonp'
-import { proxyFetch } from '@/api/proxy'
 
 // ==================== 类型定义 ====================
 
@@ -124,14 +123,12 @@ export async function fetchPlateData(
   rankField: PlateRankField = 'f62'
 ): Promise<PlateItem[]> {
   const code = getPlateCode(plateTab)
-  const targetUrl = `https://data.eastmoney.com/dataapi/bkzj/getbkzj?key=${rankField}&code=${encodeURIComponent(code)}`
+  const targetUrl = 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(`https://data.eastmoney.com/dataapi/bkzj/getbkzj?key=${rankField}&code=${code}`)
 
   try {
-    // 开发环境走 Vite proxy，生产环境走 Netlify Function，统一由 proxyFetch 处理
-    const res = await proxyFetch(targetUrl, { signal: AbortSignal.timeout(12000) })
-    if (res.ok) {
-      const data = await res.json()
-      return parsePlateResponse(data, rankField)
+    const res = await fetchJSON(targetUrl)
+    if (res) {
+      return parsePlateResponse(res, rankField)
     }
   } catch { /* ignore */ }
 

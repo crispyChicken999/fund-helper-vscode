@@ -8,11 +8,9 @@
  *   但由于 CORS 限制，改为使用 JSONP 方式的 FundMApi 接口
  * - 历史净值：JSONP → FundNetDiagram.ashx
  * - 累计收益：fetch → dataapi.1234567.com.cn（无 CORS）
- * - 持仓明细：proxyFetch → FundMNInverstPosition（需代理）
  */
 
 import { loadJSONP, fetchJSON } from '@/utils/jsonp'
-import { proxyFetch } from '@/api/proxy'
 
 // ==================== 类型定义 ====================
 
@@ -349,9 +347,9 @@ export interface PositionData {
 }
 
 export async function fetchInvestmentPosition(code: string): Promise<PositionData | null> {
-  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
+  const url =  `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
   try {
-    const res = await proxyFetch(url, { signal: AbortSignal.timeout(10000) })
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
     if (!res.ok) return null
     const data = await res.json().catch(() => null)
     if (!data?.Datas) return null
