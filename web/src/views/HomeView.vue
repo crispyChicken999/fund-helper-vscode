@@ -2632,7 +2632,7 @@ onUnmounted(() => {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  touch-action: manipulation;
+  touch-action: none;
   background: var(--bg-secondary);
   -webkit-tap-highlight-color: transparent;
 }

@@ -11,7 +11,7 @@
         <!-- 使用说明 -->
         <el-collapse-item
           class="usage-guide settings-collapse-item"
-          name="display"
+          name="usage"
         >
           <template #title>
             <span class="collapse-section-title">使用说明</span>
@@ -392,6 +392,15 @@
                 >
                   当前浏览器不支持应用安装
                 </el-button>
+                <el-button
+                  v-if="isPWAInstalled"
+                  type="danger"
+                  size="small"
+                  plain
+                  @click="handleShowUninstallGuide"
+                >
+                  卸载应用
+                </el-button>
               </div>
             </el-form-item>
           </el-collapse-item>
@@ -414,7 +423,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
+import { ref, computed, nextTick, onMounted, onUnmounted, h } from "vue";
 import MainLayout from "@/layouts/MainLayout.vue";
 import SyncDialog from "@/components/SyncDialog.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -430,10 +439,13 @@ import { syncService } from "@/services";
 import { storageService } from "@/services/storageService";
 import { generateJsonboxName } from "@/utils/validate";
 import {
+  myPWAConfig,
+  isInstallPromptReady,
   triggerInstallPrompt,
   canInstallPWA,
   isPWAInstalled as checkPWAInstalled,
 } from "@/utils/pwa";
+import { updateThemeColor } from "@/utils/themeColor";
 
 const settingStore = useSettingStore();
 const fundStore = useFundStore();
@@ -467,6 +479,8 @@ const theme = computed({
   set: async (value: "light" | "dark") => {
     await settingStore.setTheme(value);
     document.documentElement.dataset.theme = value;
+    // 动态更新 PWA 主题色
+    updateThemeColor(value);
     ElMessage.success(`已切换到${value === "light" ? "浅色" : "深色"}主题`);
   },
 });
@@ -493,6 +507,7 @@ let columnSortable: Sortable | null = null;
 
 // 默认全部展开
 const activeCollapseItems = ref([
+  "usage",
   "display",
   "columns",
   "sync",
@@ -540,8 +555,18 @@ onMounted(async () => {
   );
   document.documentElement.dataset.theme = settingStore.theme;
 
+
+  // PWA可用监听
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    myPWAConfig.installPrompt = e;
+    isInstallPromptReady.value = true;
+    console.log('✓ Install prompt event captured');
+  });
+
   // 初始化PWA状态
   isPWAInstalled.value = checkPWAInstalled();
+
 
   buildColumnDraft();
 
@@ -990,6 +1015,136 @@ async function handleInstallPWA() {
   } finally {
     isInstallingPWA.value = false;
   }
+}
+
+function handleShowUninstallGuide() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+  const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+  const isEdge = /Edg/.test(navigator.userAgent);
+  const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+
+  let title = "卸载应用指南";
+  let content;
+
+  if (isIOS || isSafari) {
+    content = h("div", { style: "line-height: 1.8" }, [
+      h("p", { style: "font-weight: bold; margin-bottom: 12px" }, "iOS 卸载方法："),
+      h("ol", { style: "margin: 0; padding-left: 20px" }, [
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "在主屏幕上找到\"基金助手\"应用图标"),
+        ]),
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "长按应用图标（直到出现菜单）"),
+        ]),
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "点击\"移除应用\"或\"从主屏幕移除\""),
+        ]),
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "选择\"删除应用\"确认"),
+        ]),
+      ]),
+      h("p", { style: "margin-top: 16px; color: var(--el-text-color-secondary); font-size: 12px" }, [
+        h("span", "💡 提示：也可以前往 Settings > General > iPhone Storage 找到应用并卸载"),
+      ]),
+    ]);
+  } else if (isAndroid) {
+    content = h("div", { style: "line-height: 1.8" }, [
+      h("p", { style: "font-weight: bold; margin-bottom: 12px" }, "Android 卸载方法："),
+      h("ol", { style: "margin: 0; padding-left: 20px" }, [
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "在主屏幕上找到\"基金助手\"应用图标"),
+        ]),
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "长按应用图标（直到出现菜单）"),
+        ]),
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "点击\"卸载\"或\"移除\""),
+        ]),
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "确认卸载操作"),
+        ]),
+      ]),
+      h("p", { style: "margin-top: 16px; color: var(--el-text-color-secondary); font-size: 12px" }, [
+        h("span", "💡 提示：也可以在 Settings > Apps > Installed Apps 中卸载"),
+      ]),
+    ]);
+  } else if (isChrome) {
+    content = h("div", { style: "line-height: 1.8" }, [
+      h("p", { style: "font-weight: bold; margin-bottom: 12px" }, "Chrome 浏览器卸载方法："),
+      h("div", { style: "margin-bottom: 16px" }, [
+        h("p", { style: "font-weight: 500; margin-bottom: 8px" }, "方法一（推荐）："),
+        h("ol", { style: "margin: 0; padding-left: 20px" }, [
+          h("li", [
+            h("span", "在地址栏输入 "),
+            h("code", { style: "background: #f5f7fa; padding: 2px 6px; border-radius: 3px; color: #409EFF; font-family: monospace; user-select: all;" }, "chrome://apps"),
+            h("span", " 并回车"),
+          ]),
+          h("li", "右键点击\"基金助手\"应用图标"),
+          h("li", "选择\"从 Chrome 中移除\""),
+          h("li", "确认删除"),
+        ]),
+      ]),
+      h("div", { style: "margin-bottom: 16px" }, [
+        h("p", { style: "font-weight: 500; margin-bottom: 8px" }, "方法二："),
+        h("ol", { style: "margin: 0; padding-left: 20px" }, [
+          h("li", "点击地址栏右侧的应用图标"),
+          h("li", "选择\"卸载\""),
+        ]),
+      ]),
+    ]);
+  } else if (isEdge) {
+    content = h("div", { style: "line-height: 1.8" }, [
+      h("p", { style: "font-weight: bold; margin-bottom: 12px" }, "Edge 浏览器卸载方法："),
+      h("div", { style: "margin-bottom: 16px" }, [
+        h("p", { style: "font-weight: 500; margin-bottom: 8px" }, "方法一（推荐）："),
+        h("ol", { style: "margin: 0; padding-left: 20px" }, [
+          h("li", [
+            h("span", "在地址栏输入 "),
+            h("code", { style: "background: #f5f7fa; padding: 2px 6px; border-radius: 3px; color: #409EFF; font-family: monospace; user-select: all;" }, "edge://apps"),
+            h("span", " 并回车"),
+          ]),
+          h("li", "右键点击\"基金助手\"应用图标"),
+          h("li", "选择\"卸载\""),
+          h("li", "确认删除"),
+        ]),
+      ]),
+      h("div", { style: "margin-bottom: 16px" }, [
+        h("p", { style: "font-weight: 500; margin-bottom: 8px" }, "方法二："),
+        h("ol", { style: "margin: 0; padding-left: 20px" }, [
+          h("li", "点击地址栏右侧的应用图标"),
+          h("li", "选择\"卸载\""),
+        ]),
+      ]),
+    ]);
+  } else {
+    content = h("div", { style: "line-height: 1.8" }, [
+      h("p", { style: "font-weight: bold; margin-bottom: 12px" }, "通用卸载方法："),
+      h("ol", { style: "margin: 0; padding-left: 20px" }, [
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "如果应用已打开，在地址栏右侧点击三点菜单（⋮）"),
+        ]),
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "查找\"卸载\"或\"应用设置\"选项"),
+        ]),
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "点击卸载并确认"),
+        ]),
+        h("li", { style: "margin-bottom: 8px" }, [
+          h("span", "或访问浏览器的应用管理页面卸载应用"),
+        ]),
+      ]),
+      h("p", { style: "margin-top: 16px; color: var(--el-text-color-secondary); font-size: 12px" }, [
+        h("span", "💡 提示：具体步骤可能因浏览器版本而异"),
+      ]),
+    ]);
+  }
+
+  ElMessageBox.alert(content, title, {
+    confirmButtonText: "我知道了",
+    type: "info",
+    dangerouslyUseHTMLString: false,
+  });
 }
 </script>
 

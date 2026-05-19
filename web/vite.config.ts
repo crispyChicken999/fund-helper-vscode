@@ -48,12 +48,6 @@ export default defineConfig({
         ],
         categories: ['finance', 'productivity'],
         screenshots: [
-          {
-            src: '/screenshot-1.png',
-            sizes: '540x720',
-            type: 'image/png',
-            form_factor: 'narrow'
-          }
         ]
       },
       workbox: {

@@ -4,6 +4,7 @@ import { storageService } from '@/services/storageService'
 import { initHolidayData } from '@/utils/holiday'
 import { getChinaMarketStatus } from '@/utils/marketChina'
 import { getReadyPendingBuys } from '@/services/pendingBuyService'
+import { updateThemeColor } from '@/utils/themeColor'
 
 let initialized = false
 let initPromise: Promise<void> | null = null
@@ -33,6 +34,10 @@ export async function initApp(): Promise<void> {
       const settingStore = useSettingStore()
       const fundStore = useFundStore()
       await settingStore.loadFromStorage()
+
+      // 初始化主题色 - 从存储中读取用户的主题设置
+      updateThemeColor(settingStore.theme)
+
       await groupService.initialize()
       await fundService.initialize()
       await syncService.initialize()

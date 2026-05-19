@@ -13,6 +13,7 @@ import '@/utils/pwa'
 
 // PWA 服务
 import { pwaService } from '@/services/pwaService'
+import { initThemeColor } from '@/utils/themeColor'
 
 // vite-plugin-pwa 的自动注册
 import { registerSW } from 'virtual:pwa-register'
@@ -44,6 +45,9 @@ pwaService.init(updateSW, {
   enableOfflineWarning: true,
   checkUpdateInterval: 60 * 60 * 1000 // 每小时检查一次更新
 })
+
+// 初始化主题色为默认值（应用启动时的初始值）
+initThemeColor('light')
 
 // 导出更新函数供外部使用
 export { updateSW, pwaService }

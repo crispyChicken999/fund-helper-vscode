@@ -3,14 +3,16 @@
  */
 import { ref } from 'vue';
 
-let installPrompt: any = null;
-const isInstallPromptReady = ref(false);
+export const myPWAConfig  = {
+  installPrompt: null as any,
+}
+export const isInstallPromptReady = ref(false);
 
 // 监听 beforeinstallprompt 事件
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
-    installPrompt = e;
+    myPWAConfig.installPrompt = e;
     isInstallPromptReady.value = true;
     console.log('✓ Install prompt event captured');
   });
@@ -21,17 +23,17 @@ if (typeof window !== 'undefined') {
  * @returns 返回是否成功触发
  */
 export async function triggerInstallPrompt() {
-  if (!installPrompt) {
+  if (!myPWAConfig.installPrompt) {
     return false;
   }
 
   try {
-    installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
+    myPWAConfig.installPrompt.prompt();
+    const { outcome } = await myPWAConfig.installPrompt.userChoice;
     
     if (outcome === 'accepted') {
       console.log('✓ User accepted PWA installation');
-      installPrompt = null;
+      myPWAConfig.installPrompt = null;
       isInstallPromptReady.value = false;
       return true;
     } else {
@@ -55,11 +57,16 @@ export function canInstallPWA() {
  * 检查PWA是否已安装
  */
 export function isPWAInstalled() {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const isIOSStandalone = (navigator as any).standalone === true;
+  const isAndroidStandalone = window.matchMedia('(display-mode: fullscreen)').matches;
+  
   return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (navigator as any).standalone === true ||
-    (document.referrer.includes('android-app://') ||
-     document.referrer.includes('ios-app://'))
+    isStandalone ||
+    isIOSStandalone ||
+    isAndroidStandalone ||
+    document.referrer.includes('android-app://') ||
+    document.referrer.includes('ios-app://')
   );
 }
 
