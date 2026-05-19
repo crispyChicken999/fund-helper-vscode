@@ -11,7 +11,7 @@ export const isInstallPromptReady = ref(false);
 // 监听 beforeinstallprompt 事件
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
+    // e.preventDefault();
     myPWAConfig.installPrompt = e;
     isInstallPromptReady.value = true;
     console.log('✓ Install prompt event captured');
