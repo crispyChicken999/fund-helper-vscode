@@ -40,7 +40,7 @@ class MarketService {
       // 更新到store
       marketStore.updateMarkets(marketInfos)
       
-      console.log(`已加载 ${markets.length} 个行情数据`)
+      console.log(`[MarketService] 已加载 ${markets.length} 个行情数据`)
     } catch (error: any) {
       console.error('加载行情数据失败:', error)
       marketStore.setError(error.message)

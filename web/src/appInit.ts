@@ -69,7 +69,7 @@ export async function initApp(): Promise<void> {
 
       // 延迟 100ms 后执行，让页面先渲染出来
       setTimeout(() => {
-        const { isClosed } = getChinaMarketStatus()
+        const { isClosed, isOpen } = getChinaMarketStatus()
 
         if (!hasCachedDetails) {
           // 无缓存时无论是否休市都强制刷新一次，确保列表显示基金名称等基本信息
@@ -80,26 +80,36 @@ export async function initApp(): Promise<void> {
           console.log('[AppInit] 当前休市，跳过自动刷新，使用缓存数据')
           triggerPendingCheck()
         } else {
-          // 有缓存且开市，立即刷新一次
+          // 有缓存且是交易日，立即刷新一次
+          console.log('[AppInit] 交易日手动刷新一次')
           fundService.refreshAllFunds().then(() => triggerPendingCheck()).catch(console.error)
         }
 
-        // 只在开市状态下启动定时刷新
-        if (!isClosed && interval > 0 && refreshTimer === null) {
-          refreshTimer = setInterval(() => {
-            // 每次定时触发时重新判断市场状态，避免开市期间跨越到休市后继续刷新
-            const { isClosed: nowClosed } = getChinaMarketStatus()
-            if (nowClosed) {
-              console.log('[AppInit] 市场已休市，停止定时刷新')
-              if (refreshTimer !== null) {
-                clearInterval(refreshTimer)
-                refreshTimer = null
+        // 只在交易时间段内且用户启用自动刷新时启动定时刷新
+        if (isOpen) {
+          if (interval > 0) {
+            console.log('[AppInit] 当前处于交易时间段，启动定时刷新')
+            if (refreshTimer !== null) clearInterval(refreshTimer)
+            refreshTimer = setInterval(() => {
+              // 每次定时触发时重新判断市场状态
+              const { isOpen: nowOpen } = getChinaMarketStatus()
+              if (!nowOpen) {
+                console.log('[AppInit] 已离开交易时间段，停止定时刷新')
+                if (refreshTimer !== null) {
+                  clearInterval(refreshTimer)
+                  refreshTimer = null
+                }
+                return
               }
-              return
-            }
-            fundService.refreshAllFunds().catch(console.error)
-          }, interval * 1000)
+              fundService.refreshAllFunds().catch(console.error)
+            }, interval * 1000)
+          } else {
+            console.log('[AppInit] 用户未启用自动刷新')
+          }
+        } else {
+          console.log('[AppInit] 当前不在交易时间段，不启动定时刷新')
         }
+        console.log('[AppInit] 应用初始化完成')
       }, 100)
     })().finally(() => {
       initPromise = null

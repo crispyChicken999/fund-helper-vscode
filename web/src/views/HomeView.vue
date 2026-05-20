@@ -203,7 +203,7 @@
         <div class="search-box">
           <el-input
             v-model="searchQuery"
-            placeholder="搜索基金代码或名称"
+            placeholder="搜索基金代码、名称、分组或板块"
             clearable
             size="small"
             @input="handleSearch"
@@ -439,6 +439,7 @@
       <GroupManageDialog
         v-model:visible="showGroupManageDialog"
         :fund-rows="enrichedRows"
+        :highlight-fund-code="highlightFundCodeForGroup"
         @saved="onGroupManageSaved"
       />
     </div>
@@ -963,6 +964,7 @@ const showEditFundDialog = ref(false);
 const showAddGroupDialog = ref(false);
 const showEditGroupDialog = ref(false);
 const showGroupManageDialog = ref(false);
+const highlightFundCodeForGroup = ref<string>(""); // 需要在分组管理器中高亮的基金代码
 const showColumnSettings = ref(false);
 const groupTooltipVisible = ref(false);
 const groupTooltipStats = ref<GroupStats>({
@@ -1071,14 +1073,6 @@ const LONG_PRESS_MS = 520;
 const fundFormRules: FormRules = {
   code: [
     { required: true, message: "请选择或输入6位基金代码", trigger: "blur" },
-    {
-      validator: (_rule, value, callback) => {
-        if (!validateFundCode(String(value).trim())) {
-          callback(new Error("基金代码必须是6位数字"));
-        } else callback();
-      },
-      trigger: "blur",
-    },
   ],
   num: [
     { required: true, message: "请输入持有份额", trigger: "blur" },
@@ -1195,7 +1189,11 @@ const filteredRows = computed(() => {
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase();
     rows = rows.filter(
-      (r) => r.code.includes(q) || r.name.toLowerCase().includes(q),
+      (r) =>
+        r.code.includes(q) ||
+        r.name.toLowerCase().includes(q) ||
+        r.groupName?.toLowerCase().includes(q) ||
+        r.relateTheme?.toLowerCase().includes(q),
     );
   }
   return rows;
@@ -1955,7 +1953,8 @@ function onHoverTooltipEdit() {
 function onHoverTooltipSetGroup() {
   if (!fundHoverRow.value) return;
   closeFundHover();
-  openTooltip(fundHoverRow.value);
+  highlightFundCodeForGroup.value = fundHoverRow.value.code;
+  showGroupManageDialog.value = true;
 }
 
 function onHoverTooltipDelete() {
@@ -2135,7 +2134,9 @@ function onTooltipEdit() {
 }
 
 async function onTooltipSetGroup() {
+  if (!tooltipRow.value) return;
   tooltipVisible.value = false;
+  highlightFundCodeForGroup.value = tooltipRow.value.code;
   showGroupManageDialog.value = true;
 }
 
@@ -2392,6 +2393,8 @@ function showGroupStats(group: Group) {
 function onGroupManageSaved() {
   // Refresh data after group management changes
   fundService.refreshAllFunds().catch(() => {});
+  // 清除高亮状态
+  highlightFundCodeForGroup.value = "";
 }
 
 // ---- 批量加减仓 ----
@@ -2421,6 +2424,13 @@ watch(canDragFundRows, async (can) => {
     initFundTableSortable();
   } else {
     destroyFundTableSortable();
+  }
+});
+
+// 监听分组管理对话框关闭，清除高亮状态
+watch(showGroupManageDialog, (visible) => {
+  if (!visible) {
+    highlightFundCodeForGroup.value = "";
   }
 });
 
@@ -2736,6 +2746,7 @@ html.dark .group-tag-item.active {
 .fund-name {
   font-size: 14px;
   font-weight: 500;
+  user-select: none;
 }
 
 .positive {

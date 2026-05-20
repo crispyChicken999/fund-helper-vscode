@@ -50,7 +50,7 @@ class FundService {
       }
     })
 
-    console.log(`已加载 ${funds.length} 个基金`)
+    console.log(`[FundService] 已加载 ${funds.length} 个基金`)
   }
 
   async addFund(code: string, num: number, cost: number, groupKey?: string): Promise<void> {

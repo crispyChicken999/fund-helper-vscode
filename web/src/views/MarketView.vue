@@ -39,21 +39,21 @@
       <!-- 大盘资金 Tab -->
       <div v-show="activeMainTab === 'market'" class="tab-panel">
         <!-- 两市统计条 -->
-        <div v-if="marketStat" class="market-stat-bar">
+        <div class="market-stat-bar">
           <span
             >两市合计成交额：<strong>{{
-              marketStat.totalVolume.toFixed(2)
+              marketStat?.totalVolume.toFixed(2) || 0
             }}</strong>
             亿元</span
           >
           <span class="stat-up"
-            >上涨：<strong>{{ marketStat.rising }}</strong></span
+            >上涨：<strong>{{ marketStat?.rising || 0 }}</strong></span
           >
           <span class="stat-flat"
-            >平盘：<strong>{{ marketStat.flat }}</strong></span
+            >平盘：<strong>{{ marketStat?.flat || 0 }}</strong></span
           >
           <span class="stat-down"
-            >下跌：<strong>{{ marketStat.falling }}</strong></span
+            >下跌：<strong>{{ marketStat?.falling || 0 }}</strong></span
           >
         </div>
 
@@ -272,7 +272,39 @@ async function loadMarketTab() {
     fetchMarketStat(),
     fetchFlowLine(),
   ]);
-  indexCards.value = cards;
+  const defaultCards = [
+    {
+      code: "1.000001",
+      name: "上证指数",
+      price: 0,
+      changePercent: 0,
+      changeAmount: 0,
+    },
+    {
+      code: "1.000300",
+      name: "沪深300",
+      price: 0,
+      changePercent: 0,
+      changeAmount: 0,
+    },
+    {
+      code: "0.399001",
+      name: "深证成指",
+      price: 0,
+      changePercent: 0,
+      changeAmount: 0,
+    },
+    {
+      code: "0.399006",
+      name: "创业板指",
+      price: 0,
+      changePercent: 0,
+      changeAmount: 0,
+    },
+  ];
+
+  indexCards.value = cards || defaultCards;
+
   marketStat.value = stat;
   await renderFlowChart(flowData);
 }

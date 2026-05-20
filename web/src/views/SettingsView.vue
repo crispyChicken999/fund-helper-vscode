@@ -64,7 +64,14 @@
               </el-radio-group>
             </el-form-item>
 
-            <el-form-item label="刷新间隔">
+            <el-form-item label="自动刷新">
+              <el-switch v-model="autoRefreshEnabled" />
+              <div class="form-item-tip">
+                开启后在交易时间段内自动刷新数据
+              </div>
+            </el-form-item>
+
+            <el-form-item label="刷新间隔" v-if="autoRefreshEnabled">
               <el-select
                 v-model="refreshInterval"
                 allow-create
@@ -493,6 +500,21 @@ const refreshInterval = computed({
   },
 });
 
+const autoRefreshEnabled = computed({
+  get: () => settingStore.refreshInterval > 0,
+  set: async (value: boolean) => {
+    if (value) {
+      // 启用自动刷新，设置为默认间隔30秒
+      await settingStore.setRefreshInterval(30);
+      ElMessage.success('已启用自动刷新');
+    } else {
+      // 关闭自动刷新，设置为0
+      await settingStore.setRefreshInterval(0);
+      ElMessage.success('已关闭自动刷新');
+    }
+  },
+});
+
 const jsonboxName = ref("");
 const savedJsonboxName = ref("");
 const showSyncDialog = ref(false);
@@ -565,7 +587,7 @@ onMounted(async () => {
     // e.preventDefault();
     myPWAConfig.installPrompt = e;
     isInstallPromptReady.value = true;
-    console.log("✓ Install prompt event captured");
+    console.log("[PWAEvent] Install prompt event captured");
   });
 
   // 初始化PWA状态

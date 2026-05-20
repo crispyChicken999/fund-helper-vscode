@@ -30,7 +30,7 @@ export function updateThemeColor(theme: 'light' | 'dark') {
   }
   metaThemeColor.setAttribute('content', color)
 
-  console.log(`✓ Theme color updated to ${color} (${theme})`)
+  // console.log(`✓ Theme color updated to ${color} (${theme})`)
 }
 
 /**

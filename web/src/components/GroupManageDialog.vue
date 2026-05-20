@@ -8,7 +8,7 @@
     @update:model-value="$emit('update:visible', $event)"
   >
     <div class="gm-hint">
-      拖动 ☰ 手柄排序；点击分组查看基金；点击基金右侧分组名可移动
+      拖动 ☰ 手柄排序；拖动基金到分组可调整分组；点击分组查看基金
     </div>
 
     <!-- 分组管理器 -->
@@ -18,41 +18,63 @@
         >+ 新建分组</el-button
       >
     </div>
+    
     <ul ref="groupListRef" class="gm-list">
-      <!-- 未分类（固定，不可拖拽） -->
-      <li
-        class="gm-item gm-group-fixed"
-        :class="{ 'gm-active': selectedGroup === '__uncategorized__' }"
-        @click="selectGroupItem('__uncategorized__')"
-      >
-        <span class="drag-handle disabled">☰</span>
-        <span class="gm-name">未分类</span>
-        <span class="gm-count">{{ uncategorizedFunds.length }} 只</span>
-      </li>
-      <!-- 自定义分组 -->
-      <li
-        v-for="g in draftGroupOrder"
-        :key="g.key"
-        :data-key="g.key"
-        class="gm-item"
-        :class="{ 'gm-active': selectedGroup === g.key }"
-        @click="selectGroupItem(g.key)"
-      >
-        <span class="drag-handle">☰</span>
-        <span class="gm-name">{{ g.name }}</span>
-        <span class="gm-count">{{ getGroupFundCount(g.key) }} 只</span>
-        <el-button
-          size="small"
-          link
-          type="primary"
-          @click.stop="renameGroup(g)"
+      <el-scrollbar ref="groupScrollbarRef">
+        <!-- 未分类（固定，不可拖拽） -->
+        <li
+          class="gm-item gm-group-fixed"
+          :class="{ 
+            'gm-active': selectedGroup === '__uncategorized__',
+            'gm-highlighted': highlightedGroupKey === '__uncategorized__',
+            'gm-drop-target': dropTargetGroupKey === '__uncategorized__'
+          }"
+          @click="selectGroupItem('__uncategorized__')"
+          @dragover.prevent="onGroupDragOver($event, '__uncategorized__')"
+          @dragleave="onGroupDragLeave"
+          @drop.prevent="onGroupDrop($event, '__uncategorized__')"
         >
-          <el-icon><Edit /></el-icon>
-        </el-button>
-        <el-button size="small" link type="danger" @click.stop="deleteGroup(g)">
-          <el-icon><Delete /></el-icon>
-        </el-button>
-      </li>
+          <span class="drag-handle disabled" title="未分类不能修改排序">☰</span>
+          <span class="gm-name">未分类</span>
+          <span class="gm-count">{{ uncategorizedFunds.length }} 只</span>
+          <span class="gm-fix-tip">固定</span>
+        </li>
+        <!-- 自定义分组 -->
+        <li
+          v-for="g in draftGroupOrder"
+          :key="g.key"
+          :data-key="g.key"
+          draggable="true"
+          class="gm-item"
+          :class="{ 
+            'gm-active': selectedGroup === g.key,
+            'gm-highlighted': highlightedGroupKey === g.key,
+            'gm-drop-target': dropTargetGroupKey === g.key,
+            'dragging': draggingGroupKey === g.key
+          }"
+          @click="selectGroupItem(g.key)"
+          @dragstart="onGroupDragStart($event, g.key)"
+          @dragend="onGroupDragEnd"
+          @dragover.prevent="onGroupDragOver($event, g.key)"
+          @dragleave="onGroupDragLeave"
+          @drop.prevent="onGroupDrop($event, g.key)"
+        >
+          <span class="drag-handle">☰</span>
+          <span class="gm-name">{{ g.name }}</span>
+          <span class="gm-count">{{ getGroupFundCount(g.key) }} 只</span>
+          <el-button
+            size="small"
+            link
+            type="primary"
+            @click.stop="renameGroup(g)"
+          >
+            <el-icon><Edit /></el-icon>
+          </el-button>
+          <el-button size="small" link type="danger" @click.stop="deleteGroup(g)">
+            <el-icon><Delete /></el-icon>
+          </el-button>
+        </li>
+      </el-scrollbar>
     </ul>
 
     <!-- 基金列表 -->
@@ -62,40 +84,32 @@
         {{ currentFundList.length }} 只</span
       >
     </div>
+
     <ul ref="fundListRef" class="gm-list">
-      <li v-if="currentFundList.length === 0" class="gm-empty">暂无基金</li>
-      <li
-        v-for="fund in currentFundList"
-        :key="fund.code"
-        :data-key="fund.code"
-        class="gm-item"
-      >
-        <span class="drag-handle">☰</span>
-        <span class="gm-name">{{ fund.name }}</span>
-        <span class="gm-fund-code">{{ fund.code }}</span>
-        <!-- 移动到分组 -->
-        <el-select
-          :model-value="getFundGroupKey(fund.code)"
-          size="small"
-          placeholder="移至分组"
-          clearable
-          class="gm-group-select"
-          @click.stop
-          @change="
-            (val: string) =>
-              moveFundToGroup(fund.code, val || '__uncategorized__')
-          "
-          @clear="moveFundToGroup(fund.code, '__uncategorized__')"
+      <el-scrollbar ref="fundScrollbarRef">
+        <li v-if="currentFundList.length === 0" class="gm-empty">暂无基金</li>
+        <li
+          v-for="fund in currentFundList"
+          :key="fund.code"
+          :data-code="fund.code"
+          draggable="true"
+          class="gm-item gm-fund-item"
+          :class="{ 
+            'gm-fund-highlighted': highlightedFundCode === fund.code,
+            'dragging': draggingFundCode === fund.code,
+            'gm-drop-target': dropTargetFundCode === fund.code
+          }"
+          @dragstart="onFundDragStart($event, fund.code)"
+          @dragend="onFundDragEnd"
+          @dragover.prevent="onFundDragOver($event, fund.code)"
+          @dragleave="onFundDragLeave"
+          @drop.prevent="onFundDrop($event, fund.code)"
         >
-          <el-option label="未分类" value="__uncategorized__" />
-          <el-option
-            v-for="g in draftGroupOrder"
-            :key="g.key"
-            :label="g.name"
-            :value="g.key"
-          />
-        </el-select>
-      </li>
+          <span class="drag-handle">☰</span>
+          <span class="gm-name">{{ fund.name }}</span>
+          <span class="gm-fund-code">{{ fund.code }}</span>
+        </li>
+      </el-scrollbar>
     </ul>
 
     <template #footer>
@@ -109,7 +123,6 @@
 import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Edit, Delete } from "@element-plus/icons-vue";
-import Sortable from "sortablejs";
 import { useGroupStore, useFundStore } from "@/stores";
 import { validateGroupName } from "@/utils/validate";
 import type { FundRowDisplay } from "@/utils/fundDisplay";
@@ -117,6 +130,7 @@ import type { FundRowDisplay } from "@/utils/fundDisplay";
 const props = defineProps<{
   visible: boolean;
   fundRows: FundRowDisplay[];
+  highlightFundCode?: string; // 需要高亮的基金代码
 }>();
 
 const emit = defineEmits<{
@@ -132,11 +146,21 @@ const draftGroupOrder = ref<{ key: string; name: string }[]>([]);
 const draftFundGroups = ref<Map<string, string[]>>(new Map()); // groupKey -> fundCodes[]
 const selectedGroup = ref<string>("__uncategorized__");
 
-// --- Sortable refs & instances ---
+// --- Refs ---
 const groupListRef = ref<HTMLElement | null>(null);
 const fundListRef = ref<HTMLElement | null>(null);
-let groupSortable: Sortable | null = null;
-let fundSortable: Sortable | null = null;
+const groupScrollbarRef = ref<any>(null);
+const fundScrollbarRef = ref<any>(null);
+
+// --- 高亮基金相关 ---
+const highlightedFundCode = ref<string>("");
+const highlightedGroupKey = ref<string>("");
+
+// --- 拖拽状态 ---
+const draggingGroupKey = ref<string>("");
+const draggingFundCode = ref<string>("");
+const dropTargetGroupKey = ref<string>("");
+const dropTargetFundCode = ref<string>("");
 
 // --- Init ---
 function initDraft() {
@@ -148,6 +172,14 @@ function initDraft() {
   }
   draftFundGroups.value = map;
   selectedGroup.value = "__uncategorized__";
+  
+  // 如果有需要高亮的基金，自动选中其所在分组
+  if (props.highlightFundCode) {
+    highlightedFundCode.value = props.highlightFundCode;
+    const groupKey = getFundGroupKey(props.highlightFundCode);
+    highlightedGroupKey.value = groupKey;
+    selectedGroup.value = groupKey;
+  }
 }
 
 // --- Computed ---
@@ -273,76 +305,140 @@ function moveFundToGroup(fundCode: string, targetKey: string) {
   }
 }
 
-// --- Sortable ---
-function initSortables() {
-  destroySortables();
-  initGroupSortable();
-  initFundSortable();
+// --- 拖拽事件处理 - 分组 ---
+function onGroupDragStart(e: DragEvent, groupKey: string) {
+  draggingGroupKey.value = groupKey;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", groupKey);
+  }
 }
 
-function destroySortables() {
-  groupSortable?.destroy();
-  groupSortable = null;
-  fundSortable?.destroy();
-  fundSortable = null;
+function onGroupDragEnd() {
+  draggingGroupKey.value = "";
+  dropTargetGroupKey.value = "";
 }
 
-function initGroupSortable() {
-  const el = groupListRef.value;
-  if (!el) return;
-  groupSortable = Sortable.create(el, {
-    handle: ".drag-handle:not(.disabled)",
-    animation: 200,
-    ghostClass: "sortable-ghost",
-    filter: ".gm-group-fixed",
-    onEnd(evt) {
-      const { oldIndex, newIndex } = evt;
-      if (oldIndex == null || newIndex == null || oldIndex === newIndex) return;
-      // 第0项是固定的"未分类"，自定义分组从索引1开始
-      const adjOld = oldIndex - 1;
-      const adjNew = newIndex - 1;
-      if (adjOld < 0 || adjNew < 0) return;
-      const arr = draftGroupOrder.value;
-      const [item] = arr.splice(adjOld, 1);
-      if (item) arr.splice(adjNew, 0, item);
-    },
-  });
+function onGroupDragOver(e: DragEvent, groupKey: string) {
+  if (draggingFundCode.value) {
+    // 基金拖到分组上
+    dropTargetGroupKey.value = groupKey;
+  } else if (draggingGroupKey.value && draggingGroupKey.value !== groupKey) {
+    // 分组拖到分组上（排序）
+    dropTargetGroupKey.value = groupKey;
+  }
 }
 
-function initFundSortable() {
-  const el = fundListRef.value;
-  if (!el) return;
-  fundSortable = Sortable.create(el, {
-    handle: ".drag-handle",
-    animation: 200,
-    ghostClass: "sortable-ghost",
-    onEnd(evt) {
-      const { oldIndex, newIndex } = evt;
-      if (oldIndex == null || newIndex == null || oldIndex === newIndex) return;
-      if (selectedGroup.value === "__uncategorized__") {
-        // 未分类：直接操作 fundStore 全局顺序
-        const codes = fundStore.funds.map((f) => f.code);
-        const [moved] = codes.splice(oldIndex, 1);
-        if (moved) {
-          codes.splice(newIndex, 0, moved);
-          fundStore.reorderFunds(codes);
-        }
+function onGroupDragLeave() {
+  dropTargetGroupKey.value = "";
+}
+
+function onGroupDrop(e: DragEvent, groupKey: string) {
+  dropTargetGroupKey.value = "";
+  
+  if (draggingFundCode.value) {
+    // 基金拖到分组
+    moveFundToGroup(draggingFundCode.value, groupKey);
+    ElMessage.success("已移动到分组");
+    return;
+  }
+  
+  if (draggingGroupKey.value && draggingGroupKey.value !== groupKey) {
+    // 分组排序
+    const fromIdx = draftGroupOrder.value.findIndex(g => g.key === draggingGroupKey.value);
+    const toIdx = draftGroupOrder.value.findIndex(g => g.key === groupKey);
+    
+    if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+      const [item] = draftGroupOrder.value.splice(fromIdx, 1);
+      // 重新计算目标位置
+      const newToIdx = draftGroupOrder.value.findIndex(g => g.key === groupKey);
+      // 如果向下拖，插入到目标后面；向上拖，插入到目标位置
+      if (fromIdx < toIdx) {
+        draftGroupOrder.value.splice(newToIdx + 1, 0, item);
       } else {
-        const codes = draftFundGroups.value.get(selectedGroup.value);
-        if (!codes) return;
-        const [moved] = codes.splice(oldIndex, 1);
-        if (moved) codes.splice(newIndex, 0, moved);
+        draftGroupOrder.value.splice(newToIdx, 0, item);
       }
-    },
-  });
+    }
+  }
 }
 
-// 切换分组时重新初始化基金列表 Sortable（DOM 重新渲染）
+// --- 拖拽事件处理 - 基金 ---
+function onFundDragStart(e: DragEvent, fundCode: string) {
+  draggingFundCode.value = fundCode;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("application/x-fund-code", fundCode);
+  }
+}
+
+function onFundDragEnd() {
+  draggingFundCode.value = "";
+  dropTargetFundCode.value = "";
+}
+
+function onFundDragOver(e: DragEvent, fundCode: string) {
+  if (draggingFundCode.value && draggingFundCode.value !== fundCode) {
+    dropTargetFundCode.value = fundCode;
+  }
+}
+
+function onFundDragLeave() {
+  dropTargetFundCode.value = "";
+}
+
+function onFundDrop(e: DragEvent, fundCode: string) {
+  dropTargetFundCode.value = "";
+  
+  if (!draggingFundCode.value || draggingFundCode.value === fundCode) {
+    return;
+  }
+  
+  // 基金列表内排序
+  if (selectedGroup.value === "__uncategorized__") {
+    // 未分类：操作全局顺序
+    const codes = fundStore.funds.map((f) => f.code);
+    const fromIdx = codes.indexOf(draggingFundCode.value);
+    const toIdx = codes.indexOf(fundCode);
+    
+    if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+      codes.splice(fromIdx, 1);
+      const newToIdx = codes.indexOf(fundCode);
+      if (fromIdx < toIdx) {
+        codes.splice(newToIdx + 1, 0, draggingFundCode.value);
+      } else {
+        codes.splice(newToIdx, 0, draggingFundCode.value);
+      }
+      fundStore.reorderFunds(codes);
+    }
+  } else {
+    // 分组内排序
+    const codes = draftFundGroups.value.get(selectedGroup.value);
+    if (!codes) return;
+    
+    const fromIdx = codes.indexOf(draggingFundCode.value);
+    const toIdx = codes.indexOf(fundCode);
+    
+    if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+      codes.splice(fromIdx, 1);
+      const newToIdx = codes.indexOf(fundCode);
+      if (fromIdx < toIdx) {
+        codes.splice(newToIdx + 1, 0, draggingFundCode.value);
+      } else {
+        codes.splice(newToIdx, 0, draggingFundCode.value);
+      }
+    }
+  }
+}
+
+// 切换分组时，如果有高亮的基金，滚动到该基金位置
 watch(selectedGroup, async () => {
   await nextTick();
-  fundSortable?.destroy();
-  fundSortable = null;
-  initFundSortable();
+  
+  // 如果有高亮的基金，滚动到该基金位置
+  if (highlightedFundCode.value && selectedGroup.value === highlightedGroupKey.value) {
+    await nextTick();
+    scrollToHighlightedFund();
+  }
 });
 
 watch(
@@ -351,14 +447,59 @@ watch(
     if (val) {
       initDraft();
       await nextTick();
-      initSortables();
+      
+      // 如果有高亮的基金，滚动到该基金和分组位置
+      if (highlightedFundCode.value) {
+        await nextTick();
+        await nextTick(); // 确保 DOM 完全渲染
+        scrollToHighlightedGroup();
+        scrollToHighlightedFund();
+      }
     } else {
-      destroySortables();
+      // 清除高亮状态
+      highlightedFundCode.value = "";
+      highlightedGroupKey.value = "";
     }
   },
 );
 
-onBeforeUnmount(() => destroySortables());
+// 滚动到高亮的分组位置
+function scrollToHighlightedGroup() {
+  if (!highlightedGroupKey.value || !groupScrollbarRef.value) return;
+  
+  const highlightedItem = groupListRef.value?.querySelector(
+    `[data-key="${highlightedGroupKey.value}"]`
+  ) as HTMLElement;
+  
+  if (highlightedItem && groupScrollbarRef.value.wrapRef) {
+    const containerHeight = groupScrollbarRef.value.wrapRef.clientHeight;
+    const itemTop = highlightedItem.offsetTop;
+    const itemHeight = highlightedItem.offsetHeight;
+    
+    // 计算滚动位置，使该项居中
+    const scrollTop = itemTop - containerHeight / 2 + itemHeight / 2;
+    groupScrollbarRef.value.setScrollTop(Math.max(0, scrollTop));
+  }
+}
+
+// 滚动到高亮的基金位置
+function scrollToHighlightedFund() {
+  if (!highlightedFundCode.value || !fundScrollbarRef.value) return;
+  
+  const highlightedItem = fundListRef.value?.querySelector(
+    `[data-code="${highlightedFundCode.value}"]`
+  ) as HTMLElement;
+  
+  if (highlightedItem && fundScrollbarRef.value.wrapRef) {
+    const containerHeight = fundScrollbarRef.value.wrapRef.clientHeight;
+    const itemTop = highlightedItem.offsetTop;
+    const itemHeight = highlightedItem.offsetHeight;
+    
+    // 计算滚动位置，使该项居中
+    const scrollTop = itemTop - containerHeight / 2 + itemHeight / 2;
+    fundScrollbarRef.value.setScrollTop(Math.max(0, scrollTop));
+  }
+}
 
 // --- Save ---
 async function handleSave() {
@@ -441,8 +582,7 @@ async function handleSave() {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 220px;
-  overflow-y: auto;
+  height: 220px;
   border: 1px solid var(--el-border-color);
   border-radius: 8px;
 }
@@ -460,9 +600,6 @@ async function handleSave() {
   user-select: none;
 }
 
-.gm-item:last-child {
-  border-bottom: none;
-}
 
 .gm-item .el-button {
   margin: 0;
@@ -476,9 +613,47 @@ async function handleSave() {
   background: var(--el-color-primary-light-9);
 }
 
+.gm-item.gm-highlighted {
+  box-shadow: 0 0 0 2px var(--el-color-primary) inset;
+  animation: pulse-highlight 1.5s ease-in-out;
+}
+
+.gm-item.gm-fund-highlighted {
+  background: var(--el-color-warning-light-9);
+  box-shadow: 0 0 0 2px var(--el-color-warning) inset;
+  animation: pulse-highlight 1.5s ease-in-out;
+}
+
+.gm-item.gm-drop-target {
+  background: var(--el-color-success-light-9);
+  box-shadow: 0 0 0 2px var(--el-color-success) inset;
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
+.gm-item.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 .gm-group-fixed {
-  opacity: 0.75;
-  padding-right: 60px;
+  opacity: 0.8;
+}
+
+.gm-fix-tip {
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 3px;
+  background: var(--el-fill-color-light);
+  padding: 0px 8px;
 }
 
 /* 关键：touch-action: none 让 Sortable 在移动端能捕获 touch 事件 */
@@ -493,7 +668,7 @@ async function handleSave() {
 }
 
 .drag-handle.disabled {
-  cursor: default;
+  cursor: not-allowed;
   opacity: 0.3;
 }
 

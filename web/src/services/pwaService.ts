@@ -214,7 +214,7 @@ class PWAService {
     const support = this.getPWASupport()
     const isPWA = this.isInstalledAsPWA()
 
-    console.group('📱 PWA Status')
+    console.group('[PWA Status]')
     console.log('Installed as PWA:', isPWA)
     console.log('Support:', support)
     console.log('Online:', this.isOnline)

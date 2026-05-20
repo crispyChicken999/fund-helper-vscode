@@ -22,7 +22,7 @@ class GroupService {
     // Sync fund groupKey based on group membership
     this.syncFundGroupKeys()
     
-    console.log(`已加载 ${Object.keys(groups).length} 个分组`)
+    console.log(`[GroupService] 已加载 ${Object.keys(groups).length} 个分组`)
   }
 
   /**

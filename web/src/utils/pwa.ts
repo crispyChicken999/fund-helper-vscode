@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
     // e.preventDefault();
     myPWAConfig.installPrompt = e;
     isInstallPromptReady.value = true;
-    console.log('✓ Install prompt event captured');
+    console.log('[PWAEvent] Install prompt event captured');
   });
 }
 

@@ -89,17 +89,25 @@ async function fetchFundEstimateChange(code: string): Promise<number | null> {
   }
 }
 
-/** 批量 MNFInfo — 通过  */
+/** 批量 MNFInfo  */
 export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, any>> {
   const map = new Map<string, any>()
   if (!codes.length) return map
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=web&Fcodes=${codes.join(',')}`
+  
+  // 尝试直接请求
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(12000) })
-    if (!res.ok) return map
+    if (!res.ok) throw new Error('Direct fetch failed')
     const data = await res.json().catch(() => null)
+    
+    // 检查是否返回错误响应（网络繁忙等）
+    if (!data || !data.Success || data.ErrCode !== 0 || !data.Datas) {
+      throw new Error('API returned error response')
+    }
+    
     const gztime = data?.Expansion?.GZTIME ?? ''
-    for (const fund of data?.Datas ?? []) {
+    for (const fund of data.Datas) {
       map.set(fund.FCODE, {
         navchgrt: fund.NAVCHGRT,
         jzrq: fund.PDATE,
@@ -109,17 +117,56 @@ export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, an
         gztime
       })
     }
-  } catch { /* ignore */ }
+    return map
+  } catch (directError) {
+    // 直接请求失败，尝试使用代理
+    try {
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+      const proxyRes = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) })
+      if (!proxyRes.ok) return map
+      
+      const proxyData = await proxyRes.json().catch(() => null)
+      if (!proxyData?.contents) return map
+      
+      const data = JSON.parse(proxyData.contents)
+      
+      // 检查代理返回的数据是否有效
+      if (!data || !data.Success || data.ErrCode !== 0 || !data.Datas) {
+        return map
+      }
+      
+      const gztime = data?.Expansion?.GZTIME ?? ''
+      for (const fund of data.Datas) {
+        map.set(fund.FCODE, {
+          navchgrt: fund.NAVCHGRT,
+          jzrq: fund.PDATE,
+          dwjz: fund.NAV,
+          name: fund.SHORTNAME,
+          gszzl: fund.GSZZL,
+          gztime
+        })
+      }
+    } catch (proxyError) {
+      /* 代理也失败，返回空 map */
+    }
+  }
   return map
 }
 
 async function fetchFundFromMNFInfo(code: string): Promise<any | null> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=200&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=web&Fcodes=${code}`
+  
+  // 尝试直接请求
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(12000) })
-    if (!res.ok) return null
+    if (!res.ok) throw new Error('Direct fetch failed')
     const data = await res.json().catch(() => null)
-    if (!data?.Datas?.length) return null
+    
+    // 检查是否返回错误响应（网络繁忙等）
+    if (!data || !data.Success || data.ErrCode !== 0 || !data.Datas?.length) {
+      throw new Error('API returned error response')
+    }
+    
     const fund = data.Datas[0]
     const estimateChange = await fetchFundEstimateChange(code)
     return {
@@ -134,8 +181,41 @@ async function fetchFundFromMNFInfo(code: string): Promise<any | null> {
       _fromMNFInfo: true,
       _estimateChange: estimateChange
     }
-  } catch {
-    return null
+  } catch (directError) {
+    // 直接请求失败，尝试使用代理
+    try {
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+      const proxyRes = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) })
+      if (!proxyRes.ok) return null
+      
+      const proxyData = await proxyRes.json().catch(() => null)
+      if (!proxyData?.contents) return null
+      
+      const data = JSON.parse(proxyData.contents)
+      
+      // 检查代理返回的数据是否有效
+      if (!data || !data.Success || data.ErrCode !== 0 || !data.Datas?.length) {
+        return null
+      }
+      
+      const fund = data.Datas[0]
+      const estimateChange = await fetchFundEstimateChange(code)
+      return {
+        fundcode: fund.FCODE,
+        name: fund.SHORTNAME,
+        dwjz: fund.NAV,
+        gsz: null,
+        gszzl: estimateChange !== null ? String(estimateChange) : null,
+        navchgrt: fund.NAVCHGRT,
+        jzrq: fund.PDATE,
+        gztime: data?.Expansion?.GZTIME ?? '',
+        _fromMNFInfo: true,
+        _estimateChange: estimateChange
+      }
+    } catch (proxyError) {
+      /* 代理也失败，返回 null */
+      return null
+    }
   }
 }
 
