@@ -258,7 +258,7 @@ async function renderChart() {
         },
         axisLabel: {
           formatter: fmtAxis,
-          interval: (index: number, value: string) => fmtVal(value),
+          interval: (_index: number, value: string) => fmtVal(value),
         },
       },
       {
@@ -282,7 +282,7 @@ async function renderChart() {
         },
         axisLabel: {
           formatter: fmtAxis,
-          interval: (index: number, value: string) => fmtVal(value),
+          interval: (_index: number, value: string) => fmtVal(value),
         },
         axisPointer: {
           show: true,
