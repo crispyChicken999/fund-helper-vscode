@@ -3,18 +3,27 @@
     <div v-for="i in rows" :key="i" class="skeleton-row">
       <div class="skeleton-cell skeleton-name">
         <div class="skeleton-bar" style="width: 80%; height: 14px"></div>
-        <div class="skeleton-bar" style="width: 50%; height: 11px; margin-top: 4px"></div>
+        <div
+          class="skeleton-bar"
+          style="width: 50%; height: 11px; margin-top: 4px"
+        ></div>
       </div>
       <div v-for="j in cols" :key="j" class="skeleton-cell">
         <div class="skeleton-bar" style="width: 70%; height: 13px"></div>
-        <div class="skeleton-bar" style="width: 50%; height: 11px; margin-top: 4px"></div>
+        <div
+          class="skeleton-bar"
+          style="width: 50%; height: 11px; margin-top: 4px"
+        ></div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{ rows?: number; cols?: number }>(), { rows: 8, cols: 4 })
+withDefaults(defineProps<{ rows?: number; cols?: number }>(), {
+  rows: 8,
+  cols: 4,
+});
 </script>
 
 <style scoped>
@@ -53,7 +62,11 @@ withDefaults(defineProps<{ rows?: number; cols?: number }>(), { rows: 8, cols: 4
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 </style>

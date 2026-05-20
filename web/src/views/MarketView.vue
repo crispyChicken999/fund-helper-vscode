@@ -506,8 +506,12 @@ async function renderFlowChart(
   const option = {
     tooltip: {
       trigger: "axis",
-      backgroundColor: isDarkMode.value ? "rgba(30, 30, 30, 0.9)" : "rgba(255, 255, 255, 0.95)",
-      borderColor: isDarkMode.value ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.1)",
+      backgroundColor: isDarkMode.value
+        ? "rgba(30, 30, 30, 0.9)"
+        : "rgba(255, 255, 255, 0.95)",
+      borderColor: isDarkMode.value
+        ? "rgba(255, 255, 255, 0.2)"
+        : "rgba(0, 0, 0, 0.1)",
       borderWidth: 1,
       textStyle: {
         color: isDarkMode.value ? "#fff" : "#000",
@@ -646,8 +650,12 @@ async function renderPlateChart(
   const option = {
     tooltip: {
       trigger: "axis",
-      backgroundColor: isDarkMode.value ? "rgba(30, 30, 30, 0.9)" : "rgba(255, 255, 255, 0.95)",
-      borderColor: isDarkMode.value ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.1)",
+      backgroundColor: isDarkMode.value
+        ? "rgba(30, 30, 30, 0.9)"
+        : "rgba(255, 255, 255, 0.95)",
+      borderColor: isDarkMode.value
+        ? "rgba(255, 255, 255, 0.2)"
+        : "rgba(0, 0, 0, 0.1)",
       borderWidth: 1,
       textStyle: {
         color: isDarkMode.value ? "#fff" : "#000",

@@ -1,17 +1,27 @@
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div v-if="visible" class="pending-overlay" @click.self="$emit('dismiss')">
+      <div
+        v-if="visible"
+        class="pending-overlay"
+        @click.self="$emit('dismiss')"
+      >
         <div class="pending-panel">
           <div class="pending-panel-header">
             <span class="pending-panel-title">净值已更新，确认加仓？</span>
           </div>
 
           <div class="pending-panel-body">
-            <p class="pending-hint">以下基金的买入日净值已更新，请确认是否加仓：</p>
+            <p class="pending-hint">
+              以下基金的买入日净值已更新，请确认是否加仓：
+            </p>
 
             <div class="pending-confirm-list">
-              <div v-for="item in enrichedItems" :key="item.record.id" class="pending-confirm-card">
+              <div
+                v-for="item in enrichedItems"
+                :key="item.record.id"
+                class="pending-confirm-card"
+              >
                 <div class="confirm-card-header">
                   <span class="confirm-fund-name">{{ item.record.name }}</span>
                   <span class="confirm-fund-code">{{ item.record.code }}</span>
@@ -30,28 +40,45 @@
                 </div>
                 <div class="confirm-row">
                   <span class="confirm-label">新增份额</span>
-                  <span class="positive">+{{ item.addShares.toFixed(2) }} 份</span>
+                  <span class="positive"
+                    >+{{ item.addShares.toFixed(2) }} 份</span
+                  >
                 </div>
                 <div class="confirm-divider"></div>
                 <div class="confirm-row">
                   <span class="confirm-label">新总份额</span>
-                  <span>{{ item.oldShares.toFixed(2) }} → <strong>{{ item.newShares.toFixed(2) }}</strong> 份</span>
+                  <span
+                    >{{ item.oldShares.toFixed(2) }} →
+                    <strong>{{ item.newShares.toFixed(2) }}</strong> 份</span
+                  >
                 </div>
                 <div class="confirm-row">
                   <span class="confirm-label">新成本价</span>
-                  <span>{{ item.oldCost.toFixed(4) }} → <strong>{{ item.newCost.toFixed(4) }}</strong></span>
+                  <span
+                    >{{ item.oldCost.toFixed(4) }} →
+                    <strong>{{ item.newCost.toFixed(4) }}</strong></span
+                  >
                 </div>
                 <div class="confirm-row">
                   <span class="confirm-label">持仓总额</span>
-                  <span>{{ item.oldAmount.toFixed(2) }} → <strong>{{ item.newAmount.toFixed(2) }}</strong> 元</span>
+                  <span
+                    >{{ item.oldAmount.toFixed(2) }} →
+                    <strong>{{ item.newAmount.toFixed(2) }}</strong> 元</span
+                  >
                 </div>
               </div>
             </div>
           </div>
 
           <div class="pending-panel-footer">
-            <button class="pending-btn-dismiss" @click="$emit('dismiss')">稍后再说</button>
-            <button class="pending-btn-confirm" :disabled="confirming" @click="handleConfirm">
+            <button class="pending-btn-dismiss" @click="$emit('dismiss')">
+              稍后再说
+            </button>
+            <button
+              class="pending-btn-confirm"
+              :disabled="confirming"
+              @click="handleConfirm"
+            >
               <span v-if="confirming">确认中...</span>
               <span v-else>全部确认加仓</span>
             </button>
@@ -63,51 +90,64 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useFundStore } from '@/stores'
-import { confirmPendingBuys, type BuyRecord } from '@/services/pendingBuyService'
-import { fundService } from '@/services'
+import { ref, computed } from "vue";
+import { ElMessage } from "element-plus";
+import { useFundStore } from "@/stores";
+import {
+  confirmPendingBuys,
+  type BuyRecord,
+} from "@/services/pendingBuyService";
+import { fundService } from "@/services";
 
 const props = defineProps<{
-  visible: boolean
-  readyList: BuyRecord[]
-}>()
+  visible: boolean;
+  readyList: BuyRecord[];
+}>();
 
 const emit = defineEmits<{
-  (e: 'dismiss'): void
-  (e: 'confirmed'): void
-}>()
+  (e: "dismiss"): void;
+  (e: "confirmed"): void;
+}>();
 
-const confirming = ref(false)
-const fundStore = useFundStore()
+const confirming = ref(false);
+const fundStore = useFundStore();
 
 const enrichedItems = computed(() => {
-  return props.readyList.map(record => {
-    const fund = fundStore.getFund(record.code)
-    const oldShares = fund?.num ?? 0
-    const oldCost = fund?.cost ?? 0
-    const nav = record.navOnBuyDate ?? 0
-    const addShares = nav > 0 ? record.amount / nav : 0
-    const newShares = oldShares + addShares
-    const newCost = newShares > 0 ? (oldCost * oldShares + nav * addShares) / newShares : nav
-    const oldAmount = oldShares * oldCost
-    const newAmount = newShares * newCost
-    return { record, oldShares, oldCost, addShares, newShares, newCost, oldAmount, newAmount }
-  })
-})
+  return props.readyList.map((record) => {
+    const fund = fundStore.getFund(record.code);
+    const oldShares = fund?.num ?? 0;
+    const oldCost = fund?.cost ?? 0;
+    const nav = record.navOnBuyDate ?? 0;
+    const addShares = nav > 0 ? record.amount / nav : 0;
+    const newShares = oldShares + addShares;
+    const newCost =
+      newShares > 0 ? (oldCost * oldShares + nav * addShares) / newShares : nav;
+    const oldAmount = oldShares * oldCost;
+    const newAmount = newShares * newCost;
+    return {
+      record,
+      oldShares,
+      oldCost,
+      addShares,
+      newShares,
+      newCost,
+      oldAmount,
+      newAmount,
+    };
+  });
+});
 
 async function handleConfirm() {
-  confirming.value = true
+  confirming.value = true;
   try {
-    await confirmPendingBuys(props.readyList)
-    await fundService.refreshAllFunds()
-    ElMessage.success(`已确认 ${props.readyList.length} 笔加仓`)
-    emit('confirmed')
+    await confirmPendingBuys(props.readyList);
+    await fundService.refreshAllFunds();
+    ElMessage.success(`已确认 ${props.readyList.length} 笔加仓`);
+    emit("confirmed");
   } catch (e: any) {
-    ElMessage.error(e?.message || '操作失败')
+    ElMessage.error(e?.message || "操作失败");
   } finally {
-    confirming.value = false
+    confirming.value = false;
   }
 }
 </script>
@@ -136,8 +176,13 @@ async function handleConfirm() {
 }
 
 @media (min-width: 600px) {
-  .pending-overlay { align-items: center; }
-  .pending-panel { border-radius: 12px; max-height: 75vh; }
+  .pending-overlay {
+    align-items: center;
+  }
+  .pending-panel {
+    border-radius: 12px;
+    max-height: 75vh;
+  }
 }
 
 .pending-panel-header {
@@ -220,7 +265,9 @@ async function handleConfirm() {
   margin: 2px 0;
 }
 
-.positive { color: var(--el-color-danger); }
+.positive {
+  color: var(--el-color-danger);
+}
 
 .pending-panel-footer {
   display: flex;
@@ -241,7 +288,9 @@ async function handleConfirm() {
   cursor: pointer;
   transition: all 0.15s;
 }
-.pending-btn-dismiss:hover { background: var(--el-fill-color-light); }
+.pending-btn-dismiss:hover {
+  background: var(--el-fill-color-light);
+}
 
 .pending-btn-confirm {
   flex: 2;
@@ -255,14 +304,27 @@ async function handleConfirm() {
   cursor: pointer;
   transition: all 0.15s;
 }
-.pending-btn-confirm:hover:not(:disabled) { background: var(--el-color-primary-dark-2); }
-.pending-btn-confirm:disabled { background: var(--el-color-primary-light-5); cursor: not-allowed; }
+.pending-btn-confirm:hover:not(:disabled) {
+  background: var(--el-color-primary-dark-2);
+}
+.pending-btn-confirm:disabled {
+  background: var(--el-color-primary-light-5);
+  cursor: not-allowed;
+}
 
 .modal-fade-enter-active,
-.modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
 .modal-fade-enter-active .pending-panel,
-.modal-fade-leave-active .pending-panel { transition: transform 0.25s ease; }
+.modal-fade-leave-active .pending-panel {
+  transition: transform 0.25s ease;
+}
 .modal-fade-enter-from,
-.modal-fade-leave-to { opacity: 0; }
-.modal-fade-enter-from .pending-panel { transform: translateY(40px); }
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-from .pending-panel {
+  transform: translateY(40px);
+}
 </style>

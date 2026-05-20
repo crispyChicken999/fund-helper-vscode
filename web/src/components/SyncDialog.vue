@@ -48,12 +48,7 @@
 
       <!-- 扫码同步 -->
       <div class="sync-section">
-        <el-button
-          type="primary"
-          round
-          class="scan-btn"
-          @click="toggleScanner"
-        >
+        <el-button type="primary" round class="scan-btn" @click="toggleScanner">
           {{ scannerActive ? "关闭扫码" : "点击扫码" }}
         </el-button>
         <div

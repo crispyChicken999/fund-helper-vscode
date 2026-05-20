@@ -1,27 +1,68 @@
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div v-if="visible" class="batch-modal-overlay" @click.self="$emit('close')">
+      <div
+        v-if="visible"
+        class="batch-modal-overlay"
+        @click.self="$emit('close')"
+      >
         <div class="batch-modal-panel">
           <!-- 头部 -->
           <div class="batch-modal-header">
             <span class="batch-modal-title">批量加减仓</span>
             <div class="batch-modal-header-actions">
-              <span v-if="pendingCount > 0" class="pending-badge" @click="activeTab = 'pending'">
+              <span
+                v-if="pendingCount > 0"
+                class="pending-badge"
+                @click="activeTab = 'pending'"
+              >
                 进行中 {{ pendingCount }}
               </span>
               <button class="batch-close-btn" @click="$emit('close')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
               </button>
             </div>
           </div>
 
           <!-- Tab 切换 -->
           <div class="batch-tabs">
-            <button :class="['batch-tab', { active: activeTab === 'buy' }]" @click="activeTab = 'buy'">加仓</button>
-            <button :class="['batch-tab', { active: activeTab === 'sell' }]" @click="activeTab = 'sell'">减仓</button>
-            <el-badge :value="pendingCount" :hidden="pendingCount === 0" type="danger" class="batch-tab-badge-wrap">
-              <button :class="['batch-tab', { active: activeTab === 'pending' }]" @click="activeTab = 'pending'">进行中</button>
+            <button
+              :class="['batch-tab', { active: activeTab === 'buy' }]"
+              @click="activeTab = 'buy'"
+            >
+              加仓
+            </button>
+            <button
+              :class="['batch-tab', { active: activeTab === 'sell' }]"
+              @click="activeTab = 'sell'"
+            >
+              减仓
+            </button>
+            <el-badge
+              :value="pendingCount"
+              :hidden="pendingCount === 0"
+              type="danger"
+              class="batch-tab-badge-wrap"
+            >
+              <button
+                :class="['batch-tab', { active: activeTab === 'pending' }]"
+                @click="activeTab = 'pending'"
+              >
+                进行中
+              </button>
             </el-badge>
           </div>
 
@@ -35,7 +76,20 @@
                   placeholder="搜索基金代码或名称..."
                   @input="onBuySearch"
                 />
-                <svg v-if="buySearchLoading" class="search-spin" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+                <svg
+                  v-if="buySearchLoading"
+                  class="search-spin"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 2a10 10 0 0 1 10 10" />
+                </svg>
               </div>
               <div v-if="buySearchResults.length" class="search-dropdown">
                 <el-scrollbar max-height="200px">
@@ -52,17 +106,34 @@
               </div>
             </div>
 
-            <div v-if="buyItems.length === 0" class="panel-empty">搜索并点击基金以添加加仓计划</div>
+            <div v-if="buyItems.length === 0" class="panel-empty">
+              搜索并点击基金以添加加仓计划
+            </div>
 
             <div class="fund-items-list">
-              <div v-for="item in buyItems" :key="item.code" class="fund-item-card">
+              <div
+                v-for="item in buyItems"
+                :key="item.code"
+                class="fund-item-card"
+              >
                 <div class="fund-item-header">
                   <div class="fund-item-info">
                     <span class="fund-item-name">{{ item.name }}</span>
                     <span class="fund-item-code">{{ item.code }}</span>
                   </div>
                   <button class="remove-btn" @click="removeBuyItem(item.code)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
                   </button>
                 </div>
 
@@ -72,13 +143,24 @@
                   <div class="nav-date-select-wrap">
                     <el-select
                       :model-value="item.selectedDate"
-                      @update:model-value="(val: string) => onBuyDateChange(item, val)"
-                      :placeholder="item.navLoading ? '加载中...' : item.navError ? '加载失败' : '选择日期'"
+                      @update:model-value="
+                        (val: string) => onBuyDateChange(item, val)
+                      "
+                      :placeholder="
+                        item.navLoading
+                          ? '加载中...'
+                          : item.navError
+                            ? '加载失败'
+                            : '选择日期'
+                      "
                       :loading="item.navLoading"
                       :disabled="item.navLoading"
-                      style="flex:1;min-width:0;"
+                      style="flex: 1; min-width: 0"
                     >
-                      <el-option value="today" :label="`今日 ${todayStr}（待更新）`" />
+                      <el-option
+                        value="today"
+                        :label="`今日 ${todayStr}（待更新）`"
+                      />
                       <el-option
                         v-for="nav in item.navList"
                         :key="nav.date"
@@ -88,7 +170,12 @@
                     </el-select>
                     <span v-if="item.navError" class="nav-error-tip">
                       加载失败
-                      <button class="retry-btn" @click="loadNavForItem(item.code)">重试</button>
+                      <button
+                        class="retry-btn"
+                        @click="loadNavForItem(item.code)"
+                      >
+                        重试
+                      </button>
                     </span>
                   </div>
                 </div>
@@ -96,8 +183,17 @@
                 <!-- 净值显示 -->
                 <div class="fund-item-row" v-if="item.selectedDate">
                   <span class="fund-item-label">买入净值</span>
-                  <span class="fund-item-value" :class="{ 'pending-nav': item.selectedDate === 'today' }">
-                    {{ item.selectedDate === 'today' ? '待更新' : (item.selectedNav ? item.selectedNav.toFixed(4) : '—') }}
+                  <span
+                    class="fund-item-value"
+                    :class="{ 'pending-nav': item.selectedDate === 'today' }"
+                  >
+                    {{
+                      item.selectedDate === "today"
+                        ? "待更新"
+                        : item.selectedNav
+                          ? item.selectedNav.toFixed(4)
+                          : "—"
+                    }}
                   </span>
                 </div>
 
@@ -119,27 +215,50 @@
 
                 <!-- 预览计算结果 -->
                 <div
-                  v-if="item.selectedDate !== 'today' && item.selectedNav && item.amount > 0"
+                  v-if="
+                    item.selectedDate !== 'today' &&
+                    item.selectedNav &&
+                    item.amount > 0
+                  "
                   class="calc-preview"
                 >
                   <div class="preview-row">
                     <span class="preview-label">新增份额</span>
-                    <span class="positive">+{{ (item.amount / item.selectedNav).toFixed(2) }} 份</span>
+                    <span class="positive"
+                      >+{{
+                        (item.amount / item.selectedNav).toFixed(2)
+                      }}
+                      份</span
+                    >
                   </div>
                   <div class="preview-row">
                     <span class="preview-label">持有份额</span>
-                    <span>{{ calcOldShares(item).toFixed(2) }} → <strong>{{ calcNewShares(item).toFixed(2) }}</strong> 份</span>
+                    <span
+                      >{{ calcOldShares(item).toFixed(2) }} →
+                      <strong>{{ calcNewShares(item).toFixed(2) }}</strong>
+                      份</span
+                    >
                   </div>
                   <div class="preview-row">
                     <span class="preview-label">成本价</span>
-                    <span>{{ calcOldCost(item).toFixed(4) }} → <strong>{{ calcNewCost(item).toFixed(4) }}</strong></span>
+                    <span
+                      >{{ calcOldCost(item).toFixed(4) }} →
+                      <strong>{{ calcNewCost(item).toFixed(4) }}</strong></span
+                    >
                   </div>
                   <div class="preview-row">
                     <span class="preview-label">持仓总额</span>
-                    <span>{{ calcOldAmount(item).toFixed(2) }} → <strong>{{ calcNewAmount(item).toFixed(2) }}</strong> 元</span>
+                    <span
+                      >{{ calcOldAmount(item).toFixed(2) }} →
+                      <strong>{{ calcNewAmount(item).toFixed(2) }}</strong>
+                      元</span
+                    >
                   </div>
                 </div>
-                <div v-else-if="item.selectedDate === 'today' && item.amount > 0" class="calc-preview pending-preview">
+                <div
+                  v-else-if="item.selectedDate === 'today' && item.amount > 0"
+                  class="calc-preview pending-preview"
+                >
                   <div class="preview-row">
                     <span>买入金额</span>
                     <span>{{ item.amount.toFixed(2) }} 元</span>
@@ -173,23 +292,42 @@
                   >
                     <span class="item-code">{{ item.code }}</span>
                     <span class="item-name">{{ item.name }}</span>
-                    <span class="item-shares">{{ item.shares.toFixed(2) }} 份</span>
+                    <span class="item-shares"
+                      >{{ item.shares.toFixed(2) }} 份</span
+                    >
                   </div>
                 </el-scrollbar>
               </div>
             </div>
 
-            <div v-if="sellItems.length === 0" class="panel-empty">搜索持仓基金以添加减仓计划</div>
+            <div v-if="sellItems.length === 0" class="panel-empty">
+              搜索持仓基金以添加减仓计划
+            </div>
 
             <div class="fund-items-list">
-              <div v-for="item in sellItems" :key="item.code" class="fund-item-card">
+              <div
+                v-for="item in sellItems"
+                :key="item.code"
+                class="fund-item-card"
+              >
                 <div class="fund-item-header">
                   <div class="fund-item-info">
                     <span class="fund-item-name">{{ item.name }}</span>
                     <span class="fund-item-code">{{ item.code }}</span>
                   </div>
                   <button class="remove-btn" @click="removeSellItem(item.code)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
                   </button>
                 </div>
                 <div class="fund-item-row">
@@ -208,16 +346,26 @@
                   </div>
                 </div>
                 <div
-                  v-if="item.sellShares > 0 && item.sellShares <= item.maxShares"
+                  v-if="
+                    item.sellShares > 0 && item.sellShares <= item.maxShares
+                  "
                   class="calc-preview"
                 >
                   <div class="preview-row">
                     <span class="preview-label">减少份额</span>
-                    <span class="negative">-{{ item.sellShares.toFixed(2) }} 份</span>
+                    <span class="negative"
+                      >-{{ item.sellShares.toFixed(2) }} 份</span
+                    >
                   </div>
                   <div class="preview-row">
                     <span class="preview-label">持有份额</span>
-                    <span>{{ item.maxShares.toFixed(2) }} → <strong>{{ (item.maxShares - item.sellShares).toFixed(2) }}</strong> 份</span>
+                    <span
+                      >{{ item.maxShares.toFixed(2) }} →
+                      <strong>{{
+                        (item.maxShares - item.sellShares).toFixed(2)
+                      }}</strong>
+                      份</span
+                    >
                   </div>
                   <div class="preview-row">
                     <span class="preview-label">成本价</span>
@@ -225,7 +373,11 @@
                   </div>
                   <div class="preview-row">
                     <span class="preview-label">持仓总额</span>
-                    <span>{{ calcSellOldAmount(item).toFixed(2) }} → <strong>{{ calcSellNewAmount(item).toFixed(2) }}</strong> 元</span>
+                    <span
+                      >{{ calcSellOldAmount(item).toFixed(2) }} →
+                      <strong>{{ calcSellNewAmount(item).toFixed(2) }}</strong>
+                      元</span
+                    >
                   </div>
                 </div>
               </div>
@@ -233,22 +385,50 @@
           </div>
 
           <!-- 进行中面板 -->
-          <div v-show="activeTab === 'pending'" class="batch-panel" >
-            <div v-if="pendingList.length === 0" class="panel-empty">暂无等待更新净值的加仓记录</div>
+          <div v-show="activeTab === 'pending'" class="batch-panel">
+            <div v-if="pendingList.length === 0" class="panel-empty">
+              暂无等待更新净值的加仓记录
+            </div>
             <el-scrollbar max-height="350px">
-              <div class="fund-items-list" :style="{ padding: pendingList.length > 1 ? '0 10px 0 0' : '0' }">
-                <div v-for="record in pendingList" :key="record.id" class="fund-item-card pending-card">
+              <div
+                class="fund-items-list"
+                :style="{
+                  padding: pendingList.length > 1 ? '0 10px 0 0' : '0',
+                }"
+              >
+                <div
+                  v-for="record in pendingList"
+                  :key="record.id"
+                  class="fund-item-card pending-card"
+                >
                   <div class="fund-item-header">
                     <div class="fund-item-info">
                       <span class="fund-item-name">{{ record.name }}</span>
                       <span class="fund-item-code">{{ record.code }}</span>
                     </div>
-                    <button class="remove-btn" @click="cancelPending(record.id)" title="取消">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <button
+                      class="remove-btn"
+                      @click="cancelPending(record.id)"
+                      title="取消"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
                     </button>
                   </div>
                   <div class="pending-meta">
-                    <span class="pending-tag">⏳ 等待 {{ record.buyDate }} 净值更新</span>
+                    <span class="pending-tag"
+                      >⏳ 等待 {{ record.buyDate }} 净值更新</span
+                    >
                   </div>
                   <div class="fund-item-row">
                     <span class="fund-item-label">买入日期</span>
@@ -256,9 +436,11 @@
                   </div>
                   <div class="fund-item-row">
                     <span class="fund-item-label">买入金额</span>
-                    <span class="fund-item-value">{{ record.amount.toFixed(2) }} 元</span>
+                    <span class="fund-item-value"
+                      >{{ record.amount.toFixed(2) }} 元</span
+                    >
                   </div>
-                  <div class="fund-item-row muted" style="font-size:11px;">
+                  <div class="fund-item-row muted" style="font-size: 11px">
                     创建于 {{ formatTime(record.createdAt) }}
                   </div>
                 </div>
@@ -268,7 +450,9 @@
 
           <!-- 底部操作区 -->
           <div class="batch-modal-footer" v-if="activeTab !== 'pending'">
-            <button class="batch-btn-cancel" @click="$emit('close')">取消</button>
+            <button class="batch-btn-cancel" @click="$emit('close')">
+              取消
+            </button>
             <button
               class="batch-btn-confirm"
               :disabled="!canConfirm || confirming"
@@ -285,132 +469,146 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { useDebounceFn } from '@vueuse/core'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { searchFund } from '@/api/fundEastmoney'
-import { fetchNetValueHistory } from '@/api/fundDetail'
-import { useFundStore } from '@/stores'
+import { ref, computed, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { searchFund } from "@/api/fundEastmoney";
+import { fetchNetValueHistory } from "@/api/fundDetail";
+import { useFundStore } from "@/stores";
 import {
   loadPendingBuys,
   addPendingBuy,
   cancelPendingBuy,
   executeImmediateBuys,
   executeSells,
-  type BuyRecord
-} from '@/services/pendingBuyService'
-import { fundService } from '@/services'
+  type BuyRecord,
+} from "@/services/pendingBuyService";
+import { fundService } from "@/services";
 
 // ---- props / emits ----
-const props = defineProps<{ visible: boolean }>()
+const props = defineProps<{ visible: boolean }>();
 const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'confirmed'): void
-}>()
+  (e: "close"): void;
+  (e: "confirmed"): void;
+}>();
 
 // ---- types ----
 interface BuyItem {
-  code: string
-  name: string
-  navList: { date: string; netValue: number; changePercent: number }[]
-  navLoading: boolean
-  navError: boolean
-  selectedDate: string
-  selectedNav: number | null
-  amount: number
+  code: string;
+  name: string;
+  navList: { date: string; netValue: number; changePercent: number }[];
+  navLoading: boolean;
+  navError: boolean;
+  selectedDate: string;
+  selectedNav: number | null;
+  amount: number;
 }
 
 interface SellItem {
-  code: string
-  name: string
-  maxShares: number
-  sellShares: number
+  code: string;
+  name: string;
+  maxShares: number;
+  sellShares: number;
 }
 
 // ---- state ----
-const activeTab = ref<'buy' | 'sell' | 'pending'>('buy')
-const confirming = ref(false)
+const activeTab = ref<"buy" | "sell" | "pending">("buy");
+const confirming = ref(false);
 
 // buy
-const buySearchQuery = ref('')
-const buySearchResults = ref<{ code: string; name: string }[]>([])
-const buySearchLoading = ref(false)
-const buyItems = ref<BuyItem[]>([])
+const buySearchQuery = ref("");
+const buySearchResults = ref<{ code: string; name: string }[]>([]);
+const buySearchLoading = ref(false);
+const buyItems = ref<BuyItem[]>([]);
 
 // sell
-const sellSearchQuery = ref('')
-const sellSearchResults = ref<{ code: string; name: string; shares: number }[]>([])
-const sellItems = ref<SellItem[]>([])
+const sellSearchQuery = ref("");
+const sellSearchResults = ref<{ code: string; name: string; shares: number }[]>(
+  [],
+);
+const sellItems = ref<SellItem[]>([]);
 
 // pending
-const pendingList = ref<BuyRecord[]>([])
-const pendingCount = computed(() => pendingList.value.length)
+const pendingList = ref<BuyRecord[]>([]);
+const pendingCount = computed(() => pendingList.value.length);
 
 // ---- computed ----
-const fundStore = useFundStore()
+const fundStore = useFundStore();
 
 const todayStr = computed(() => {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-})
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+});
 
 const canConfirm = computed(() => {
-  if (activeTab.value === 'buy') {
-    return buyItems.value.some(item => item.amount > 0 && item.selectedDate)
+  if (activeTab.value === "buy") {
+    return buyItems.value.some((item) => item.amount > 0 && item.selectedDate);
   }
-  if (activeTab.value === 'sell') {
-    return sellItems.value.some(item => item.sellShares > 0 && item.sellShares <= item.maxShares)
+  if (activeTab.value === "sell") {
+    return sellItems.value.some(
+      (item) => item.sellShares > 0 && item.sellShares <= item.maxShares,
+    );
   }
-  return false
-})
+  return false;
+});
 
 // ---- watchers ----
-watch(() => props.visible, (val) => {
-  if (val) {
-    refreshPendingList()
-    // 清空上次的搜索状态
-    buySearchQuery.value = ''
-    buySearchResults.value = []
-    sellSearchQuery.value = ''
-    sellSearchResults.value = []
-  }
-})
+watch(
+  () => props.visible,
+  (val) => {
+    if (val) {
+      refreshPendingList();
+      // 清空上次的搜索状态
+      buySearchQuery.value = "";
+      buySearchResults.value = [];
+      sellSearchQuery.value = "";
+      sellSearchResults.value = [];
+    }
+  },
+);
 
 // ---- pending ----
 function refreshPendingList() {
-  pendingList.value = loadPendingBuys().filter(r => r.status === 'pending')
+  pendingList.value = loadPendingBuys().filter((r) => r.status === "pending");
 }
 
 async function cancelPending(id: string) {
   try {
-    await ElMessageBox.confirm('确认取消该笔待加仓记录？', '取消确认', { type: 'warning' })
-    cancelPendingBuy(id)
-    refreshPendingList()
-    ElMessage.success('已取消')
-  } catch { /* user cancel */ }
+    await ElMessageBox.confirm("确认取消该笔待加仓记录？", "取消确认", {
+      type: "warning",
+    });
+    cancelPendingBuy(id);
+    refreshPendingList();
+    ElMessage.success("已取消");
+  } catch {
+    /* user cancel */
+  }
 }
 
 // ---- buy ----
 const debouncedBuySearch = useDebounceFn(async (q: string) => {
-  if (!q.trim()) { buySearchResults.value = []; return }
-  buySearchLoading.value = true
-  try {
-    buySearchResults.value = await searchFund(q.trim())
-  } finally {
-    buySearchLoading.value = false
+  if (!q.trim()) {
+    buySearchResults.value = [];
+    return;
   }
-}, 300)
+  buySearchLoading.value = true;
+  try {
+    buySearchResults.value = await searchFund(q.trim());
+  } finally {
+    buySearchLoading.value = false;
+  }
+}, 300);
 
 function onBuySearch() {
-  debouncedBuySearch(buySearchQuery.value)
+  debouncedBuySearch(buySearchQuery.value);
 }
 
 function addBuyItem(fund: { code: string; name: string }) {
-  if (buyItems.value.find(i => i.code === fund.code)) {
-    ElMessage.warning('该基金已添加')
-    buySearchResults.value = []
-    buySearchQuery.value = ''
-    return
+  if (buyItems.value.find((i) => i.code === fund.code)) {
+    ElMessage.warning("该基金已添加");
+    buySearchResults.value = [];
+    buySearchQuery.value = "";
+    return;
   }
   const item: BuyItem = {
     code: fund.code,
@@ -418,155 +616,193 @@ function addBuyItem(fund: { code: string; name: string }) {
     navList: [],
     navLoading: true,
     navError: false,
-    selectedDate: '',
+    selectedDate: "",
     selectedNav: null,
-    amount: 0
-  }
-  buyItems.value.push(item)
-  buySearchResults.value = []
-  buySearchQuery.value = ''
-  loadNavForItem(fund.code)
+    amount: 0,
+  };
+  buyItems.value.push(item);
+  buySearchResults.value = [];
+  buySearchQuery.value = "";
+  loadNavForItem(fund.code);
 }
 
 async function loadNavForItem(code: string) {
-  const idx = buyItems.value.findIndex(i => i.code === code)
-  if (idx === -1) return
+  const idx = buyItems.value.findIndex((i) => i.code === code);
+  if (idx === -1) return;
 
   // 用对象替换强制触发响应式更新
-  buyItems.value[idx] = { ...buyItems.value[idx]!, navLoading: true, navError: false }
+  buyItems.value[idx] = {
+    ...buyItems.value[idx]!,
+    navLoading: true,
+    navError: false,
+  };
 
   try {
-    const records = await fetchNetValueHistory(code, '1m')
-    const navList = records.slice(-15).reverse()
-    const idx2 = buyItems.value.findIndex(i => i.code === code)
+    const records = await fetchNetValueHistory(code, "1m");
+    const navList = records.slice(-15).reverse();
+    const idx2 = buyItems.value.findIndex((i) => i.code === code);
     if (idx2 !== -1) {
-      buyItems.value[idx2] = { ...buyItems.value[idx2]!, navList, navLoading: false }
+      buyItems.value[idx2] = {
+        ...buyItems.value[idx2]!,
+        navList,
+        navLoading: false,
+      };
     }
   } catch {
-    const idx3 = buyItems.value.findIndex(i => i.code === code)
+    const idx3 = buyItems.value.findIndex((i) => i.code === code);
     if (idx3 !== -1) {
-      buyItems.value[idx3] = { ...buyItems.value[idx3]!, navLoading: false, navError: true }
+      buyItems.value[idx3] = {
+        ...buyItems.value[idx3]!,
+        navLoading: false,
+        navError: true,
+      };
     }
   }
 }
 
 function removeBuyItem(code: string) {
-  buyItems.value = buyItems.value.filter(i => i.code !== code)
+  buyItems.value = buyItems.value.filter((i) => i.code !== code);
 }
 
 function onBuyDateChange(item: BuyItem, val: string) {
-  const idx = buyItems.value.findIndex(i => i.code === item.code)
-  if (idx === -1) return
-  const selectedNav = val === 'today' ? null : (item.navList.find(n => n.date === val)?.netValue ?? null)
-  buyItems.value[idx] = { ...buyItems.value[idx]!, selectedDate: val, selectedNav }
+  const idx = buyItems.value.findIndex((i) => i.code === item.code);
+  if (idx === -1) return;
+  const selectedNav =
+    val === "today"
+      ? null
+      : (item.navList.find((n) => n.date === val)?.netValue ?? null);
+  buyItems.value[idx] = {
+    ...buyItems.value[idx]!,
+    selectedDate: val,
+    selectedNav,
+  };
 }
 
 function calcOldShares(item: BuyItem): number {
-  return Number(fundStore.getFund(item.code)?.num) ?? 0
+  return Number(fundStore.getFund(item.code)?.num) ?? 0;
 }
 
 function calcOldCost(item: BuyItem): number {
-  return Number(fundStore.getFund(item.code)?.cost) ?? 0
+  return Number(fundStore.getFund(item.code)?.cost) ?? 0;
 }
 
 function calcNewShares(item: BuyItem): number {
-  const oldNum = calcOldShares(item)
-  if (!item.selectedNav || item.amount <= 0) return oldNum
-  return oldNum + item.amount / item.selectedNav
+  const oldNum = calcOldShares(item);
+  if (!item.selectedNav || item.amount <= 0) return oldNum;
+  return oldNum + item.amount / item.selectedNav;
 }
 
 function calcNewCost(item: BuyItem): number {
-  const oldNum = calcOldShares(item)
-  const oldCost = calcOldCost(item)
-  if (!item.selectedNav || item.amount <= 0) return oldCost
-  const addNum = item.amount / item.selectedNav
-  const newNum = oldNum + addNum
-  if (newNum <= 0) return item.selectedNav
-  return (oldCost * oldNum + item.selectedNav * addNum) / newNum
+  const oldNum = calcOldShares(item);
+  const oldCost = calcOldCost(item);
+  if (!item.selectedNav || item.amount <= 0) return oldCost;
+  const addNum = item.amount / item.selectedNav;
+  const newNum = oldNum + addNum;
+  if (newNum <= 0) return item.selectedNav;
+  return (oldCost * oldNum + item.selectedNav * addNum) / newNum;
 }
 
 function calcOldAmount(item: BuyItem): number {
-  return calcOldShares(item) * calcOldCost(item)
+  return calcOldShares(item) * calcOldCost(item);
 }
 
 function calcNewAmount(item: BuyItem): number {
-  return calcNewShares(item) * calcNewCost(item)
+  return calcNewShares(item) * calcNewCost(item);
 }
 
 function calcSellCost(item: SellItem): number {
-  return fundStore.getFund(item.code)?.cost ?? 0
+  return fundStore.getFund(item.code)?.cost ?? 0;
 }
 
 function calcSellOldAmount(item: SellItem): number {
-  return item.maxShares * calcSellCost(item)
+  return item.maxShares * calcSellCost(item);
 }
 
 function calcSellNewAmount(item: SellItem): number {
-  return (item.maxShares - item.sellShares) * calcSellCost(item)
+  return (item.maxShares - item.sellShares) * calcSellCost(item);
 }
 
 // ---- sell ----
 function onSellSearch() {
-  const q = sellSearchQuery.value.trim().toLowerCase()
-  if (!q) { sellSearchResults.value = []; return }
-  const allFunds = fundStore.funds
-  const results: { code: string; name: string; shares: number }[] = []
+  const q = sellSearchQuery.value.trim().toLowerCase();
+  if (!q) {
+    sellSearchResults.value = [];
+    return;
+  }
+  const allFunds = fundStore.funds;
+  const results: { code: string; name: string; shares: number }[] = [];
   for (const fund of allFunds) {
-    const detail = fundStore.fundDetails.get(fund.code)
-    const name = detail?.name ?? fund.code
+    const detail = fundStore.fundDetails.get(fund.code);
+    const name = detail?.name ?? fund.code;
     if (fund.code.includes(q) || name.toLowerCase().includes(q)) {
-      results.push({ code: fund.code, name, shares: fund.num })
+      results.push({ code: fund.code, name, shares: fund.num });
     }
   }
-  sellSearchResults.value = results.slice(0, 10)
+  sellSearchResults.value = results.slice(0, 10);
 }
 
 function addSellItem(fund: { code: string; name: string; shares: number }) {
-  if (sellItems.value.find(i => i.code === fund.code)) {
-    ElMessage.warning('该基金已添加')
-    sellSearchResults.value = []
-    sellSearchQuery.value = ''
-    return
+  if (sellItems.value.find((i) => i.code === fund.code)) {
+    ElMessage.warning("该基金已添加");
+    sellSearchResults.value = [];
+    sellSearchQuery.value = "";
+    return;
   }
-  sellItems.value.push({ code: fund.code, name: fund.name, maxShares: fund.shares, sellShares: 0 })
-  sellSearchResults.value = []
-  sellSearchQuery.value = ''
+  sellItems.value.push({
+    code: fund.code,
+    name: fund.name,
+    maxShares: fund.shares,
+    sellShares: 0,
+  });
+  sellSearchResults.value = [];
+  sellSearchQuery.value = "";
 }
 
 function removeSellItem(code: string) {
-  sellItems.value = sellItems.value.filter(i => i.code !== code)
+  sellItems.value = sellItems.value.filter((i) => i.code !== code);
 }
 
 // ---- confirm ----
 async function handleConfirm() {
-  confirming.value = true
+  confirming.value = true;
   try {
-    if (activeTab.value === 'buy') {
-      await handleBuyConfirm()
-    } else if (activeTab.value === 'sell') {
-      await handleSellConfirm()
+    if (activeTab.value === "buy") {
+      await handleBuyConfirm();
+    } else if (activeTab.value === "sell") {
+      await handleSellConfirm();
     }
   } finally {
-    confirming.value = false
+    confirming.value = false;
   }
 }
 
 async function handleBuyConfirm() {
-  const validItems = buyItems.value.filter(i => i.amount > 0 && i.selectedDate)
-  if (validItems.length === 0) { ElMessage.warning('请填写有效的加仓信息'); return }
+  const validItems = buyItems.value.filter(
+    (i) => i.amount > 0 && i.selectedDate,
+  );
+  if (validItems.length === 0) {
+    ElMessage.warning("请填写有效的加仓信息");
+    return;
+  }
 
   // 分离即时项和 pending 项
   const immediateItems = validItems
-    .filter(i => i.selectedDate !== 'today' && i.selectedNav)
-    .map(i => ({ code: i.code, name: i.name, buyDate: i.selectedDate, amount: i.amount, nav: i.selectedNav! }))
+    .filter((i) => i.selectedDate !== "today" && i.selectedNav)
+    .map((i) => ({
+      code: i.code,
+      name: i.name,
+      buyDate: i.selectedDate,
+      amount: i.amount,
+      nav: i.selectedNav!,
+    }));
 
-  const pendingItems = validItems.filter(i => i.selectedDate === 'today')
+  const pendingItems = validItems.filter((i) => i.selectedDate === "today");
 
   if (immediateItems.length > 0) {
-    await executeImmediateBuys(immediateItems)
+    await executeImmediateBuys(immediateItems);
   }
 
-  let pendingAdded = 0
+  let pendingAdded = 0;
   for (const item of pendingItems) {
     addPendingBuy({
       code: item.code,
@@ -574,41 +810,54 @@ async function handleBuyConfirm() {
       buyDate: todayStr.value,
       amount: item.amount,
       navOnBuyDate: null,
-      status: 'pending'
-    })
-    pendingAdded++
+      status: "pending",
+    });
+    pendingAdded++;
   }
 
-  await fundService.refreshAllFunds()
+  await fundService.refreshAllFunds();
 
-  const msgs: string[] = []
-  if (immediateItems.length > 0) msgs.push(`${immediateItems.length} 笔加仓已完成`)
-  if (pendingAdded > 0) msgs.push(`${pendingAdded} 笔已记录，等待净值更新后确认`)
-  ElMessage.success(msgs.join('，'))
+  const msgs: string[] = [];
+  if (immediateItems.length > 0)
+    msgs.push(`${immediateItems.length} 笔加仓已完成`);
+  if (pendingAdded > 0)
+    msgs.push(`${pendingAdded} 笔已记录，等待净值更新后确认`);
+  ElMessage.success(msgs.join("，"));
 
-  buyItems.value = []
-  refreshPendingList()
-  emit('confirmed')
-  emit('close')
+  buyItems.value = [];
+  refreshPendingList();
+  emit("confirmed");
+  emit("close");
 }
 
 async function handleSellConfirm() {
-  const validItems = sellItems.value.filter(i => i.sellShares > 0 && i.sellShares <= i.maxShares)
-  if (validItems.length === 0) { ElMessage.warning('请填写有效的减仓信息'); return }
+  const validItems = sellItems.value.filter(
+    (i) => i.sellShares > 0 && i.sellShares <= i.maxShares,
+  );
+  if (validItems.length === 0) {
+    ElMessage.warning("请填写有效的减仓信息");
+    return;
+  }
 
-  await executeSells(validItems.map(i => ({ code: i.code, name: i.name, sellShares: i.sellShares })))
-  await fundService.refreshAllFunds()
+  await executeSells(
+    validItems.map((i) => ({
+      code: i.code,
+      name: i.name,
+      sellShares: i.sellShares,
+    })),
+  );
+  await fundService.refreshAllFunds();
 
-  ElMessage.success(`${validItems.length} 笔减仓已完成`)
-  sellItems.value = []
-  emit('confirmed')
-  emit('close')
+  ElMessage.success(`${validItems.length} 笔减仓已完成`);
+  sellItems.value = [];
+  emit("confirmed");
+  emit("close");
 }
 
 // ---- utils ----
 function formatTime(ts: number): string {
-  const d = new Date(ts)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 </script>
 
@@ -633,7 +882,6 @@ function formatTime(ts: number): string {
   flex-direction: column;
   box-shadow: 0 -4px 24px var(--el-color-shadow);
   overflow: hidden;
-
 }
 
 /* PC 端居中显示 */
@@ -688,7 +936,9 @@ function formatTime(ts: number): string {
   align-items: center;
   border-radius: 4px;
 }
-.batch-close-btn:hover { background: var(--el-fill-color-light); }
+.batch-close-btn:hover {
+  background: var(--el-fill-color-light);
+}
 
 /* ---- tabs ---- */
 .batch-tabs {
@@ -711,7 +961,9 @@ function formatTime(ts: number): string {
   transition: all 0.15s;
   width: 100%;
 }
-.batch-tab:hover { background: var(--el-fill-color-light); }
+.batch-tab:hover {
+  background: var(--el-fill-color-light);
+}
 .batch-tab.active {
   background: var(--el-color-primary);
   border-color: var(--el-color-primary);
@@ -781,7 +1033,9 @@ function formatTime(ts: number): string {
   outline: none;
   transition: border-color 0.15s;
 }
-.batch-search-input:focus { border-color: var(--el-color-primary); }
+.batch-search-input:focus {
+  border-color: var(--el-color-primary);
+}
 
 .search-spin {
   position: absolute;
@@ -791,7 +1045,11 @@ function formatTime(ts: number): string {
   color: var(--el-text-color-placeholder);
   animation: spin 1s linear infinite;
 }
-@keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
 
 .search-dropdown {
   position: absolute;
@@ -814,10 +1072,22 @@ function formatTime(ts: number): string {
   font-size: 13px;
   transition: background 0.1s;
 }
-.search-dropdown-item:hover { background: var(--el-fill-color-light); }
-.item-code { color: var(--el-text-color-secondary); font-size: 12px; min-width: 54px; }
-.item-name { flex: 1; color: var(--el-text-color-primary); }
-.item-shares { color: var(--el-text-color-secondary); font-size: 12px; }
+.search-dropdown-item:hover {
+  background: var(--el-fill-color-light);
+}
+.item-code {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  min-width: 54px;
+}
+.item-name {
+  flex: 1;
+  color: var(--el-text-color-primary);
+}
+.item-shares {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
 
 /* ---- fund item card ---- */
 .fund-items-list {
@@ -876,7 +1146,10 @@ function formatTime(ts: number): string {
   border-radius: 4px;
   flex-shrink: 0;
 }
-.remove-btn:hover { color: var(--el-color-danger); background: var(--el-color-danger-light-9); }
+.remove-btn:hover {
+  color: var(--el-color-danger);
+  background: var(--el-color-danger-light-9);
+}
 
 /* ---- fund item row ---- */
 .fund-item-row {
@@ -910,12 +1183,15 @@ function formatTime(ts: number): string {
   gap: 6px;
 }
 
-.nav-loading-tip, .nav-error-tip {
+.nav-loading-tip,
+.nav-error-tip {
   font-size: 11px;
   color: var(--el-text-color-placeholder);
   white-space: nowrap;
 }
-.nav-error-tip { color: var(--el-color-danger); }
+.nav-error-tip {
+  color: var(--el-color-danger);
+}
 .retry-btn {
   background: none;
   border: none;
@@ -935,7 +1211,9 @@ function formatTime(ts: number): string {
   overflow: hidden;
   background: var(--el-fill-color-blank);
 }
-.amount-input-wrap:focus-within { border-color: var(--el-color-primary); }
+.amount-input-wrap:focus-within {
+  border-color: var(--el-color-primary);
+}
 
 .amount-input {
   flex: 1;
@@ -949,8 +1227,13 @@ function formatTime(ts: number): string {
 }
 /* 隐藏 number input spinner */
 .amount-input::-webkit-outer-spin-button,
-.amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
-.amount-input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+.amount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+.amount-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
 
 .amount-unit {
   padding: 0 8px;
@@ -983,18 +1266,28 @@ function formatTime(ts: number): string {
   font-size: 12px;
   color: var(--el-text-color-regular);
 }
-.preview-row.muted { color: var(--el-text-color-placeholder); }
+.preview-row.muted {
+  color: var(--el-text-color-placeholder);
+}
 
 .preview-label {
   color: var(--el-text-color-secondary);
   min-width: 58px;
 }
 
-.positive { color: var(--el-color-danger); }
-.negative { color: var(--el-color-success); }
+.positive {
+  color: var(--el-color-danger);
+}
+.negative {
+  color: var(--el-color-success);
+}
 
 /* ---- pending meta ---- */
-.pending-meta { display: flex; align-items: center; gap: 6px; }
+.pending-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .pending-tag {
   font-size: 12px;
   color: var(--el-color-warning);
@@ -1023,7 +1316,9 @@ function formatTime(ts: number): string {
   cursor: pointer;
   transition: all 0.15s;
 }
-.batch-btn-cancel:hover { background: var(--el-fill-color-light); }
+.batch-btn-cancel:hover {
+  background: var(--el-fill-color-light);
+}
 
 .batch-btn-confirm {
   flex: 2;
@@ -1037,14 +1332,18 @@ function formatTime(ts: number): string {
   cursor: pointer;
   transition: all 0.15s;
 }
-.batch-btn-confirm:hover:not(:disabled) { background: var(--el-color-primary-dark-2); }
+.batch-btn-confirm:hover:not(:disabled) {
+  background: var(--el-color-primary-dark-2);
+}
 .batch-btn-confirm:disabled {
   background: var(--el-color-primary-light-5);
   cursor: not-allowed;
 }
 
 /* ---- muted ---- */
-.muted { color: var(--el-text-color-placeholder); }
+.muted {
+  color: var(--el-text-color-placeholder);
+}
 
 /* ---- transitions ---- */
 .modal-fade-enter-active,

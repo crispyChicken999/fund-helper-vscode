@@ -66,9 +66,7 @@
 
             <el-form-item label="自动刷新">
               <el-switch v-model="autoRefreshEnabled" />
-              <div class="form-item-tip">
-                开启后在交易时间段内自动刷新数据
-              </div>
+              <div class="form-item-tip">开启后在交易时间段内自动刷新数据</div>
             </el-form-item>
 
             <el-form-item label="刷新间隔" v-if="autoRefreshEnabled">
@@ -506,11 +504,11 @@ const autoRefreshEnabled = computed({
     if (value) {
       // 启用自动刷新，设置为默认间隔30秒
       await settingStore.setRefreshInterval(30);
-      ElMessage.success('已启用自动刷新');
+      ElMessage.success("已启用自动刷新");
     } else {
       // 关闭自动刷新，设置为0
       await settingStore.setRefreshInterval(0);
-      ElMessage.success('已关闭自动刷新');
+      ElMessage.success("已关闭自动刷新");
     }
   },
 });

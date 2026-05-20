@@ -232,7 +232,6 @@ import {
   Folder,
   FolderOpened,
   FullScreen,
-  Close,
 } from "@element-plus/icons-vue";
 import Sortable from "sortablejs";
 import { useGroupStore, useFundStore } from "@/stores";
@@ -487,21 +486,6 @@ function moveFundDown(groupKey: string, index: number) {
       const item = codes.splice(index, 1)[0]!;
       codes.splice(index + 1, 0, item);
     }
-  }
-}
-
-// 移动基金到指定分组
-function moveFundToGroup(fundCode: string, targetKey: string) {
-  // 从所有分组中移除
-  for (const codes of draftFundGroups.value.values()) {
-    const idx = codes.indexOf(fundCode);
-    if (idx >= 0) codes.splice(idx, 1);
-  }
-  // 加入目标分组（未分类不需要加）
-  if (targetKey !== "__uncategorized__") {
-    const codes = draftFundGroups.value.get(targetKey);
-    if (codes) codes.push(fundCode);
-    else draftFundGroups.value.set(targetKey, [fundCode]);
   }
 }
 
@@ -848,10 +832,6 @@ async function handleSave() {
 /* 文件夹样式 */
 .gm-folder {
   border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.gm-folder:last-child {
-  border-bottom: none;
 }
 
 .gm-folder-fixed {

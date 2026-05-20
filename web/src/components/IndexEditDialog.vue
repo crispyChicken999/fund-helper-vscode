@@ -11,7 +11,7 @@
         type="warning"
         size="small"
         :closable="false"
-        style="--el-alert-padding: 4px 16px;"
+        style="--el-alert-padding: 4px 16px"
         >拖动 ☰ 或点击箭头调整顺序，点击删除按钮移除</el-alert
       >
 
@@ -231,7 +231,7 @@ watch(
     } else {
       destroySortable();
     }
-  }
+  },
 );
 
 onBeforeUnmount(() => {

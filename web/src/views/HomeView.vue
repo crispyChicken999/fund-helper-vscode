@@ -263,9 +263,16 @@
                     v-if="row.showRealValueIcon"
                     class="real-value-icon"
                     title="已更新实际净值"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
                     >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M14.431 3.323l-8.47 10-.79-.036-3.35-4.77.818-.574 2.978 4.24 8.051-9.506.764.646z"/>
+                      <path
+                        d="M14.431 3.323l-8.47 10-.79-.036-3.35-4.77.818-.574 2.978 4.24 8.051-9.506.764.646z"
+                      />
                     </svg>
                   </span>
                   <span class="fund-name">{{ row.name }}</span>
@@ -881,7 +888,7 @@ import { storageService } from "@/services/storageService";
 import { searchFund } from "@/api/fundEastmoney";
 import { fetchNetValueHistory } from "@/api/fundDetail";
 import { formatCurrency, formatNumber, formatPrivacy } from "@/utils/format";
-import { validateFundCode, validateGroupName } from "@/utils/validate";
+import { validateGroupName } from "@/utils/validate";
 import { getChinaMarketStatus } from "@/utils/marketChina";
 import type { Group, FundView } from "@/types";
 import type { FundRowDisplay } from "@/utils/fundDisplay";

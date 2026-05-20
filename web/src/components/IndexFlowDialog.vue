@@ -103,7 +103,7 @@ function getNextTime(
   startTime: string,
   endTime: string,
   offset: number,
-  resultArr: string[]
+  resultArr: string[],
 ): string[] {
   const result = addTimeStr(startTime, offset);
   resultArr.push(result);
@@ -144,10 +144,7 @@ function formatNum(val: number): string {
 
 // 成交量颜色
 function CJcolor(dataIndex: number): string {
-  if (
-    dataIndex === 0 ||
-    dataList[dataIndex][1] > dataList[dataIndex - 1][1]
-  ) {
+  if (dataIndex === 0 || dataList[dataIndex][1] > dataList[dataIndex - 1][1]) {
     return "#f56c6c";
   } else {
     return "#4eb61b";
@@ -220,8 +217,7 @@ async function renderChart() {
         if (!p || p.length === 0) return "";
         const dataIndex = p[0].dataIndex;
         const color =
-          dataIndex === 0 ||
-          dataList[dataIndex][1] > dataList[dataIndex - 1][1]
+          dataIndex === 0 || dataList[dataIndex][1] > dataList[dataIndex - 1][1]
             ? "#f56c6c"
             : "#4eb61b";
         const changePercent = (
@@ -304,7 +300,7 @@ async function renderChart() {
         max: maxVal,
         interval: interval,
         axisLine: {
-          show: true
+          show: true,
         },
         axisLabel: {
           color: (val: number) => yAxisLabelColor(val),
@@ -451,7 +447,7 @@ watch(
     if (val) {
       loadData();
     }
-  }
+  },
 );
 
 // 监听窗口大小变化
