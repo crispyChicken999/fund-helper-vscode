@@ -15,12 +15,12 @@ class SyncService {
   async initialize(): Promise<void> {
     const settingStore = useSettingStore()
     const syncStore = useSyncStore()
-    
+
     // 设置JSONBox ID
     if (settingStore.jsonboxName) {
       jsonboxApi.setBoxId(settingStore.jsonboxName)
     }
-    
+
     // 加载同步元数据
     const syncMeta = storageService.loadSyncMeta()
     if (syncMeta) {
@@ -28,7 +28,7 @@ class SyncService {
       syncStore.cloudVersion = syncMeta.cloudVersion
       syncStore.lastSyncTime = syncMeta.lastSyncTime
     }
-    
+
     console.log('同步服务已初始化')
   }
 
@@ -40,18 +40,18 @@ class SyncService {
     const groupStore = useGroupStore()
     const settingStore = useSettingStore()
     const syncStore = useSyncStore()
-    
+
     if (!settingStore.jsonboxName) {
       throw new Error('请先配置JSONBox名称')
     }
-    
+
     try {
       syncStore.setSyncStatus('syncing')
       syncStore.clearSyncError()
-      
+
       // 设置Box ID
       jsonboxApi.setBoxId(settingStore.jsonboxName)
-      
+
       // 先读取云端已有数据，保留 VSCode 专属字段（hideStatusBar, defaultViewMode, jsonboxName）
       let vscodeFields: Record<string, any> = {}
       try {
@@ -67,19 +67,28 @@ class SyncService {
       } catch {
         // 读取失败不影响上传
       }
-      
+
       // 准备数据 — 保持与 VSCode 导出格式一致
       const { groups, groupOrder } = groupStore.exportGroupsToObject()
-      
+
       // funds 只保留 code/num/cost（与 VSCode 格式一致）
       const cleanFunds = fundStore.funds.map(f => ({
         code: f.code,
         num: String(f.num),
         cost: String(f.cost)
       }))
-      
+
       const settings = settingStore.getSettings()
-      
+
+      // 读取 indexCardsConfig
+      const indexCardsConfig = localStorage.getItem('fund_helper_index_cards_config')
+      let parsedIndexCardsConfig
+      try {
+        parsedIndexCardsConfig = indexCardsConfig ? JSON.parse(indexCardsConfig) : undefined
+      } catch {
+        parsedIndexCardsConfig = undefined
+      }
+
       const data: JsonboxData = {
         funds: cleanFunds as any,
         groups,
@@ -92,23 +101,24 @@ class SyncService {
         refreshInterval: settings.refreshInterval,
         privacyMode: settings.privacyMode,
         grayscaleMode: settings.grayscaleMode,
+        indexCardsConfig: parsedIndexCardsConfig,
         // 保留 VSCode 专属字段
         ...vscodeFields,
         version: syncStore.localVersion,
         lastModified: Date.now()
       } as any
-      
+
       // 上传到云端
       await jsonboxApi.write(data)
-      
+
       // 更新同步状态
       syncStore.setCloudVersion(syncStore.localVersion)
       syncStore.updateLastSyncTime()
       syncStore.setSyncStatus('success')
-      
+
       // 保存同步元数据
       this.saveSyncMetadata()
-      
+
       console.log('数据已同步到云端')
     } catch (error: any) {
       console.error('同步到云端失败:', error)
@@ -124,25 +134,25 @@ class SyncService {
   async syncFromCloud(): Promise<void> {
     const settingStore = useSettingStore()
     const syncStore = useSyncStore()
-    
+
     if (!settingStore.jsonboxName) {
       throw new Error('请先配置JSONBox名称')
     }
-    
+
     try {
       syncStore.setSyncStatus('syncing')
       syncStore.clearSyncError()
-      
+
       // 设置Box ID
       jsonboxApi.setBoxId(settingStore.jsonboxName)
-      
+
       // 从云端读取数据
       const data = await jsonboxApi.read()
-      
+
       if (!data) {
         throw new Error('云端没有数据')
       }
-      
+
       // 检查版本冲突
       if (data.version < syncStore.localVersion) {
         // 云端版本较旧，提示冲突
@@ -159,23 +169,23 @@ class SyncService {
         syncStore.setSyncError('检测到数据冲突，请选择使用哪个版本')
         return
       }
-      
+
       // 应用云端数据
       await this.applyCloudData(data)
-      
+
       // 更新同步状态
       syncStore.setCloudVersion(data.version)
       syncStore.localVersion = data.version
       syncStore.updateLastSyncTime()
       syncStore.setSyncStatus('success')
-      
+
       // 保存同步元数据
       this.saveSyncMetadata()
-      
+
       // 刷新基金数据
       const { fundService } = await import('./fundService')
       await fundService.refreshAllFunds()
-      
+
       console.log('数据已从云端同步并刷新基金数据')
     } catch (error: any) {
       console.error('从云端同步失败:', error)
@@ -190,17 +200,17 @@ class SyncService {
    */
   async fullSync(): Promise<void> {
     const syncStore = useSyncStore()
-    
+
     try {
       // 先从云端读取
       const data = await jsonboxApi.read()
-      
+
       if (!data) {
         // 云端没有数据，直接上传
         await this.syncToCloud()
         return
       }
-      
+
       // 比较版本
       if (data.version > syncStore.localVersion) {
         // 云端较新，下载
@@ -225,11 +235,11 @@ class SyncService {
    */
   async resolveConflict(strategy: 'local' | 'cloud'): Promise<void> {
     const syncStore = useSyncStore()
-    
+
     if (!syncStore.dataConflict) {
       throw new Error('没有数据冲突')
     }
-    
+
     try {
       if (strategy === 'local') {
         // 使用本地版本，上传到云端
@@ -242,16 +252,16 @@ class SyncService {
         syncStore.localVersion = data.version
         syncStore.updateLastSyncTime()
         this.saveSyncMetadata()
-        
+
         // 刷新基金数据
         const { fundService } = await import('./fundService')
         await fundService.refreshAllFunds()
       }
-      
+
       // 清除冲突
       syncStore.clearDataConflict()
       syncStore.setSyncStatus('success')
-      
+
       console.log(`冲突已解决，使用${strategy === 'local' ? '本地' : '云端'}版本`)
     } catch (error: any) {
       console.error('解决冲突失败:', error)
@@ -264,11 +274,11 @@ class SyncService {
    */
   async testConnection(): Promise<boolean> {
     const settingStore = useSettingStore()
-    
+
     if (!settingStore.jsonboxName) {
       throw new Error('请先配置JSONBox名称')
     }
-    
+
     try {
       jsonboxApi.setBoxId(settingStore.jsonboxName)
       return await jsonboxApi.testConnection()
@@ -283,11 +293,11 @@ class SyncService {
    */
   async checkBoxExists(): Promise<boolean> {
     const settingStore = useSettingStore()
-    
+
     if (!settingStore.jsonboxName) {
       return false
     }
-    
+
     try {
       jsonboxApi.setBoxId(settingStore.jsonboxName)
       return await jsonboxApi.exists()
@@ -302,11 +312,11 @@ class SyncService {
    */
   async resetBox(): Promise<void> {
     const settingStore = useSettingStore()
-    
+
     if (!settingStore.jsonboxName) {
       throw new Error('请先配置JSONBox名称')
     }
-    
+
     try {
       jsonboxApi.setBoxId(settingStore.jsonboxName)
       await jsonboxApi.clear()
@@ -325,17 +335,26 @@ class SyncService {
     const groupStore = useGroupStore()
     const settingStore = useSettingStore()
     const syncStore = useSyncStore()
-    
+
     const { groups, groupOrder } = groupStore.exportGroupsToObject()
     const settings = settingStore.getSettings()
-    
+
     // funds 只保留 code/num/cost（与 VSCode 格式一致）
     const cleanFunds = fundStore.funds.map(f => ({
       code: f.code,
       num: String(f.num),
       cost: String(f.cost)
     }))
-    
+
+    // 读取 indexCardsConfig
+    const indexCardsConfig = localStorage.getItem('fund_helper_index_cards_config')
+    let parsedIndexCardsConfig
+    try {
+      parsedIndexCardsConfig = indexCardsConfig ? JSON.parse(indexCardsConfig) : undefined
+    } catch {
+      parsedIndexCardsConfig = undefined
+    }
+
     return {
       funds: cleanFunds as any,
       groups,
@@ -348,6 +367,7 @@ class SyncService {
       refreshInterval: settings.refreshInterval,
       privacyMode: settings.privacyMode,
       grayscaleMode: settings.grayscaleMode,
+      indexCardsConfig: parsedIndexCardsConfig,
       version: syncStore.localVersion,
       lastModified: Date.now()
     } as any
@@ -360,29 +380,34 @@ class SyncService {
     const fundStore = useFundStore()
     const groupStore = useGroupStore()
     const settingStore = useSettingStore()
-    
+
     // 清空现有数据
     fundStore.clearFunds()
     groupStore.clearGroups()
-    
+
     // 应用基金数据
     data.funds.forEach(fund => {
       fundStore.funds.push(fund)
     })
-    
+
     // 应用分组数据
     groupStore.initGroupsFromObject(data.groups, data.groupOrder)
-        
+
     // 应用隐私模式（从云端读取）
     if (data.privacyMode !== undefined) {
       await settingStore.setPrivacyMode(data.privacyMode)
     }
-    
+
     // 应用灰色模式（从云端读取）
     if (data.grayscaleMode !== undefined) {
       await settingStore.setGrayscaleMode(data.grayscaleMode)
     }
-    
+
+    // 应用指数卡片配置（从云端读取）
+    if (data.indexCardsConfig !== undefined) {
+      localStorage.setItem('fund_helper_index_cards_config', JSON.stringify(data.indexCardsConfig))
+    }
+
     // 应用其他顶层设置
     if (data.sortMethod !== undefined) {
       await settingStore.setSortMethod(data.sortMethod)
@@ -398,12 +423,12 @@ class SyncService {
         await settingStore.setVisibleColumns(data.columnSettings.visibleColumns)
       }
     }
-    
+
     // 保存到本地存储
     storageService.saveFunds(fundStore.funds)
     storageService.saveGroups(data.groups, data.groupOrder)
     storageService.saveSettings(settingStore.getSettings())
-    
+
     console.log('云端数据已应用')
   }
 
@@ -413,7 +438,7 @@ class SyncService {
   private saveSyncMetadata(): void {
     const settingStore = useSettingStore()
     const syncStore = useSyncStore()
-    
+
     storageService.saveSyncMeta({
       lastSyncTime: syncStore.lastSyncTime,
       localVersion: syncStore.localVersion,

@@ -3,17 +3,26 @@
     :model-value="visible"
     title="列设置"
     width="min(92%, 480px)"
-    top="15vh"
+    top="9vh"
     :close-on-click-modal="true"
     @update:model-value="$emit('update:visible', $event)"
   >
     <el-alert
       type="warning"
       size="small"
+      show-icon
       :closable="false"
-      style="--el-alert-padding: 4px 16px; margin-bottom: 10px"
-      >勾选显示，取消隐藏；拖动 ☰ 或点击箭头调整顺序</el-alert
+      style="
+        --el-alert-padding: 4px 16px;
+        margin-bottom: 10px;
+        text-align: left;
+      "
     >
+      <div style="font-size: 13px; line-height: 1.6; text-align: left">
+        <p>● 勾选显示，取消隐藏；</p>
+        <p>● 拖动 ☰ 或点击箭头调整顺序</p>
+      </div>
+    </el-alert>
 
     <ul ref="sortableRef" class="col-settings-list">
       <li

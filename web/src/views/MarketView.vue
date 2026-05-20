@@ -58,32 +58,42 @@
         </div>
 
         <!-- 大盘指数卡片 -->
-        <div class="index-cards">
-          <div
-            v-for="card in indexCards"
-            :key="card.code"
-            class="index-card"
-            :class="cardBorderClass(card.changePercent)"
-          >
-            <div class="card-name">{{ card.name }}</div>
+        <div class="index-section">
+          <div class="section-header">
+            <h4>大盘指数（点击查看详情）</h4>
+            <el-button size="small" text @click="handleEditIndexCards">
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+          </div>
+          <div class="index-cards">
             <div
-              class="card-price"
-              :class="changeColorClass(card.changePercent)"
+              v-for="card in indexCards"
+              :key="card.code"
+              class="index-card"
+              :class="cardBorderClass(card.changePercent)"
+              @click="handleIndexCardClick(card)"
             >
-              {{ card.price.toFixed(2) }}
-            </div>
-            <div class="card-stats">
+              <div class="card-name">{{ card.name }}</div>
               <div
-                class="card-amount"
-                :class="changeColorClass(card.changeAmount)"
-              >
-                {{ fmtChange(card.changeAmount) }}
-              </div>
-              <div
-                class="card-change"
+                class="card-price"
                 :class="changeColorClass(card.changePercent)"
               >
-                {{ fmtPct(card.changePercent) }}
+                {{ card.price.toFixed(2) }}
+              </div>
+              <div class="card-stats">
+                <div
+                  class="card-amount"
+                  :class="changeColorClass(card.changeAmount)"
+                >
+                  {{ fmtChange(card.changeAmount) }}
+                </div>
+                <div
+                  class="card-change"
+                  :class="changeColorClass(card.changePercent)"
+                >
+                  {{ fmtPct(card.changePercent) }}
+                </div>
               </div>
             </div>
           </div>
@@ -149,13 +159,29 @@
         ></div>
       </div>
     </div>
+
+    <!-- 指数走势图弹窗 -->
+    <IndexFlowDialog
+      v-model="showIndexFlowDialog"
+      :index-code="selectedIndexCode"
+      :index-name="selectedIndexName"
+    />
+
+    <!-- 指数编辑弹窗 -->
+    <IndexEditDialog
+      v-model="showIndexEditDialog"
+      :index-cards="indexCardsConfig"
+      @save="handleSaveIndexCards"
+    />
   </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted, nextTick } from "vue";
-import { Refresh } from "@element-plus/icons-vue";
+import { Refresh, Edit } from "@element-plus/icons-vue";
 import MainLayout from "@/layouts/MainLayout.vue";
+import IndexFlowDialog from "@/components/IndexFlowDialog.vue";
+import IndexEditDialog from "@/components/IndexEditDialog.vue";
 import {
   fetchIndexCards,
   fetchMarketStat,
@@ -189,6 +215,14 @@ const plateRankFields: { field: PlateRankField; label: string }[] = [
 
 const globalIndexGroups = Object.keys(GLOBAL_INDEX_GROUPS);
 
+// 默认指数卡片配置
+const DEFAULT_INDEX_CARDS = [
+  { code: "1.000001", name: "上证指数" },
+  { code: "1.000300", name: "沪深300" },
+  { code: "0.399001", name: "深证成指" },
+  { code: "0.399006", name: "创业板指" },
+];
+
 // ==================== 状态 ====================
 
 const activeMainTab = ref("market");
@@ -198,6 +232,19 @@ const contentRef = ref<HTMLElement | null>(null);
 
 const indexCards = ref<IndexCardData[]>([]);
 const marketStat = ref<MarketStatData | null>(null);
+
+// 指数卡片配置（用户可自定义）
+const indexCardsConfig = ref<{ code: string; name: string }[]>([
+  ...DEFAULT_INDEX_CARDS,
+]);
+
+// 指数走势图弹窗
+const showIndexFlowDialog = ref(false);
+const selectedIndexCode = ref("");
+const selectedIndexName = ref("");
+
+// 指数编辑弹窗
+const showIndexEditDialog = ref(false);
 
 // Stable timestamp for image URLs — only changes on manual refresh
 const imageTimestamp = ref(Date.now());
@@ -267,44 +314,40 @@ function getStableImageUrl(nid: string) {
 // --- 数据加载 ---
 
 async function loadMarketTab() {
+  // 构建用户配置的指数代码列表
+  const secids = indexCardsConfig.value.map((c) => c.code).join(",");
+
   const [cards, stat, flowData] = await Promise.all([
-    fetchIndexCards(),
+    fetchIndexCards(secids),
     fetchMarketStat(),
     fetchFlowLine(),
   ]);
-  const defaultCards = [
-    {
-      code: "1.000001",
-      name: "上证指数",
-      price: 0,
-      changePercent: 0,
-      changeAmount: 0,
-    },
-    {
-      code: "1.000300",
-      name: "沪深300",
-      price: 0,
-      changePercent: 0,
-      changeAmount: 0,
-    },
-    {
-      code: "0.399001",
-      name: "深证成指",
-      price: 0,
-      changePercent: 0,
-      changeAmount: 0,
-    },
-    {
-      code: "0.399006",
-      name: "创业板指",
-      price: 0,
-      changePercent: 0,
-      changeAmount: 0,
-    },
-  ];
 
-  indexCards.value = cards || defaultCards;
+  // 根据用户配置的指数卡片顺序和选择来显示
+  const cardsMap = new Map<string, IndexCardData>();
+  (cards || []).forEach((card) => {
+    cardsMap.set(card.code, card);
+  });
 
+  // 按照用户配置的顺序构建显示列表
+  const displayCards: IndexCardData[] = [];
+  for (const config of indexCardsConfig.value) {
+    const card = cardsMap.get(config.code);
+    if (card) {
+      displayCards.push(card);
+    } else {
+      // 如果没有获取到数据，使用默认值
+      displayCards.push({
+        code: config.code,
+        name: config.name,
+        price: 0,
+        changePercent: 0,
+        changeAmount: 0,
+      });
+    }
+  }
+
+  indexCards.value = displayCards;
   marketStat.value = stat;
   await renderFlowChart(flowData);
 }
@@ -352,7 +395,92 @@ async function handleRefresh() {
   }
 }
 
+// --- 指数卡片点击 ---
+
+function handleIndexCardClick(card: IndexCardData) {
+  selectedIndexCode.value = card.code;
+  selectedIndexName.value = card.name;
+  showIndexFlowDialog.value = true;
+}
+
+// --- 指数编辑 ---
+
+function handleEditIndexCards() {
+  showIndexEditDialog.value = true;
+}
+
+async function handleSaveIndexCards(cards: { code: string; name: string }[]) {
+  indexCardsConfig.value = cards;
+
+  // 保存到 localStorage
+  localStorage.setItem("fund_helper_index_cards_config", JSON.stringify(cards));
+
+  // 不再主动保存到云端，因为暂时存在localStorage就好啦，用户想要同步的时候自动会同步
+  // 保存到云端配置
+  // try {
+  //   const { syncService } = await import("@/services/syncService");
+  //   await syncService.syncToCloud();
+  //   console.log("指数卡片配置已同步到云端");
+  // } catch (error) {
+  //   console.error("同步指数卡片配置到云端失败:", error);
+  // }
+
+  // 重新加载数据
+  await loadMarketTab();
+}
+
 // --- ECharts 渲染 ---
+
+// 生成时间数组（完全参考 indDetail.vue）
+function time_arr(type: string): string[] {
+  if (type === "hs") {
+    // 生成沪深时间段 09:30-11:30, 13:00-15:00
+    const timeArr: string[] = [];
+    timeArr.push("09:30");
+    getNextTime("09:30", "11:30", 1, timeArr);
+    getNextTime("13:00", "15:00", 1, timeArr);
+    return timeArr;
+  }
+  return [];
+}
+
+function getNextTime(
+  startTime: string,
+  endTime: string,
+  offset: number,
+  resultArr: string[],
+): string[] {
+  const result = addTimeStr(startTime, offset);
+  resultArr.push(result);
+  if (result === endTime) {
+    return resultArr;
+  } else {
+    return getNextTime(result, endTime, offset, resultArr);
+  }
+}
+
+function addTimeStr(time: string, num: number): string {
+  let hour = time.split(":")[0];
+  let mins = Number(time.split(":")[1]);
+  const mins_un = parseInt(String((mins + num) / 60));
+  const hour_un = parseInt(String((Number(hour) + mins_un) / 24));
+
+  if (mins_un > 0) {
+    if (hour_un > 0) {
+      const tmpVal = String((Number(hour) + mins_un) % 24);
+      hour = tmpVal.length > 1 ? tmpVal : "0" + tmpVal;
+    } else {
+      const tmpVal = String(Number(hour) + mins_un);
+      hour = tmpVal.length > 1 ? tmpVal : "0" + tmpVal;
+    }
+    const tmpMinsVal = String((mins + num) % 60);
+    mins = Number(tmpMinsVal.length > 1 ? tmpMinsVal : "0" + tmpMinsVal);
+  } else {
+    const tmpMinsVal = String(mins + num);
+    mins = Number(tmpMinsVal.length > 1 ? tmpMinsVal : "0" + tmpMinsVal);
+  }
+  return hour + ":" + (mins < 10 ? "0" + mins : mins);
+}
 
 async function renderFlowChart(
   data: {
@@ -371,31 +499,56 @@ async function renderFlowChart(
     flowChartInstance = echarts.init(flowChartRef.value);
   }
 
-  const times = data.map((d) => d.time.split(" ").pop() ?? d.time);
+  // data.map((d) => d.time.split(" ").pop() ?? d.time);
+  const times = time_arr("hs");
   // data-grayscale 属性控制是否启用灰度模式，配合 CSS filter 实现全图灰度
   const isGrayScale = document.documentElement.dataset.grayscale === "true";
   const option = {
     tooltip: {
       trigger: "axis",
+      backgroundColor: isDarkMode.value ? "rgba(30, 30, 30, 0.9)" : "rgba(255, 255, 255, 0.95)",
+      borderColor: isDarkMode.value ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.1)",
+      borderWidth: 1,
+      textStyle: {
+        color: isDarkMode.value ? "#fff" : "#000",
+        fontSize: 12,
+        fontFamily: "inherit",
+      },
+      padding: [10, 12],
+      borderRadius: 6,
+      boxShadow: isDarkMode.value
+        ? "0 4px 12px rgba(0, 0, 0, 0.6)"
+        : "0 4px 12px rgba(0, 0, 0, 0.15)",
       formatter(params: any[]) {
-        let html = `<div style="font-size:12px">${params[0]?.axisValue}<br/>`;
+        const time = params[0]?.axisValue || "";
+        let html = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDarkMode.value ? "#fff" : "#333"}">${time}</div>`;
         params.forEach((p: any) => {
           const color = isGrayScale
             ? "var(--el-text-color)"
             : p.value >= 0
               ? "var(--color-up)"
               : "var(--color-down)";
-          html += `<span style="color:${color}">${p.seriesName}: ${p.value.toFixed(2)} 亿</span><br/>`;
+          html += `<div style="display: flex; align-items: center; margin: 4px 0; gap: 8px">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${p.color}; flex-shrink: 0;"></span>
+            <span style="flex: 1;">${p.seriesName}:</span>
+            <span style="color: ${color}; font-weight: 600;">${p.value.toFixed(2)} 亿</span>
+          </div>`;
         });
-        return html + "</div>";
+        return html;
       },
     },
     legend: {
-      data: ["主力", "超大单", "大单", "中单", "小单"],
+      data: [
+        "主力净流入",
+        "超大单净流入",
+        "大单净流入",
+        "中单净流入",
+        "小单净流入",
+      ],
       top: 0,
       textStyle: { fontSize: 11, color: isDarkMode.value ? "#fff" : "#000" },
     },
-    grid: { left: 50, right: 16, top: 30, bottom: 40 },
+    grid: { left: 50, right: 16, top: 50, bottom: 40 },
     xAxis: {
       type: "category",
       data: times,
@@ -404,10 +557,20 @@ async function renderFlowChart(
     yAxis: {
       type: "value",
       axisLabel: { fontSize: 10, formatter: "{value}亿" },
+      axisLine: {
+        show: true,
+        lineStyle: {
+          color: isGrayScale
+            ? "var(--el-text-color)"
+            : isDarkMode.value
+              ? "#888"
+              : "#ccc",
+        },
+      },
     },
     series: [
       {
-        name: "主力",
+        name: "主力净流入",
         type: "line",
         data: data.map((d) => parseFloat(d.main.toFixed(2))),
         smooth: false,
@@ -416,7 +579,7 @@ async function renderFlowChart(
         color: "#3b82f6",
       },
       {
-        name: "超大单",
+        name: "超大单净流入",
         type: "line",
         data: data.map((d) => parseFloat(d.superLarge.toFixed(2))),
         smooth: false,
@@ -425,7 +588,7 @@ async function renderFlowChart(
         color: "#ef4444",
       },
       {
-        name: "大单",
+        name: "大单净流入",
         type: "line",
         data: data.map((d) => parseFloat(d.large.toFixed(2))),
         smooth: false,
@@ -434,7 +597,7 @@ async function renderFlowChart(
         color: "#06b6d4",
       },
       {
-        name: "中单",
+        name: "中单净流入",
         type: "line",
         data: data.map((d) => parseFloat(d.medium.toFixed(2))),
         smooth: false,
@@ -443,7 +606,7 @@ async function renderFlowChart(
         color: "#22c55e",
       },
       {
-        name: "小单",
+        name: "小单净流入",
         type: "line",
         data: data.map((d) => parseFloat(d.small.toFixed(2))),
         smooth: false,
@@ -483,13 +646,36 @@ async function renderPlateChart(
   const option = {
     tooltip: {
       trigger: "axis",
+      backgroundColor: isDarkMode.value ? "rgba(30, 30, 30, 0.9)" : "rgba(255, 255, 255, 0.95)",
+      borderColor: isDarkMode.value ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.1)",
+      borderWidth: 1,
+      textStyle: {
+        color: isDarkMode.value ? "#fff" : "#000",
+        fontSize: 12,
+        fontFamily: "inherit",
+      },
+      padding: [10, 12],
+      borderRadius: 6,
+      boxShadow: isDarkMode.value
+        ? "0 4px 12px rgba(0, 0, 0, 0.6)"
+        : "0 4px 12px rgba(0, 0, 0, 0.15)",
       formatter(params: any[]) {
         const p = params[0];
         if (!p) return "";
         const name = data[p.dataIndex]?.name ?? "";
         const color = p.value >= 0 ? "#ef4444" : "#22c55e";
         const sign = p.value >= 0 ? "+" : "";
-        return `${name}<br/>净流入: <span style="color:${color};font-weight:600;">${sign}${p.value.toFixed(2)}</span> 亿`;
+        return `
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-weight: 600; font-size: 13px; color: ${isDarkMode.value ? "#fff" : "#333"};">${name}</div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${color}; flex-shrink: 0;"></span>
+              <span>净流入:</span>
+              <span style="color: ${color}; font-weight: 600;">${sign}${p.value.toFixed(2)}</span>
+              <span>亿</span>
+            </div>
+          </div>
+        `;
       },
     },
     grid: { left: 50, right: 20, top: 20, bottom: 130 },
@@ -589,6 +775,16 @@ function setupResize() {
 // ==================== 生命周期 ====================
 
 onMounted(async () => {
+  // 从 localStorage 加载用户配置的指数卡片
+  const savedConfig = localStorage.getItem("fund_helper_index_cards_config");
+  if (savedConfig) {
+    try {
+      indexCardsConfig.value = JSON.parse(savedConfig);
+    } catch {
+      indexCardsConfig.value = [...DEFAULT_INDEX_CARDS];
+    }
+  }
+
   await loadTabOnce("market");
   setupAutoRefresh();
   setupResize();
@@ -696,6 +892,24 @@ onUnmounted(() => {
 }
 
 /* 指数卡片 */
+.index-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .index-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -709,11 +923,13 @@ onUnmounted(() => {
   border-left: 3px solid var(--el-border-color);
   background: var(--el-bg-color);
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .index-card:hover {
   background: var(--el-fill-color);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 .index-card.border-up {

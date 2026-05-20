@@ -92,6 +92,7 @@ export function buildExportPayload(): any {
     defaultViewMode: config.get<string>("defaultViewMode", "tree"),
     privacyMode: config.get<boolean>("privacyMode", false),
     grayscaleMode: config.get<boolean>("grayscaleMode", false),
+    indexCardsConfig: config.get<any[]>("indexCardsConfig", []),
     jsonboxName: getJsonboxName(),
   };
 }
@@ -147,6 +148,9 @@ export async function applyImportPayload(data: any): Promise<string[]> {
   }
   if (typeof data.jsonboxName === 'string' && data.jsonboxName) {
     await saveJsonboxName(data.jsonboxName);
+  }
+  if (Array.isArray(data.indexCardsConfig)) {
+    await config.update("indexCardsConfig", data.indexCardsConfig, vscode.ConfigurationTarget.Global);
   }
   return messages;
 }
@@ -592,6 +596,7 @@ export async function exportFund() {
   const defaultViewMode = config.get<string>("defaultViewMode", "tree");
   const privacyMode = config.get<boolean>("privacyMode", false);
   const grayscaleMode = config.get<boolean>("grayscaleMode", false);
+  const indexCardsConfig = config.get<any[]>("indexCardsConfig", []);
   const jsonboxName = getJsonboxName();
 
   const exportData = {
@@ -608,6 +613,7 @@ export async function exportFund() {
     defaultViewMode,
     privacyMode,
     grayscaleMode,
+    indexCardsConfig,
     jsonboxName,
   };
 
@@ -642,6 +648,7 @@ export async function exportFund() {
     const groupOrderJson = JSON.stringify(groupOrder);
     const columnOrderJson = JSON.stringify(columnOrder);
     const visibleColumnsJson = JSON.stringify(visibleColumns);
+    const indexCardsConfigJson = JSON.stringify(indexCardsConfig);
 
     const formattedJson = `{
   "funds": [
@@ -659,6 +666,7 @@ export async function exportFund() {
   "defaultViewMode": ${JSON.stringify(defaultViewMode)},
   "privacyMode": ${privacyMode},
   "grayscaleMode": ${grayscaleMode},
+  "indexCardsConfig": ${indexCardsConfigJson},
   "jsonboxName": ${JSON.stringify(jsonboxName)}
 }`;
 
@@ -694,6 +702,7 @@ export async function importFund() {
     let privacyModeData: boolean | undefined;
     let grayscaleModeData: boolean | undefined;
     let jsonboxNameData: string | undefined;
+    let indexCardsConfigData: any[] | undefined;
 
     if (Array.isArray(data.funds)) {
       fundsList = data.funds;
@@ -730,6 +739,9 @@ export async function importFund() {
       }
       if (typeof data.jsonboxName === 'string' && data.jsonboxName) {
         jsonboxNameData = data.jsonboxName;
+      }
+      if (Array.isArray(data.indexCardsConfig)) {
+        indexCardsConfigData = data.indexCardsConfig;
       }
     } else if (Array.isArray(data)) {
       fundsList = data;
@@ -797,6 +809,9 @@ export async function importFund() {
     if (jsonboxNameData !== undefined) {
       await saveJsonboxName(jsonboxNameData);
     }
+    if (indexCardsConfigData !== undefined) {
+      await config.update("indexCardsConfig", indexCardsConfigData, vscode.ConfigurationTarget.Global);
+    }
 
     await refreshData();
 
@@ -821,6 +836,9 @@ export async function importFund() {
     if (jsonboxNameData !== undefined) otherSettings.push('云同步配置');
     if (otherSettings.length > 0) {
       messages.push(otherSettings.join('、'));
+    }
+    if (indexCardsConfigData !== undefined) {
+      messages.push('指数卡片配置');
     }
 
     vscode.window.showInformationMessage(

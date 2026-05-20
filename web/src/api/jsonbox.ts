@@ -19,6 +19,8 @@ export interface JsonboxData {
   // Web 端设置（从云端同步到本地）
   privacyMode?: boolean
   grayscaleMode?: boolean
+  // 指数卡片配置
+  indexCardsConfig?: Array<{ code: string; name: string }>
   // VSCode 专属字段（保留）
   hideStatusBar?: boolean
   defaultViewMode?: 'webview' | 'editor'
@@ -92,6 +94,7 @@ class JsonboxClient {
           refreshInterval: item.refreshInterval,
           privacyMode: item.privacyMode,
           grayscaleMode: item.grayscaleMode,
+          indexCardsConfig: item.indexCardsConfig,
           // VSCode 专属字段
           hideStatusBar: item.hideStatusBar,
           defaultViewMode: item.defaultViewMode,
