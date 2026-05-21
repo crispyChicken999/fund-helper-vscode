@@ -983,19 +983,50 @@ async function renderNetValueChart(records: NetValueRecord[]) {
     {
       tooltip: {
         trigger: "axis",
+        backgroundColor: isDarkMode.value
+          ? "rgba(30, 30, 30, 0.9)"
+          : "rgba(255, 255, 255, 0.95)",
+        borderColor: isDarkMode.value
+          ? "rgba(255, 255, 255, 0.2)"
+          : "rgba(0, 0, 0, 0.1)",
+        borderWidth: 1,
+        textStyle: {
+          color: isDarkMode.value ? "#fff" : "#000",
+          fontSize: 12,
+          fontFamily: "inherit",
+        },
+        padding: [10, 12],
+        borderRadius: 6,
+        boxShadow: isDarkMode.value
+          ? "0 4px 12px rgba(0, 0, 0, 0.6)"
+          : "0 4px 12px rgba(0, 0, 0, 0.15)",
         formatter(params: any[]) {
-          let html = `<div style="font-size:12px">时间: ${params[0]?.axisValue}<br/>`;
+          const time = params[0]?.axisValue || "";
+          let html = `<div style="font-weight: 600; margin-bottom: 8px; color: ${
+            isDarkMode.value ? "#fff" : "#333"
+          }">${time}</div>`;
           params.forEach((p: any) => {
-            html += `${p.marker}${p.seriesName}: ${Number(p.value).toFixed(4)}<br/>`;
+            html += `<div style="display: flex; align-items: center; margin: 4px 0; gap: 8px">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${
+                p.color
+              }; flex-shrink: 0;"></span>
+              <span style="flex: 1;">${p.seriesName}:</span>
+              <span style="color: ${p.color}; font-weight: 600;">${Number(
+                p.value,
+              ).toFixed(4)}</span>
+            </div>`;
           });
           const idx = params[0]?.dataIndex;
           const rate = jzzzl[idx];
           if (rate != null && rate !== 0) {
-            const color =
-              rate > 0 ? "#f56c6c" : rate < 0 ? "#4eb61b" : "inherit";
-            html += `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#909399;"></span>日增长率: <span style="color:${color};font-weight:bold;">${rate}%</span><br/>`;
+            const color = rate > 0 ? "#f56c6c" : rate < 0 ? "#4eb61b" : "inherit";
+            html += `<div style="display: flex; align-items: center; margin-top: 6px; gap: 8px">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #909399; flex-shrink: 0;"></span>
+              <span style="flex: 1;">日增长率:</span>
+              <span style="color: ${color}; font-weight: 600;">${rate}%</span>
+            </div>`;
           }
-          return html + "</div>";
+          return html;
         },
       },
       legend: {
@@ -1088,12 +1119,40 @@ async function renderProfitChart(records: YieldRecord[]) {
     {
       tooltip: {
         trigger: "axis",
+        backgroundColor: isDarkMode.value
+          ? "rgba(30, 30, 30, 0.9)"
+          : "rgba(255, 255, 255, 0.95)",
+        borderColor: isDarkMode.value
+          ? "rgba(255, 255, 255, 0.2)"
+          : "rgba(0, 0, 0, 0.1)",
+        borderWidth: 1,
+        textStyle: {
+          color: isDarkMode.value ? "#fff" : "#000",
+          fontSize: 12,
+          fontFamily: "inherit",
+        },
+        padding: [10, 12],
+        borderRadius: 6,
+        boxShadow: isDarkMode.value
+          ? "0 4px 12px rgba(0, 0, 0, 0.6)"
+          : "0 4px 12px rgba(0, 0, 0, 0.15)",
         formatter(params: any[]) {
-          let html = `<div style="font-size:12px">时间: ${params[0]?.axisValue}<br/>`;
+          const time = params[0]?.axisValue || "";
+          let html = `<div style="font-weight: 600; margin-bottom: 8px; color: ${
+            isDarkMode.value ? "#fff" : "#333"
+          }">${time}</div>`;
           params.forEach((p: any) => {
-            html += `${p.marker}${p.seriesName}: ${Number(p.value).toFixed(2)}%<br/>`;
+            html += `<div style="display: flex; align-items: center; margin: 4px 0; gap: 8px">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${
+                p.color
+              }; flex-shrink: 0;"></span>
+              <span style="flex: 1;">${p.seriesName}:</span>
+              <span style="color: ${p.color}; font-weight: 600;">${Number(
+                p.value,
+              ).toFixed(2)}%</span>
+            </div>`;
           });
-          return html + "</div>";
+          return html;
         },
       },
       legend: {

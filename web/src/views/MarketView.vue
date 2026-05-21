@@ -564,11 +564,17 @@ async function renderFlowChart(
       axisLine: {
         show: true,
         lineStyle: {
+          color: isGrayScale ? "#fff" : isDarkMode.value ? "#888" : "#333",
+        },
+      },
+      splitLine: {
+        lineStyle: {
+          type: "dashed",
           color: isGrayScale
-            ? "var(--el-text-color)"
+            ? "#fff"
             : isDarkMode.value
-              ? "#888"
-              : "#ccc",
+              ? "rgba(255, 255, 255, 0.1)"
+              : "rgba(0, 0, 0, 0.3)",
         },
       },
     },

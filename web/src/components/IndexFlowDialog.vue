@@ -18,12 +18,15 @@
 import { ref, computed, watch, nextTick } from "vue";
 import { loadEcharts } from "@/utils/echarts";
 import { fetchJSON } from "@/utils/jsonp";
+import { useSettingStore } from "@/stores";
 
 const props = defineProps<{
   modelValue: boolean;
   indexCode: string;
   indexName: string;
 }>();
+
+const isDarkMode = computed(() => useSettingStore().theme === "dark");
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
@@ -201,10 +204,26 @@ async function renderChart() {
   const minVal = DWJZ - DWJZ * aa;
   const maxVal = DWJZ + DWJZ * aa;
   const interval = Math.abs((DWJZ - minVal) / 4);
-
   const option = {
     tooltip: {
       trigger: "axis",
+      backgroundColor: isDarkMode.value
+        ? "rgba(30, 30, 30, 0.9)"
+        : "rgba(255, 255, 255, 0.95)",
+      borderColor: isDarkMode.value
+        ? "rgba(255, 255, 255, 0.2)"
+        : "rgba(0, 0, 0, 0.1)",
+      borderWidth: 1,
+      textStyle: {
+        color: isDarkMode.value ? "#fff" : "#000",
+        fontSize: 12,
+        fontFamily: "inherit",
+      },
+      padding: [10, 12],
+      borderRadius: 6,
+      boxShadow: isDarkMode.value
+        ? "0 4px 12px rgba(0, 0, 0, 0.6)"
+        : "0 4px 12px rgba(0, 0, 0, 0.15)",
       axisPointer: {
         type: "cross",
         label: {
@@ -224,7 +243,22 @@ async function renderChart() {
           ((dataList[dataIndex][1] - DWJZ) * 100) /
           DWJZ
         ).toFixed(2);
-        return `时间：${p[0].name}<br />价格：${dataList[dataIndex][1]}<br />涨幅：${changePercent}%<br /><span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:${color}"></span>成交量：${formatNum(dataList[dataIndex][2])}`;
+        return `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDarkMode.value ? "#fff" : "#333"}"">${p[0].name}</div>
+          <div style="display: flex; align-items: center; margin: 4px 0; gap: 8px">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #3b82f6; flex-shrink: 0;"></span>
+            <span style="flex: 1;">价格:</span>
+            <span style="font-weight: 600;">${dataList[dataIndex][1]}</span>
+          </div>
+          <div style="display: flex; align-items: center; margin: 4px 0; gap: 8px">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${color}; flex-shrink: 0;"></span>
+            <span style="flex: 1;">涨幅:</span>
+            <span style="color: ${color}; font-weight: 600;">${changePercent}%</span>
+          </div>
+          <div style="display: flex; align-items: center; margin: 4px 0; gap: 8px">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #999; flex-shrink: 0;"></span>
+            <span style="flex: 1;">成交量:</span>
+            <span style="font-weight: 600;">${formatNum(dataList[dataIndex][2])}</span>
+          </div>`;
       },
     },
     axisPointer: {
