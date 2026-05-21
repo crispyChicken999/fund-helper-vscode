@@ -59,8 +59,9 @@ export function calculateSmartDailyGain(
   }
 
   if (market.isOpen) {
-    if (gsz > 0 && isGzTimeUpdatedToday(info.updateTime, market)) {
-      return (gsz - dwjz) * num
+    if (gsz > 0 && gszzl !== 0 && isGzTimeUpdatedToday(info.updateTime, market)) {
+      const baseNav = gsz / (1 + gszzl / 100)
+      return (gsz - baseNav) * num
     }
     if (gsz === 0 && gszzl !== 0) {
       const holdingAmount = num * dwjz
@@ -74,8 +75,9 @@ export function calculateSmartDailyGain(
     return (holdingAmount * navChgRt) / 100
   }
 
-  if (gsz > 0 && isGzTimeUpdatedToday(info.updateTime, market)) {
-    return (gsz - dwjz) * num
+  if (gsz > 0 && gszzl !== 0 && isGzTimeUpdatedToday(info.updateTime, market)) {
+    const baseNav = gsz / (1 + gszzl / 100)
+    return (gsz - baseNav) * num
   }
   if (gsz === 0 && gszzl !== 0) {
     const holdingAmount = num * dwjz
@@ -155,15 +157,20 @@ export function buildFundRowDisplay(
   const isMarketClosedNow = market.isClosed
   const hasUpdatedData = isGzTimeUpdatedToday(info.updateTime, market)
 
-  // 估算收益：只要有估算涨幅数据就计算，不受净值是否更新的影响
+  // 估算收益：优先使用 gsz + gszzl 反推，避免本地缓存 dwjz 的日期错位问题
   let estimatedGain = 0
-  // 当 gsz === dwjz 时，说明估算净值已更新为真实净值，应该使用涨跌幅计算
-  if (gsz > 0 && gsz !== dwjz) {
-    // 有估算净值且与单位净值不同时，使用估算净值和单位净值的差值
-    estimatedGain = (gsz - dwjz) * num
+  if (gsz > 0 && gszzl !== 0) {
+    // 核心修复：使用估算净值(gsz)和估算涨幅(gszzl)反推出昨日基准净值
+    // 这样完全避免了依赖可能过时的本地缓存 dwjz
+    // 例：gsz=3.1418, gszzl=0.11% -> baseNav=3.1383 -> 收益=(3.1418-3.1383)*11742.87≈41
+    const baseNav = gsz / (1 + gszzl / 100)
+    estimatedGain = (gsz - baseNav) * num
   } else if (gszzl !== 0) {
-    // 没有估算净值或估算净值等于单位净值时，基于涨跌幅计算
+    // gsz为0但有涨幅数据：基于当前 dwjz 和涨幅计算（此时必须依赖 dwjz）
     estimatedGain = (holdingAmount * gszzl) / 100
+  } else if (gsz > 0 && gsz !== dwjz) {
+    // 极端情况：仅有 gsz 无涨幅数据，才用 dwjz 作参照（通常不会走到这里）
+    estimatedGain = (gsz - dwjz) * num
   } else {
     console.log(`[fundDisplay] ${fund.code} 无估算数据，estimatedGain = 0`)
   }

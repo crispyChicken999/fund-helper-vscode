@@ -41,7 +41,7 @@ const INDEX_SECIDS = '1.000001,1.000300,0.399001,0.399006'
 
 export async function fetchIndexCards(secids?: string): Promise<IndexCardData[]> {
   const targetSecids = secids || INDEX_SECIDS
-  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f13,f14&secids=${targetSecids}&_=${Date.now()}`
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f13,f14&secids=${targetSecids}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
   try {
     const data = await fetchJSON<any>(url)
     if (!data) return []
@@ -61,7 +61,7 @@ export async function fetchIndexCards(secids?: string): Promise<IndexCardData[]>
 // ==================== 两市统计（push2 允许跨域） ====================
 
 export async function fetchMarketStat(): Promise<MarketStatData | null> {
-  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&secids=1.000001,0.399001&fields=f1,f2,f3,f4,f6,f12,f13,f104,f105,f106&_=${Date.now()}`
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&secids=1.000001,0.399001&fields=f1,f2,f3,f4,f6,f12,f13,f104,f105,f106&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
   try {
     const data = await fetchJSON<any>(url)
     if (!data) return null

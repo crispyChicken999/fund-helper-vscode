@@ -2,6 +2,8 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 import { initApp } from '@/appInit'
+import { fundService } from '@/services'
+import { initialized } from '@/appInit'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,14 +40,20 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach(async (to) => {
+router.beforeEach(async (to, from) => {
   try {
     await initApp()
   } catch (e) {
     console.error('应用初始化失败:', e)
   }
+
   if (to.meta.title) {
     document.title = `${to.meta.title} - 基金助手`
+  }
+
+  if (from.name && from.name !== 'home' && to.name === 'home' && initialized) {
+    // 刷新所有基金数据
+    fundService.refreshAllFunds().catch(console.error)
   }
 })
 

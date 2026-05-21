@@ -852,7 +852,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
+import {
+  ref,
+  computed,
+  watch,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  onActivated,
+} from "vue";
 import { useRouter } from "vue-router";
 import {
   ElMessage,
@@ -2786,6 +2794,7 @@ html.dark .group-tag-item.active {
   align-items: center;
   gap: 2px;
   line-height: 1.25;
+  font-size: 12px;
 }
 
 .fund-el-table :deep(th.is-right .col-head) {
@@ -2961,10 +2970,10 @@ html.dark .group-label {
   .fund-toolbar .search-box {
     flex: 1 1 100%;
   }
+}
 
-  .fund-el-table {
-    font-size: 12px;
-  }
+.fund-el-table {
+  font-size: 12px;
 }
 
 /* Position dialog */

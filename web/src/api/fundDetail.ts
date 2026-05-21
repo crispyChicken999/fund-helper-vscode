@@ -382,7 +382,7 @@ export async function fetchInvestmentPosition(code: string): Promise<PositionDat
     // 批量拉取股票实时行情
     if (stocks.length > 0) {
       const secids = stocks.map(s => `${s.newTexch}.${s.code}`).join(',')
-      const quoteUrl = `https://push2.eastmoney.com/api/qt/ulist.np/get?fields=f2,f3&fltt=2&secids=${secids}&_=${Date.now()}`
+      const quoteUrl = `https://push2.eastmoney.com/api/qt/ulist.np/get?fields=f2,f3&fltt=2&secids=${secids}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
       try {
         const quoteRes = await fetch(quoteUrl, { signal: AbortSignal.timeout(8000) }).catch(() => null)
         if (quoteRes?.ok) {

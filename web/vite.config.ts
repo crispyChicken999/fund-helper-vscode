@@ -5,6 +5,18 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    // 注入构建时间
+    __BUILD_TIME__: JSON.stringify(new Date().toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }))
+  },
   plugins: [
     vue(),
     VitePWA({

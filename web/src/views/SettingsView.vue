@@ -289,6 +289,10 @@
             <el-form-item label="版本" label-width="120px">
               <span>1.0.0</span>
             </el-form-item>
+            
+            <el-form-item label="打包时间" label-width="120px">
+              <span>{{ buildTime }}</span>
+            </el-form-item>
 
             <el-form-item label="数据来源" label-width="120px">
               <span>天天基金 / 东方财富</span>
@@ -456,6 +460,10 @@ const settingStore = useSettingStore();
 const fundStore = useFundStore();
 const groupStore = useGroupStore();
 const syncStore = useSyncStore();
+
+// ==================== 版本信息 ====================
+
+const buildTime = ref(__BUILD_TIME__);
 
 // ==================== PWA 相关 ====================
 

@@ -6,7 +6,7 @@ import { getChinaMarketStatus } from '@/utils/marketChina'
 import { getReadyPendingBuys } from '@/services/pendingBuyService'
 import { updateThemeColor } from '@/utils/themeColor'
 
-let initialized = false
+export let initialized = false
 let initPromise: Promise<void> | null = null
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
@@ -81,7 +81,7 @@ export async function initApp(): Promise<void> {
           triggerPendingCheck()
         } else {
           // 有缓存且是交易日，立即刷新一次
-          console.log('[AppInit] 交易日手动刷新一次')
+          console.log('[AppInit] 交易日刚进来刷新一次基金数据')
           fundService.refreshAllFunds().then(() => triggerPendingCheck()).catch(console.error)
         }
 
@@ -101,6 +101,7 @@ export async function initApp(): Promise<void> {
                 }
                 return
               }
+              console.log('[AppInitTimer] 定时刷新基金数据')
               fundService.refreshAllFunds().catch(console.error)
             }, interval * 1000)
           } else {

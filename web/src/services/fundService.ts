@@ -121,7 +121,7 @@ class FundService {
     })
 
     this.saveFundDetailsCache()
-    console.log(`已刷新 ${list.length} 个基金数据`)
+    console.log(`[FundInfo] 已刷新 ${list.length} 个基金数据`)
   }
 
   private saveFunds(): void {
