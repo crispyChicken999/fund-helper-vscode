@@ -17,14 +17,14 @@
         </div>
         <!-- 主 Tab 栏 -->
         <div class="main-tabs">
-          <el-scrollbar>
+          <el-scrollbar ref="mainTabsScrollbar">
             <div class="main-tabs-inner">
               <span
                 v-for="tab in mainTabs"
                 :key="tab.key"
                 class="main-tab-item"
                 :class="{ active: activeMainTab === tab.key }"
-                @click="switchMainTab(tab.key)"
+                @click="switchMainTab(tab.key, $event)"
               >
                 {{ tab.label }}
               </span>
@@ -229,6 +229,7 @@ const activeMainTab = ref("market");
 const activeGlobalTab = ref("A股");
 const refreshing = ref(false);
 const contentRef = ref<HTMLElement | null>(null);
+const mainTabsScrollbar = ref<any>(null);
 
 const indexCards = ref<IndexCardData[]>([]);
 const marketStat = ref<MarketStatData | null>(null);
@@ -368,13 +369,38 @@ async function loadTabOnce(tab: string) {
   }
 }
 
-function switchMainTab(tab: string) {
+function switchMainTab(tab: string, event?: MouseEvent) {
   activeMainTab.value = tab;
   loadTabOnce(tab);
   // Resize charts after tab switch (DOM visibility change)
   nextTick(() => {
     flowChartInstance?.resize();
     Object.values(plateChartInstances).forEach((c: any) => c?.resize());
+  });
+
+  nextTick(() => {
+    const target = event?.currentTarget as HTMLElement | null;
+    if (!target) return;
+
+    const scrollbar = mainTabsScrollbar.value as any;
+    const wrap: HTMLElement | null =
+      scrollbar?.wrapRef ??
+      scrollbar?.$el?.querySelector(".el-scrollbar__wrap") ??
+      null;
+    if (!wrap) return;
+
+    const targetCenter = target.offsetLeft + target.offsetWidth / 2;
+    const maxScroll = wrap.scrollWidth - wrap.clientWidth;
+    const nextScrollLeft = Math.min(
+      Math.max(0, targetCenter - wrap.clientWidth / 2),
+      Math.max(0, maxScroll),
+    );
+
+    if (typeof scrollbar?.setScrollLeft === "function") {
+      scrollbar.setScrollLeft(nextScrollLeft);
+    } else {
+      wrap.scrollTo({ left: nextScrollLeft, behavior: "smooth" });
+    }
   });
 }
 
