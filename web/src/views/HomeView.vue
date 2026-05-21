@@ -2827,6 +2827,7 @@ html.dark .group-tag-item.active {
   align-items: center;
   gap: 4px;
   font-size: 13px;
+  user-select: none;
   font-weight: 700;
   overflow: hidden;
   cursor: pointer;

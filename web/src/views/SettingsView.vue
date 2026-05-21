@@ -18,25 +18,23 @@
           </template>
           <ul class="usage-guide-list">
             <li>
+              ➕ 点击首页右上角 <strong>+</strong> 按钮，可添加新基金，支持按代码或名称搜索，支持批量加减仓
+            </li>
+            <li>
+              ✏️ <strong>点击基金名称</strong>，可查看基金详情、编辑持仓成本、份额和进行删除等操作
+            </li>
+            <li>
               📌<strong>长按分组</strong>，可查看该分组的详情信息（持仓汇总、收益统计等）
             </li>
+            <li>↕️ 默认排序时，<strong>拖动基金行</strong> 可调整排列顺序</li>
             <li>
-              ➕ 点击首页右上角
-              <strong>+</strong> 按钮可添加新基金，支持按代码或名称搜索
+              🗂️ <strong>点击分组设置按钮</strong>，以文件夹形式管理分组、分组下的基金，支持拖拽修改分组
             </li>
-            <li>
-              ✏️
-              <strong>点击基金名称</strong
-              >，可查看基金详情、编辑持仓成本、份额和进行删除等操作
-            </li>
-            <li>↕️ 默认排序时，<strong>拖动基金行</strong>可调整排列顺序</li>
             <li>
               🔒 开启<strong>隐私模式</strong>后所有数值将被隐藏，适合截图分享
             </li>
             <li>
-              ☁️ 配置
-              <strong>Box Name</strong
-              >后，可在多设备间（VSCode插件、PC、Mobile）云同步数据
+              ☁️ 配置 <strong>Box Name</strong>后，可在多设备间（VSCode插件、PC、Mobile）云同步数据，支持扫码同步
             </li>
           </ul>
         </el-collapse-item>
@@ -997,7 +995,7 @@ function handleExportJson() {
 async function handleClearAll() {
   try {
     await ElMessageBox.confirm(
-      "此操作将清空本地所有基金和分组数据，不可恢复。",
+      "此操作将清空本地数据，包括基金、分组和设置，且不可恢复。请谨慎操作。",
       "确认清空",
       { type: "warning" },
     );
@@ -1005,6 +1003,8 @@ async function handleClearAll() {
     groupStore.clearGroups();
     storageService.saveFunds([]);
     storageService.saveGroups({}, []);
+    settingStore.resetSettings();
+    localStorage.clear();
     ElMessage.success("已清空");
   } catch {
     /* cancel */
