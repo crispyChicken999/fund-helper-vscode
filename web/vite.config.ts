@@ -4,7 +4,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const basePath = mode === 'github' ? '/fund-helper-vscode/' : '/'
+
+  return {
+    base: basePath,
   define: {
     // 注入构建时间
     __BUILD_TIME__: JSON.stringify(new Date().toLocaleString('zh-CN', {
@@ -30,29 +34,29 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait-primary',
-        scope: '/',
-        start_url: '/',
+        scope: basePath,
+        start_url: basePath,
         icons: [
           {
-            src: '/icon-192.png',
+            src: 'icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/icon-512.png',
+            src: 'icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/icon-192-maskable.png',
+            src: 'icon-192-maskable.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable'
           },
           {
-            src: '/icon-512-maskable.png',
+            src: 'icon-512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
@@ -196,4 +200,4 @@ export default defineConfig({
       }
     }
   }
-})
+}})
