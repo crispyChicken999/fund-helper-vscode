@@ -21,6 +21,8 @@
 在 VSCode 侧边栏实时查看自选基金估值、涨跌幅与收益，支持加减仓操作、多维度排序、拖拽排序、行情中心大盘数据、AI 分析等功能。摸鱼理财两不误！
 
 > 🌐 **网页版已上线！** 无需安装，打开即用 → [**fund-helper.netlify.app**](https://fund-helper.netlify.app)
+> 
+> ✅ **GitHub Pages 备用入口：[crispychicken999.github.io/fund-helper-vscode/](https://crispychicken999.github.io/fund-helper-vscode/)**
 
 ## 📑 目录 (Table of Contents)
 
@@ -154,6 +156,8 @@
 **基金助手网页版已正式上线！** 🎉
 
 > 🔗 **访问地址：[fund-helper.netlify.app](https://fund-helper.netlify.app)**
+>
+> ✅ **GitHub Pages 备用入口：[crispychicken999.github.io/fund-helper-vscode/](https://crispychicken999.github.io/fund-helper-vscode/)**
 
 网页版与 VSCode 插件版功能对齐，无需安装任何软件，在浏览器中即可使用：
 
