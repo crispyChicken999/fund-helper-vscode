@@ -5,23 +5,74 @@
 import type { Fund, FundInfo } from '@/types'
 import { fetchFundgzRawViaJsonp } from '@/api/fundgz'
 
-async function fetchFundInvestmentPosition(code: string): Promise<any> {
+/**
+ * 通用的持仓信息请求函数（带代理降级）
+ * 策略：1. 直接请求 → 2. allorigins.win → 3. codetabs.com 双层代理
+ */
+async function fetchFundInvestmentPositionWithFallback(code: string): Promise<any> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
+
+  // 策略 1: 直接请求
   try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
-    try {
-      const res = await fetch(url, { signal: controller.signal })
-      clearTimeout(timeoutId)
-      if (!res.ok) return null
-      const data = await res.json().catch(() => null)
-      return data?.Datas ?? null
-    } catch (err) {
-      clearTimeout(timeoutId)
-      // Ignore abort and fetch errors
-      return null
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Direct fetch failed`)
     }
-  } catch {
+    const data = await res.json().catch(() => null)
+    if (!data?.Datas) {
+      throw new Error('Invalid data structure')
+    }
+    console.log('[InvestPosition] 直接请求成功')
+    return data
+  } catch (directError) {
+    console.warn('[InvestPosition] 直接请求失败，尝试第一层代理...', directError)
+  }
+
+  // 策略 2: allorigins.win 代理
+  try {
+    const proxy1Url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    const res = await fetch(proxy1Url, { signal: AbortSignal.timeout(60000) })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Proxy1 fetch failed`)
+    }
+    const data = await res.json().catch(() => null)
+    if (!data?.Datas) {
+      throw new Error('Proxy1 invalid data structure')
+    }
+    console.log('[InvestPosition] 第一层代理(allorigins.win)请求成功')
+    return data
+  } catch (proxy1Error) {
+    console.warn('[InvestPosition] 第一层代理失败，尝试第二层代理...', proxy1Error)
+  }
+
+  // 策略 3: codetabs.com 双层代理
+  try {
+    const encodedTarget = encodeURIComponent(url)
+    const firstLayerUrl = `https://api.allorigins.win/raw?url=${encodedTarget}`
+    const encodedFirstLayer = encodeURIComponent(firstLayerUrl)
+    const proxy2Url = `https://api.codetabs.com/v1/proxy/?quest=${encodedFirstLayer}`
+
+    const res = await fetch(proxy2Url, { signal: AbortSignal.timeout(60000) })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Proxy2 fetch failed`)
+    }
+    const data = await res.json().catch(() => null)
+    if (!data?.Datas) {
+      throw new Error('Proxy2 invalid data structure')
+    }
+    console.log('[InvestPosition] 第二层代理(codetabs.com)请求成功')
+    return data
+  } catch (proxy2Error) {
+    console.warn('[InvestPosition] 第二层代理也失败', proxy2Error)
+    throw new Error('All proxy strategies failed for investment position')
+  }
+}
+
+async function fetchFundInvestmentPosition(code: string): Promise<any> {
+  try {
+    return await fetchFundInvestmentPositionWithFallback(code)
+  } catch (error) {
+    console.error('[InvestPosition] 所有请求策略都失败:', error)
     return null
   }
 }
@@ -70,8 +121,8 @@ function calcEstimateChange(positions: any[], stockData: any[]): number {
 async function fetchFundEstimateChange(code: string): Promise<number | null> {
   try {
     const positionData = await fetchFundInvestmentPosition(code)
-    if (!positionData?.fundStocks) return null
-    const fundStocks = positionData.fundStocks
+    if (!positionData?.Datas?.fundStocks) return null
+    const fundStocks = positionData.Datas.fundStocks
     if (!Array.isArray(fundStocks) || fundStocks.length === 0) return null
     const secids = fundStocks
       .map((stock: any) => {
@@ -353,7 +404,7 @@ function toFundInfoFromMerge(
 
 /** 后台刷新 MNFInfo 的 Promise，避免重复请求 */
 let backgroundMNFRefreshPromise: Promise<Map<string, any>> | null = null
-let lastMNFRefreshTime: number = 0
+let lastMNFRefreshTime: number = localStorage.getItem(MNF_INFO_CACHE_TIME_KEY) ? parseInt(localStorage.getItem(MNF_INFO_CACHE_TIME_KEY)!, 10) : 0
 const MNF_REFRESH_INTERVAL = 15 * 60 * 1000  // 15分钟强制刷新一次
 
 /** 缓存更新回调函数列表 */
@@ -389,15 +440,16 @@ function refreshMNFInfoInBackground(codes: string[]): void {
   const now = Date.now()
   const needsForceRefresh = now - lastMNFRefreshTime > MNF_REFRESH_INTERVAL
 
-  if (backgroundMNFRefreshPromise && !needsForceRefresh) {
+  if (backgroundMNFRefreshPromise) {
     // 如果已有后台刷新任务在进行中，跳过
     console.log('[MNFInfo] 已有后台刷新任务在进行中，本次请求已跳过')
     return
   }
 
-  if (backgroundMNFRefreshPromise && needsForceRefresh) {
-    // 强制刷新：等待前一个任务完成，然后立即发起新的刷新
-    console.log('[MNFInfo] 缓存超过 15 分钟，即将强制刷新...')
+  if (!needsForceRefresh) {
+    // 如果距离上次刷新时间不足 15 分钟，跳过本次刷新
+    console.log('[MNFInfo] 距离上次刷新时间不足 15 分钟，本次请求已跳过')
+    return
   }
 
   backgroundMNFRefreshPromise = fetchBatchMNFInfo(codes)

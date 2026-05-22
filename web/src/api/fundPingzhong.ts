@@ -13,8 +13,63 @@ const PINGZHONG_BASE = 'https://fund.eastmoney.com/pingzhongdata'
 interface PingzhongScope {
   fS_name?: string
   fS_code?: string
+  ishb?: boolean
+  fund_sourceRate?: string
+  fund_Rate?: string
+  fund_minsg?: string
+  stockCodes?: string[]
+  zqCodes?: string
+  stockCodesNew?: string[]
+  zqCodesNew?: string
   Data_ACWorthTrend?: [number, number][]
   Data_netWorthTrend?: { x: number; y: number; equityReturn: number; unitMoney: string }[]
+  Data_fundSharesPositions?: [number, number][]
+  Data_grandTotal?: { name: string; data: [number, number][] }[]
+  Data_rateInSimilarType?: { x: number; y: number; sc: string }[]
+  Data_rateInSimilarPersent?: [number, number][]
+  Data_fluctuationScale?: {
+    categories: string[]
+    series: { y: number; mom: string }[]
+  }
+  Data_holderStructure?: {
+    series: { name: string; data: number[] }[]
+    categories: string[]
+  }
+  Data_assetAllocation?: {
+    series: { name: string; type: string | null; data: number[]; yAxis: number }[]
+    categories: string[]
+  }
+  Data_performanceEvaluation?: {
+    avr: string
+    categories: string[]
+    dsc: string[]
+    data: number[]
+  }
+  Data_currentFundManager?: Array<{
+    id: string
+    pic: string
+    name: string
+    star: number
+    workTime: string
+    fundSize: string
+    power: {
+      avr: string
+      categories: string[]
+      dsc: string[]
+      data: number[]
+      jzrq: string
+    }
+    profit: {
+      categories: string[]
+      series: { data: { name: string | null; color: string; y: number }[] }[]
+      jzrq: string
+    }
+  }>
+  Data_buySedemption?: {
+    series: { name: string; data: number[] }[]
+    categories: string[]
+  }
+  swithSameType?: string[][]
   syl_1n?: string
   syl_6y?: string
   syl_3y?: string
@@ -39,6 +94,54 @@ export interface PingzhongFundData {
   navchgrt: string
   /** 标记来源，供 toFundInfo 判断处理逻辑 */
   _fromPingzhong: true
+}
+
+export interface PingzhongDetailData {
+  fundcode: string
+  name: string
+  sourceRate: string
+  currentRate: string
+  minPurchase: string
+  stockCodes: string[]
+  bondCodes: string[]
+  stockCodesNew: string[]
+  bondCodesNew: string[]
+  returnRates: {
+    year1: string
+    sixMonth: string
+    threeMonth: string
+    oneMonth: string
+  }
+  sharePositionTrend: Array<{ date: number; value: number }>
+  netWorthTrend: Array<{ date: number; value: number; equityReturn: number; unitMoney: string }>
+  acWorthTrend: Array<{ date: number; value: number }>
+  grandTotal: { name: string; data: [number, number][] }[]
+  rateInSimilarType: { x: number; y: number; sc: string }[]
+  rateInSimilarPersent: [number, number][]
+  fluctuationScale: {
+    categories: string[]
+    series: { y: number; mom: string }[]
+  }
+  holderStructure: {
+    series: { name: string; data: number[] }[]
+    categories: string[]
+  }
+  assetAllocation: {
+    series: { name: string; type: string | null; data: number[]; yAxis: number }[]
+    categories: string[]
+  }
+  performanceEvaluation: {
+    avr: string
+    categories: string[]
+    dsc: string[]
+    data: number[]
+  }
+  currentFundManagers: PingzhongScope['Data_currentFundManager']
+  buySedemption: {
+    series: { name: string; data: number[] }[]
+    categories: string[]
+  }
+  sameType: string[][]
 }
 
 /** 将时间戳转为 YYYY-MM-DD */
@@ -83,14 +186,51 @@ function calcFromACWorthTrend(trend: [number, number][]): {
 
 /** 清理 window 上注入的 pingzhongdata 变量 */
 function cleanupPingzhongVars(scope: Window & PingzhongScope) {
-  delete scope.fS_name
-  delete scope.fS_code
-  delete scope.Data_ACWorthTrend
-  delete scope.Data_netWorthTrend
-  delete scope.syl_1n
-  delete scope.syl_6y
-  delete scope.syl_3y
-  delete scope.syl_1y
+  const keys: Array<keyof PingzhongScope> = [
+    'fS_name',
+    'fS_code',
+    'ishb',
+    'fund_sourceRate',
+    'fund_Rate',
+    'fund_minsg',
+    'stockCodes',
+    'zqCodes',
+    'stockCodesNew',
+    'zqCodesNew',
+    'Data_ACWorthTrend',
+    'Data_netWorthTrend',
+    'Data_fundSharesPositions',
+    'Data_grandTotal',
+    'Data_rateInSimilarType',
+    'Data_rateInSimilarPersent',
+    'Data_fluctuationScale',
+    'Data_holderStructure',
+    'Data_assetAllocation',
+    'Data_performanceEvaluation',
+    'Data_currentFundManager',
+    'Data_buySedemption',
+    'swithSameType',
+    'syl_1n',
+    'syl_6y',
+    'syl_3y',
+    'syl_1y',
+  ]
+
+  for (const key of keys) {
+    try {
+      scope[key] = undefined
+    } catch {
+      // ignore non-writable globals
+    }
+  }
+}
+
+function toStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.map(item => String(item)) : []
+}
+
+function parseTrend<T>(value: T[] | undefined, mapper: (item: T) => any) {
+  return Array.isArray(value) ? value.map(mapper) : []
 }
 
 /**
@@ -144,16 +284,36 @@ function loadPingzhongScript(code: string): Promise<PingzhongScope> {
         clearTimeout(timer)
         script.remove()
         const scope = window as Window & PingzhongScope
-        resolve({
+        const snapshot: PingzhongScope = {
           fS_name: scope.fS_name,
           fS_code: scope.fS_code,
+          ishb: scope.ishb,
+          fund_sourceRate: scope.fund_sourceRate,
+          fund_Rate: scope.fund_Rate,
+          fund_minsg: scope.fund_minsg,
+          stockCodes: scope.stockCodes,
+          zqCodes: scope.zqCodes,
+          stockCodesNew: scope.stockCodesNew,
+          zqCodesNew: scope.zqCodesNew,
           Data_ACWorthTrend: scope.Data_ACWorthTrend,
           Data_netWorthTrend: scope.Data_netWorthTrend,
+          Data_fundSharesPositions: scope.Data_fundSharesPositions,
+          Data_grandTotal: scope.Data_grandTotal,
+          Data_rateInSimilarType: scope.Data_rateInSimilarType,
+          Data_rateInSimilarPersent: scope.Data_rateInSimilarPersent,
+          Data_fluctuationScale: scope.Data_fluctuationScale,
+          Data_holderStructure: scope.Data_holderStructure,
+          Data_assetAllocation: scope.Data_assetAllocation,
+          Data_performanceEvaluation: scope.Data_performanceEvaluation,
+          Data_currentFundManager: scope.Data_currentFundManager,
+          Data_buySedemption: scope.Data_buySedemption,
+          swithSameType: scope.swithSameType,
           syl_1n: scope.syl_1n,
           syl_6y: scope.syl_6y,
           syl_3y: scope.syl_3y,
           syl_1y: scope.syl_1y,
-        })
+        }
+        resolve(snapshot)
         cleanupPingzhongVars(scope)
         done()
       }
@@ -194,6 +354,50 @@ export async function fetchPingzhongData(code: string): Promise<PingzhongFundDat
       gztime: calc.jzrq,  // 无盘中时间，用净值日期
       navchgrt: calc.navchgrt,
       _fromPingzhong: true,
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function fetchPingzhongDetailData(code: string): Promise<PingzhongDetailData | null> {
+  try {
+    const scope = await loadPingzhongScript(code)
+
+    return {
+      fundcode: scope.fS_code ?? code,
+      name: scope.fS_name ?? code,
+      sourceRate: scope.fund_sourceRate ?? '',
+      currentRate: scope.fund_Rate ?? '',
+      minPurchase: scope.fund_minsg ?? '',
+      stockCodes: toStringArray(scope.stockCodes),
+      bondCodes: typeof scope.zqCodes === 'string' ? scope.zqCodes.split(',').filter(Boolean) : [],
+      stockCodesNew: toStringArray(scope.stockCodesNew),
+      bondCodesNew: typeof scope.zqCodesNew === 'string' ? scope.zqCodesNew.split(',').filter(Boolean) : [],
+      returnRates: {
+        year1: scope.syl_1n ?? '',
+        sixMonth: scope.syl_6y ?? '',
+        threeMonth: scope.syl_3y ?? '',
+        oneMonth: scope.syl_1y ?? '',
+      },
+      sharePositionTrend: parseTrend(scope.Data_fundSharesPositions, ([date, value]) => ({ date, value })),
+      netWorthTrend: parseTrend(scope.Data_netWorthTrend, (item) => ({
+        date: item.x,
+        value: item.y,
+        equityReturn: item.equityReturn,
+        unitMoney: item.unitMoney,
+      })),
+      acWorthTrend: parseTrend(scope.Data_ACWorthTrend, ([date, value]) => ({ date, value })),
+      grandTotal: Array.isArray(scope.Data_grandTotal) ? scope.Data_grandTotal : [],
+      rateInSimilarType: Array.isArray(scope.Data_rateInSimilarType) ? scope.Data_rateInSimilarType : [],
+      rateInSimilarPersent: Array.isArray(scope.Data_rateInSimilarPersent) ? scope.Data_rateInSimilarPersent : [],
+      fluctuationScale: scope.Data_fluctuationScale ?? { categories: [], series: [] },
+      holderStructure: scope.Data_holderStructure ?? { categories: [], series: [] },
+      assetAllocation: scope.Data_assetAllocation ?? { categories: [], series: [] },
+      performanceEvaluation: scope.Data_performanceEvaluation ?? { avr: '', categories: [], dsc: [], data: [] },
+      currentFundManagers: scope.Data_currentFundManager ?? [],
+      buySedemption: scope.Data_buySedemption ?? { categories: [], series: [] },
+      sameType: scope.swithSameType ?? [],
     }
   } catch {
     return null

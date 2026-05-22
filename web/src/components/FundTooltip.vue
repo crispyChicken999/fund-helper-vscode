@@ -51,105 +51,109 @@
               </div>
             </header>
 
-            <section class="fund-tooltip-body" v-if="row">
-              <!-- 估算数据 -->
-              <div class="info-group">
-                <div class="info-row">
-                  <span class="info-label"
-                    >估算涨幅 ({{ row.estimatedDateLabel }})</span
-                  >
-                  <span :class="estClass(row.gszzl)">{{
-                    fmtPct(row.gszzl, row.shouldShowEstimated)
-                  }}</span>
+            <el-scrollbar>
+              <section class="fund-tooltip-body" v-if="row">
+                <!-- 估算数据 -->
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="info-label"
+                      >估算涨幅 ({{ row.estimatedDateLabel }})</span
+                    >
+                    <span :class="estClass(row.gszzl)">{{
+                      fmtPct(row.gszzl, row.shouldShowEstimated)
+                    }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"
+                      >估算收益 ({{ row.estimatedDateLabel }})</span
+                    >
+                    <span :class="estClass(row.estimatedGain)">{{
+                      fmtEst(row.estimatedGain, row.shouldShowEstimated)
+                    }}</span>
+                  </div>
                 </div>
-                <div class="info-row">
-                  <span class="info-label"
-                    >估算收益 ({{ row.estimatedDateLabel }})</span
-                  >
-                  <span :class="estClass(row.estimatedGain)">{{
-                    fmtEst(row.estimatedGain, row.shouldShowEstimated)
-                  }}</span>
-                </div>
-              </div>
 
-              <!-- 当日数据 -->
-              <div class="info-group">
-                <div class="info-row">
-                  <span class="info-label"
-                    >当日涨幅 ({{ row.navDateLabel }})</span
-                  >
-                  <span :class="pctClass(row.navChgRt)">{{
-                    fmtPct(row.navChgRt, true)
-                  }}</span>
+                <!-- 当日数据 -->
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="info-label"
+                      >当日涨幅 ({{ row.navDateLabel }})</span
+                    >
+                    <span :class="pctClass(row.navChgRt)">{{
+                      fmtPct(row.navChgRt, true)
+                    }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"
+                      >当日收益 ({{ row.navDateLabel }})</span
+                    >
+                    <span :class="moneyClass(row.dailyGain)">{{
+                      fmtMoney(row.dailyGain)
+                    }}</span>
+                  </div>
                 </div>
-                <div class="info-row">
-                  <span class="info-label"
-                    >当日收益 ({{ row.navDateLabel }})</span
-                  >
-                  <span :class="moneyClass(row.dailyGain)">{{
-                    fmtMoney(row.dailyGain)
-                  }}</span>
-                </div>
-              </div>
 
-              <!-- 持有收益 -->
-              <div class="info-group">
-                <div class="info-row">
-                  <span class="info-label">持有收益</span>
-                  <span :class="moneyClass(row.holdingGain)">{{
-                    fmtMoney(row.holdingGain)
-                  }}</span>
+                <!-- 持有收益 -->
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="info-label">持有收益</span>
+                    <span :class="moneyClass(row.holdingGain)">{{
+                      fmtMoney(row.holdingGain)
+                    }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">总收益率</span>
+                    <span :class="pctClass(row.holdingGainRate)">{{
+                      fmtPct(row.holdingGainRate, true)
+                    }}</span>
+                  </div>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">总收益率</span>
-                  <span :class="pctClass(row.holdingGainRate)">{{
-                    fmtPct(row.holdingGainRate, true)
-                  }}</span>
-                </div>
-              </div>
 
-              <!-- 持仓信息 -->
-              <div class="info-group">
-                <div class="info-row">
-                  <span class="info-label">持仓总额</span>
-                  <span>{{ fmt4Price(row.fund.num * row.fund.cost) }}</span>
+                <!-- 持仓信息 -->
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="info-label">持仓总额</span>
+                    <span>{{ fmt4Price(row.fund.num * row.fund.cost) }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">持有金额</span>
+                    <span>{{ fmtMoney(row.holdingAmount) }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">持有份额</span>
+                    <span>{{ fmtShares(row.fund.num) }}</span>
+                  </div>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">持有金额</span>
-                  <span>{{ fmtMoney(row.holdingAmount) }}</span>
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="info-label">成本价</span>
+                    <span>{{ fmt4(row.fund.cost) }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">估算净值</span>
+                    <span>{{ fmt4(row.displayGsz) }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">单位净值</span>
+                    <span>{{ fmt4(row.dwjz) }}</span>
+                  </div>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">持有份额</span>
-                  <span>{{ fmtShares(row.fund.num) }}</span>
-                </div>
-              </div>
-              <div class="info-group">
-                <div class="info-row">
-                  <span class="info-label">成本价</span>
-                  <span>{{ fmt4(row.fund.cost) }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">估算净值</span>
-                  <span>{{ fmt4(row.displayGsz) }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">单位净值</span>
-                  <span>{{ fmt4(row.dwjz) }}</span>
-                </div>
-              </div>
 
-              <!-- 其他信息 -->
-              <div class="info-group">
-                <div class="info-row">
-                  <span class="info-label">关联板块</span>
-                  <span>{{ row.relateTheme || "—" }}</span>
+                <!-- 其他信息 -->
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="info-label">关联板块</span>
+                    <span>{{ row.relateTheme || "—" }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">更新时间</span>
+                    <span>{{
+                      row.fullUpdateTime || row.updateTime || "—"
+                    }}</span>
+                  </div>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">更新时间</span>
-                  <span>{{ row.fullUpdateTime || row.updateTime || "—" }}</span>
-                </div>
-              </div>
-            </section>
+              </section>
+            </el-scrollbar>
 
             <footer class="fund-tooltip-actions">
               <el-button
@@ -341,22 +345,27 @@ function handleCopy() {
 }
 
 .fund-tooltip-panel {
-  width: 100%;
+  width: 75vw;
   max-width: 420px;
-  max-height: 85vh;
-  overflow: auto;
+  height: 85vh;
+  max-height: 686px;
   background: var(--el-bg-color);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 8px;
+  padding: 16px;
   border: 1px solid var(--el-border-color-light);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.el-scrollbar {
+  flex: 1;
 }
 
 .fund-tooltip-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--el-border-color-light);
 }
@@ -392,6 +401,7 @@ function handleCopy() {
   font-weight: 600;
   color: var(--el-text-color-primary);
   line-height: 1.4;
+  margin-right: 4px;
 }
 
 .fund-tooltip-code {

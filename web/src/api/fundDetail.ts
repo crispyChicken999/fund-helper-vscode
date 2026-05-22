@@ -256,7 +256,6 @@ export async function fetchNetValueHistory(
   range: string = '1m'
 ): Promise<NetValueRecord[]> {
   const actualRange = RANGE_MAP[range] || 'y'
-  console.log('range: ', range);
   const url = `https://fundmobapi.eastmoney.com/FundMApi/FundNetDiagram.ashx?FCODE=${code}&RANGE=${actualRange}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&_=${Date.now()}`
 
   try {
@@ -310,7 +309,6 @@ export async function fetchHistoryYield(
   range: string = '1m'
 ): Promise<YieldRecord[]> {
   const actualRange = History_RANGE_MAP[range] || 'n'
-  console.log('range: ', range);
   const url = `https://dataapi.1234567.com.cn/dataapi/fund/FundVPageAcc?INDEXCODE=000300&CODE=${code}&FCODE=${code}&RANGE=${actualRange}&deviceid=Wap&product=EFund`
 
   try {
@@ -373,12 +371,72 @@ export interface PositionData {
   bonds: PositionBond[]
 }
 
-export async function fetchInvestmentPosition(code: string): Promise<PositionData | null> {
-  const url =  `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
+/**
+ * 通用的持仓信息请求函数（带代理降级）
+ * 策略：1. 直接请求 → 2. allorigins.win → 3. codetabs.com 双层代理
+ */
+async function fetchFundInvestmentPositionWithFallback(code: string): Promise<any> {
+  const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
+  
+  // 策略 1: 直接请求
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
-    if (!res.ok) return null
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Direct fetch failed`)
+    }
     const data = await res.json().catch(() => null)
+    if (!data?.Datas) {
+      throw new Error('Invalid data structure')
+    }
+    console.log('[InvestPosition] 直接请求成功')
+    return data
+  } catch (directError) {
+    console.warn('[InvestPosition] 直接请求失败，尝试第一层代理...', directError)
+  }
+
+  // 策略 2: allorigins.win 代理
+  try {
+    const proxy1Url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    const res = await fetch(proxy1Url, { signal: AbortSignal.timeout(60000) })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Proxy1 fetch failed`)
+    }
+    const data = await res.json().catch(() => null)
+    if (!data?.Datas) {
+      throw new Error('Proxy1 invalid data structure')
+    }
+    console.log('[InvestPosition] 第一层代理(allorigins.win)请求成功')
+    return data
+  } catch (proxy1Error) {
+    console.warn('[InvestPosition] 第一层代理失败，尝试第二层代理...', proxy1Error)
+  }
+
+  // 策略 3: codetabs.com 双层代理
+  try {
+    const encodedTarget = encodeURIComponent(url)
+    const firstLayerUrl = `https://api.allorigins.win/raw?url=${encodedTarget}`
+    const encodedFirstLayer = encodeURIComponent(firstLayerUrl)
+    const proxy2Url = `https://api.codetabs.com/v1/proxy/?quest=${encodedFirstLayer}`
+
+    const res = await fetch(proxy2Url, { signal: AbortSignal.timeout(60000) })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Proxy2 fetch failed`)
+    }
+    const data = await res.json().catch(() => null)
+    if (!data?.Datas) {
+      throw new Error('Proxy2 invalid data structure')
+    }
+    console.log('[InvestPosition] 第二层代理(codetabs.com)请求成功')
+    return data
+  } catch (proxy2Error) {
+    console.warn('[InvestPosition] 第二层代理也失败', proxy2Error)
+    throw new Error('All proxy strategies failed for investment position')
+  }
+}
+
+export async function fetchInvestmentPosition(code: string): Promise<PositionData | null> {
+  try {
+    const data = await fetchFundInvestmentPositionWithFallback(code)
     if (!data?.Datas) return null
 
     const datas = data.Datas

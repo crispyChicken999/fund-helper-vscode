@@ -68,7 +68,9 @@
                 >
                 <span
                   class="g-value"
-                  :class="estClass(detailRow.gszzl, detailRow.shouldShowEstimated)"
+                  :class="
+                    estClass(detailRow.gszzl, detailRow.shouldShowEstimated)
+                  "
                 >
                   {{
                     fmtEstPct(detailRow.gszzl, detailRow.shouldShowEstimated)
@@ -81,10 +83,12 @@
                 >
                 <span
                   class="g-value"
-                  :class="estClass(
-                    detailRow.estimatedGain,
-                    detailRow.shouldShowEstimated,
-                  )"
+                  :class="
+                    estClass(
+                      detailRow.estimatedGain,
+                      detailRow.shouldShowEstimated,
+                    )
+                  "
                 >
                   {{
                     fmtEstMoney(
@@ -145,11 +149,15 @@
             <div class="info-grid-2col">
               <div class="grid-item">
                 <span class="g-label">持仓总额</span>
-                <span class="g-value">{{ fmtMoney(detailRow.costAmount) }}</span>
+                <span class="g-value">{{
+                  fmtMoney(detailRow.costAmount)
+                }}</span>
               </div>
               <div class="grid-item">
                 <span class="g-label">持有金额</span>
-                <span class="g-value">{{ fmtMoney(detailRow.holdingAmount) }}</span>
+                <span class="g-value">{{
+                  fmtMoney(detailRow.holdingAmount)
+                }}</span>
               </div>
               <div class="grid-item">
                 <span class="g-label">持有份额</span>
@@ -161,7 +169,9 @@
               </div>
               <div class="grid-item">
                 <span class="g-label">估算净值</span>
-                <span class="g-value">{{ fmtPrice(detailRow.displayGsz) }}</span>
+                <span class="g-value">{{
+                  fmtPrice(detailRow.displayGsz)
+                }}</span>
               </div>
               <div class="grid-item">
                 <span class="g-label">单位净值</span>
@@ -201,7 +211,10 @@
       <!-- 持仓明细 -->
       <div v-show="activeTab === 'position'" class="tab-panel">
         <div v-if="tabLoading && !positionData" class="loading-hint">
-          加载中...
+          <div class="loading-box">
+            <div class="spinner" role="status" aria-label="加载中"></div>
+            <div class="loading-text">加载中...</div>
+          </div>
         </div>
         <template v-else-if="positionData">
           <div class="position-header">
@@ -483,7 +496,12 @@
         </div>
 
         <el-empty v-if="!overview && !tabLoading" description="暂无概况数据" />
-        <div v-if="tabLoading && !overview" class="loading-hint">加载中...</div>
+        <div v-if="tabLoading && !overview" class="loading-hint">
+          <div class="loading-box">
+            <div class="spinner" role="status" aria-label="加载中"></div>
+            <div class="loading-text">加载中...</div>
+          </div>
+        </div>
       </div>
 
       <!-- 基金经理 -->
@@ -538,7 +556,12 @@
           </div>
         </div>
         <el-empty v-else-if="!tabLoading" description="暂无经理信息" />
-        <div v-else class="loading-hint">加载中...</div>
+        <div v-else class="loading-hint">
+          <div class="loading-box">
+            <div class="spinner" role="status" aria-label="加载中"></div>
+            <div class="loading-text">加载中...</div>
+          </div>
+        </div>
       </div>
 
       <!-- 关联板块 -->
@@ -552,7 +575,356 @@
           </div>
         </div>
         <el-empty v-else-if="!tabLoading" description="暂无关联板块数据" />
-        <div v-else class="loading-hint">加载中...</div>
+        <div v-else class="loading-hint">
+          <div class="loading-box">
+            <div class="spinner" role="status" aria-label="加载中"></div>
+            <div class="loading-text">加载中...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 深度数据 -->
+      <div v-show="activeTab === 'deep'" class="tab-panel">
+        <div v-if="pingzhongDetail" class="deep-sections">
+          <!-- 基本信息摘要 -->
+          <div class="deep-summary-card">
+            <div class="deep-section-header">
+              <span class="deep-section-title">基本信息</span>
+            </div>
+            <div class="deep-info-grid">
+              <div class="deep-info-item">
+                <span class="deep-info-label">原费率</span>
+                <span class="deep-info-value">{{
+                  pingzhongDetail.sourceRate || "--"
+                }}</span>
+              </div>
+              <div class="deep-info-item">
+                <span class="deep-info-label">现费率</span>
+                <span class="deep-info-value">{{
+                  pingzhongDetail.currentRate || "--"
+                }}</span>
+              </div>
+              <div class="deep-info-item">
+                <span class="deep-info-label">最小申购</span>
+                <span class="deep-info-value">{{
+                  pingzhongDetail.minPurchase || "--"
+                }}</span>
+              </div>
+              <div class="deep-info-item">
+                <span class="deep-info-label">股票持仓数</span>
+                <span class="deep-info-value">{{
+                  pingzhongDetail.stockCodes.length
+                }}</span>
+              </div>
+              <div class="deep-info-item">
+                <span class="deep-info-label">债券持仓数</span>
+                <span class="deep-info-value">{{
+                  pingzhongDetail.bondCodes.length
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 阶段收益率 -->
+          <div class="deep-summary-card">
+            <div class="deep-section-header">
+              <span class="deep-section-title">阶段收益率</span>
+            </div>
+            <div class="deep-return-grid">
+              <div class="deep-return-item">
+                <span class="deep-return-label">近1月</span>
+                <span
+                  class="deep-return-value"
+                  :class="
+                    pctClass(parseFloat(pingzhongDetail.returnRates.oneMonth))
+                  "
+                >
+                  {{ formatPercentValue(pingzhongDetail.returnRates.oneMonth) }}
+                </span>
+              </div>
+              <div class="deep-return-item">
+                <span class="deep-return-label">近3月</span>
+                <span
+                  class="deep-return-value"
+                  :class="
+                    pctClass(parseFloat(pingzhongDetail.returnRates.threeMonth))
+                  "
+                >
+                  {{
+                    formatPercentValue(pingzhongDetail.returnRates.threeMonth)
+                  }}
+                </span>
+              </div>
+              <div class="deep-return-item">
+                <span class="deep-return-label">近6月</span>
+                <span
+                  class="deep-return-value"
+                  :class="
+                    pctClass(parseFloat(pingzhongDetail.returnRates.sixMonth))
+                  "
+                >
+                  {{ formatPercentValue(pingzhongDetail.returnRates.sixMonth) }}
+                </span>
+              </div>
+              <div class="deep-return-item">
+                <span class="deep-return-label">近1年</span>
+                <span
+                  class="deep-return-value"
+                  :class="
+                    pctClass(parseFloat(pingzhongDetail.returnRates.year1))
+                  "
+                >
+                  {{ formatPercentValue(pingzhongDetail.returnRates.year1) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 图表区域 - 单列布局 -->
+          <div class="deep-charts-section">
+            <!-- 累计收益走势 -->
+            <div class="deep-chart-card">
+              <div class="deep-section-header">
+                <span class="deep-section-title">累计收益走势</span>
+              </div>
+              <div ref="grandTotalChartRef" class="deep-chart-container"></div>
+            </div>
+
+            <!-- 同类排行 -->
+            <div class="deep-chart-card">
+              <div class="deep-section-header">
+                <span class="deep-section-title">同类排行走势</span>
+              </div>
+              <div ref="rankChartRef" class="deep-chart-container"></div>
+            </div>
+
+            <!-- 规模变动 -->
+            <div class="deep-chart-card">
+              <div class="deep-section-header">
+                <span class="deep-section-title">规模变动</span>
+              </div>
+              <div ref="fluctuationChartRef" class="deep-chart-container"></div>
+            </div>
+
+            <!-- 持有人结构 -->
+            <div class="deep-chart-card">
+              <div class="deep-section-header">
+                <span class="deep-section-title">持有人结构</span>
+              </div>
+              <div ref="holderChartRef" class="deep-chart-container"></div>
+            </div>
+
+            <!-- 资产配置 -->
+            <div class="deep-chart-card">
+              <div class="deep-section-header">
+                <span class="deep-section-title">资产配置</span>
+              </div>
+              <div ref="assetChartRef" class="deep-chart-container"></div>
+            </div>
+
+            <!-- 业绩评价 -->
+            <div class="deep-chart-card">
+              <div class="deep-section-header">
+                <span class="deep-section-title">业绩评价</span>
+              </div>
+              <div
+                ref="performanceChartRef"
+                class="deep-chart-container deep-chart-container--radar"
+              ></div>
+            </div>
+
+            <!-- 申购赎回 -->
+            <div class="deep-chart-card">
+              <div class="deep-section-header">
+                <span class="deep-section-title">申购赎回</span>
+              </div>
+              <div ref="buySellChartRef" class="deep-chart-container"></div>
+            </div>
+
+            <!-- 股票仓位测算 -->
+            <div class="deep-chart-card">
+              <div class="deep-section-header">
+                <span class="deep-section-title">股票仓位测算</span>
+              </div>
+              <div
+                ref="sharePositionChartRef"
+                class="deep-chart-container"
+              ></div>
+            </div>
+
+            <!-- 单位净值走势 -->
+            <div class="deep-chart-card">
+              <div class="deep-section-header">
+                <span class="deep-section-title">单位净值走势</span>
+              </div>
+              <div
+                ref="netWorthTrendChartRef"
+                class="deep-chart-container"
+              ></div>
+            </div>
+
+            <!-- 累计净值走势 -->
+            <div class="deep-chart-card">
+              <div class="deep-section-header">
+                <span class="deep-section-title">累计净值走势</span>
+              </div>
+              <div
+                ref="acWorthTrendChartRef"
+                class="deep-chart-container"
+              ></div>
+            </div>
+          </div>
+
+          <!-- 基金经理概览 -->
+          <div
+            class="deep-section-card"
+            v-if="pingzhongDetail.currentFundManagers?.length"
+          >
+            <div class="deep-section-header">
+              <span class="deep-section-title">基金经理</span>
+            </div>
+            <div class="deep-manager-list">
+              <div
+                v-for="m in pingzhongDetail.currentFundManagers"
+                :key="m.id"
+                class="deep-manager-card"
+              >
+                <div class="deep-manager-header">
+                  <img
+                    v-if="m.pic"
+                    class="deep-manager-avatar"
+                    :src="m.pic"
+                    :alt="m.name"
+                    referrerpolicy="no-referrer"
+                  />
+                  <div class="deep-manager-info">
+                    <div class="deep-manager-name">{{ m.name }}</div>
+                    <div class="deep-manager-meta">
+                      <span>{{ m.workTime }}</span>
+                      <span>{{ m.fundSize }}</span>
+                      <span>星级 {{ m.star }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="deep-manager-stats">
+                  <div class="deep-manager-stat">
+                    <span class="stat-label">能力评分</span>
+                    <span class="stat-value">{{ m.power.avr }}</span>
+                  </div>
+                  <div class="deep-manager-stat">
+                    <span class="stat-label">任期收益</span>
+                    <span class="stat-value">
+                      {{ m.profit.series[0]?.data[0]?.y?.toFixed(2) ?? "--" }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 同类涨幅榜 -->
+          <div class="deep-section-card" v-if="sameTypeGroups.length">
+            <div class="deep-section-header">
+              <span class="deep-section-title">同类涨幅榜</span>
+            </div>
+            <div class="deep-same-type-grid">
+              <div
+                v-for="(group, groupIndex) in sameTypeGroups"
+                :key="groupIndex"
+                class="deep-same-type-group"
+              >
+                <div class="deep-same-type-header">
+                  第 {{ groupIndex + 1 }} 组
+                </div>
+                <div class="deep-same-type-items">
+                  <div
+                    v-for="item in group"
+                    :key="item.code + item.name"
+                    class="deep-same-type-item"
+                  >
+                    <div class="deep-same-type-name">
+                      <span>{{ item.code }}</span>
+                      <span>{{ item.name }}</span>
+                    </div>
+                    <span
+                      class="deep-same-type-rate"
+                      :class="pctClass(parseFloat(item.rate))"
+                      >{{ item.rate }}%</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 持仓代码详情 -->
+          <div class="deep-codes-section">
+            <div
+              class="deep-codes-group"
+              v-if="pingzhongDetail.stockCodes.length"
+            >
+              <div class="deep-codes-label">持仓股票代码</div>
+              <div class="deep-codes-list">
+                <span
+                  v-for="code in pingzhongDetail.stockCodes"
+                  :key="code"
+                  class="deep-code-chip"
+                  >{{ code }}</span
+                >
+              </div>
+            </div>
+            <div
+              class="deep-codes-group"
+              v-if="pingzhongDetail.stockCodesNew.length"
+            >
+              <div class="deep-codes-label">持仓股票代码（新市场号）</div>
+              <div class="deep-codes-list">
+                <span
+                  v-for="code in pingzhongDetail.stockCodesNew"
+                  :key="code"
+                  class="deep-code-chip"
+                  >{{ code }}</span
+                >
+              </div>
+            </div>
+            <div
+              class="deep-codes-group"
+              v-if="pingzhongDetail.bondCodes.length"
+            >
+              <div class="deep-codes-label">债券代码</div>
+              <div class="deep-codes-list">
+                <span
+                  v-for="code in pingzhongDetail.bondCodes"
+                  :key="code"
+                  class="deep-code-chip"
+                  >{{ code }}</span
+                >
+              </div>
+            </div>
+            <div
+              class="deep-codes-group"
+              v-if="pingzhongDetail.bondCodesNew.length"
+            >
+              <div class="deep-codes-label">债券代码（新市场号）</div>
+              <div class="deep-codes-list">
+                <span
+                  v-for="code in pingzhongDetail.bondCodesNew"
+                  :key="code"
+                  class="deep-code-chip"
+                  >{{ code }}</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <el-empty v-else-if="!tabLoading" description="暂无深度数据" />
+        <div v-else class="loading-hint">
+          <div class="loading-box">
+            <div class="spinner" role="status" aria-label="加载中"></div>
+            <div class="loading-text">加载中...</div>
+          </div>
+        </div>
       </div>
 
       <!-- 历史净值 -->
@@ -696,6 +1068,10 @@ import { normalizeFundInfo } from "@/utils/fundInfoNormalize";
 import { getChinaMarketStatus } from "@/utils/marketChina";
 import type { FundInfo } from "@/types";
 import {
+  fetchPingzhongDetailData,
+  type PingzhongDetailData,
+} from "@/api/fundPingzhong";
+import {
   fetchFundOverview,
   fetchManagerAndThemes,
   fetchNetValueHistory,
@@ -725,6 +1101,7 @@ const tabs = [
   { key: "overview", label: "基金概况" },
   { key: "manager", label: "基金经理" },
   { key: "theme", label: "关联板块" },
+  { key: "deep", label: "深度数据" },
   { key: "netValue", label: "历史净值" },
   { key: "profit", label: "累计收益" },
 ];
@@ -740,13 +1117,17 @@ const rangeOptions = [
   { key: "ln", label: "成立以来" },
 ];
 
+const ACTIVE_TAB_STORAGE_KEY = "fund_helper_detail_active_tab";
+
 // ==================== 状态 ====================
 
 const router = useRouter();
 const fundStore = useFundStore();
 const settingStore = useSettingStore();
 
-const activeTab = ref("holding");
+const activeTab = ref(
+  localStorage.getItem(ACTIVE_TAB_STORAGE_KEY) || "holding",
+);
 const refreshing = ref(false);
 const tabLoading = ref(false);
 const submitting = ref(false);
@@ -755,6 +1136,7 @@ const showEditDialog = ref(false);
 const overview = ref<FundOverview | null>(null);
 const managers = ref<FundManager[]>([]);
 const themes = ref<RelateThemeItem[]>([]);
+const pingzhongDetail = ref<PingzhongDetailData | null>(null);
 const periodIncrease = ref<PeriodIncreaseData | null>(null);
 const weekNavRecords = ref<NetValueRecord[]>([]);
 const positionData = ref<PositionData | null>(null);
@@ -764,8 +1146,28 @@ const profitRange = ref("1m");
 
 const netValueChartRef = ref<HTMLElement | null>(null);
 const profitChartRef = ref<HTMLElement | null>(null);
+const grandTotalChartRef = ref<HTMLElement | null>(null);
+const fluctuationChartRef = ref<HTMLElement | null>(null);
+const holderChartRef = ref<HTMLElement | null>(null);
+const assetChartRef = ref<HTMLElement | null>(null);
+const performanceChartRef = ref<HTMLElement | null>(null);
+const buySellChartRef = ref<HTMLElement | null>(null);
+const sharePositionChartRef = ref<HTMLElement | null>(null);
+const netWorthTrendChartRef = ref<HTMLElement | null>(null);
+const acWorthTrendChartRef = ref<HTMLElement | null>(null);
+const rankChartRef = ref<HTMLElement | null>(null);
 let netValueChart: any = null;
 let profitChart: any = null;
+let grandTotalChart: any = null;
+let fluctuationChart: any = null;
+let holderChart: any = null;
+let assetChart: any = null;
+let performanceChart: any = null;
+let buySellChart: any = null;
+let sharePositionChart: any = null;
+let netWorthTrendChart: any = null;
+let acWorthTrendChart: any = null;
+let rankChart: any = null;
 
 const isDarkMode = computed(() => settingStore.theme === "dark");
 
@@ -844,6 +1246,22 @@ const detailRow = computed<FundRowDisplay | null>(() => {
   return buildFundRowDisplay(fund, info, getChinaMarketStatus());
 });
 
+type SameTypeItem = {
+  code: string;
+  name: string;
+  rate: string;
+};
+
+const sameTypeGroups = computed<SameTypeItem[][]>(() => {
+  const groups = pingzhongDetail.value?.sameType ?? [];
+  return groups
+    .map((group) =>
+      group
+        .map((entry) => parseSameTypeEntry(entry))
+        .filter((item) => item.code || item.name || item.rate),
+    )
+    .filter((group) => group.length > 0);
+});
 // 近一周收益率 = (最新净值 - 5个交易日前净值) / 5个交易日前净值 * 100
 const calcWeekRate = computed((): number | null => {
   const records = weekNavRecords.value;
@@ -909,6 +1327,655 @@ function riskLabel(level: string) {
   return map[level] || level || "--";
 }
 
+function formatPercentValue(value: unknown) {
+  if (value == null || value === "") return "--";
+  const n = safeNum(value);
+  return `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
+}
+
+function parseSameTypeEntry(entry: string): SameTypeItem {
+  const parts = String(entry).split("_");
+  const code = parts[0] ?? "";
+  const rate = parts.length > 1 ? (parts[parts.length - 1] ?? "") : "";
+  const name =
+    parts.length > 2 ? parts.slice(1, -1).join("_") : (parts[1] ?? "");
+  return { code, name, rate };
+}
+
+function formatTsDate(ts: number) {
+  const date = new Date(ts);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+async function renderDeepCharts() {
+  const detail = pingzhongDetail.value;
+  if (!detail) return;
+
+  const echarts = await loadEcharts();
+  await nextTick();
+
+  const textColor = isDarkMode.value ? "#e5e7eb" : "#666";
+  const axisColor = isDarkMode.value
+    ? "rgba(255,255,255,0.1)"
+    : "rgba(0,0,0,0.06)";
+
+  const baseTooltip = {
+    trigger: "axis",
+    backgroundColor: isDarkMode.value
+      ? "rgba(30, 30, 30, 0.95)"
+      : "rgba(255, 255, 255, 0.98)",
+    borderColor: isDarkMode.value ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)",
+    borderWidth: 1,
+    textStyle: { color: textColor, fontSize: 12 },
+    padding: [8, 12],
+    extraCssText: "box-shadow: 0 2px 8px rgba(0,0,0,0.15);",
+  };
+
+  const baseLegend = {
+    textStyle: { color: textColor, fontSize: 12 },
+    type: "scroll",
+    top: 0,
+    itemWidth: 20,
+    itemHeight: 12,
+  };
+
+  const baseCategoryAxis = {
+    type: "category",
+    axisLine: { lineStyle: { color: axisColor } },
+    axisLabel: { color: textColor, fontSize: 11 },
+    axisTick: { show: false },
+  };
+
+  const baseValueAxis = {
+    type: "value",
+    scale: true,
+    axisLine: { show: false },
+    splitLine: { lineStyle: { color: axisColor, type: "dashed" } },
+    axisLabel: { color: textColor, fontSize: 11 },
+  };
+
+  const baseGrid = {
+    left: 35,
+    right: 35,
+    top: 48,
+    bottom: 60,
+    containLabel: false,
+  };
+
+  const baseDataZoom = [
+    { type: "inside", start: 0, end: 100 },
+    {
+      type: "slider",
+      height: 20,
+      bottom: 8,
+      borderColor: axisColor,
+      fillerColor: isDarkMode.value
+        ? "rgba(255,255,255,0.1)"
+        : "rgba(0,0,0,0.05)",
+      handleStyle: { color: isDarkMode.value ? "#555" : "#ddd" },
+      textStyle: { color: textColor, fontSize: 10 },
+    },
+  ];
+
+  const initChart = (refEl: HTMLElement | null, chart: any) => {
+    if (!refEl) return null;
+    if (!chart) return echarts.init(refEl);
+    return chart;
+  };
+
+  const setNoData = (chart: any, text: string) => {
+    chart?.clear?.();
+    chart?.setOption?.({
+      title: {
+        text,
+        left: "center",
+        top: "center",
+        textStyle: { fontSize: 13, fontWeight: "normal", color: textColor },
+      },
+    });
+  };
+
+  const deepTooltipFormatter = (params: any[]) => {
+    const title = params[0]?.axisValueLabel || params[0]?.axisValue || "";
+    let html = `<div style="font-weight:600;margin-bottom:6px;font-size:13px">${title}</div>`;
+    params.forEach((item) => {
+      const value = Array.isArray(item.value) ? item.value[1] : item.value;
+      html += `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${item.color}"></span>
+        <span style="flex:1;text-align:left;">${item.seriesName}</span>
+        <span style="font-weight:600">${value}</span>
+      </div>`;
+    });
+    return html;
+  };
+
+  grandTotalChart = initChart(grandTotalChartRef.value, grandTotalChart);
+  fluctuationChart = initChart(fluctuationChartRef.value, fluctuationChart);
+  holderChart = initChart(holderChartRef.value, holderChart);
+  assetChart = initChart(assetChartRef.value, assetChart);
+  performanceChart = initChart(performanceChartRef.value, performanceChart);
+  buySellChart = initChart(buySellChartRef.value, buySellChart);
+  sharePositionChart = initChart(
+    sharePositionChartRef.value,
+    sharePositionChart,
+  );
+  netWorthTrendChart = initChart(
+    netWorthTrendChartRef.value,
+    netWorthTrendChart,
+  );
+  acWorthTrendChart = initChart(acWorthTrendChartRef.value, acWorthTrendChart);
+  rankChart = initChart(rankChartRef.value, rankChart);
+
+  if (detail.grandTotal.length && grandTotalChart) {
+    const categories =
+      detail.grandTotal[0]?.data?.map(([ts]) => formatTsDate(ts)) ?? [];
+    const colors = ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de"];
+    grandTotalChart.setOption({
+      backgroundColor: "transparent",
+      color: colors,
+      textStyle: { color: textColor, fontFamily: "inherit" },
+      tooltip: { ...baseTooltip, formatter: deepTooltipFormatter },
+      legend: baseLegend,
+      grid: baseGrid,
+      dataZoom: baseDataZoom,
+      xAxis: { ...baseCategoryAxis, data: categories },
+      yAxis: {
+        ...baseValueAxis,
+        axisLabel: { formatter: "{value}%", color: textColor, fontSize: 11 },
+      },
+      series: detail.grandTotal.map((series, _index) => ({
+        name: series.name,
+        type: "line",
+        smooth: true,
+        showSymbol: false,
+        data: series.data.map(([, value]) => value),
+        lineStyle: { width: 2 },
+        emphasis: { focus: "series" },
+      })),
+    });
+  } else {
+    setNoData(grandTotalChart, "暂无累计收益数据");
+  }
+
+  if (detail.fluctuationScale.categories.length && fluctuationChart) {
+    fluctuationChart.setOption({
+      backgroundColor: "transparent",
+      textStyle: { color: textColor, fontFamily: "inherit" },
+      tooltip: {
+        ...baseTooltip,
+        trigger: "axis",
+        formatter(params: any) {
+          const title = params[0]?.axisValueLabel || "";
+          let html = `<div style="font-weight:600;margin-bottom:6px;font-size:13px">${title}</div>`;
+          params.forEach((item: any) => {
+            const value =
+              item.seriesName === "环比"
+                ? safeNum(Number(item.value)).toFixed(2) + "%"
+                : safeNum(Number(item.value)).toFixed(2) + " 亿";
+            html += `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${item.color}"></span>
+              <span style="flex:1;text-align:left;">${item.seriesName}</span>
+              <span style="font-weight:600">${value}</span>
+            </div>`;
+          });
+          return html;
+        },
+      },
+      legend: { data: ["规模", "环比"], ...baseLegend },
+      grid: baseGrid,
+      dataZoom: baseDataZoom,
+      xAxis: { ...baseCategoryAxis, data: detail.fluctuationScale.categories },
+      yAxis: [
+        {
+          type: "value",
+          name: "规模(亿)",
+          nameTextStyle: { color: textColor, fontSize: 11 },
+          axisLabel: { color: textColor, fontSize: 11 },
+          splitLine: { lineStyle: { color: axisColor, type: "dashed" } },
+        },
+        {
+          type: "value",
+          name: "环比(%)",
+          nameTextStyle: { color: textColor, fontSize: 11 },
+          axisLabel: { color: textColor, fontSize: 11, formatter: "{value}%" },
+          splitLine: { show: false },
+        },
+      ],
+      series: [
+        {
+          name: "规模",
+          type: "bar",
+          data: detail.fluctuationScale.series.map((item) => item.y),
+          itemStyle: {
+            color: "#5470c6",
+          },
+          barMaxWidth: 40,
+        },
+        {
+          name: "环比",
+          type: "line",
+          yAxisIndex: 1,
+          data: detail.fluctuationScale.series.map((item) =>
+            safeNum(Number(item.mom.replace("%", ""))),
+          ),
+          itemStyle: { color: "#ee6666" },
+          lineStyle: { width: 2 },
+          showSymbol: false,
+          smooth: true,
+        },
+      ],
+    });
+  } else {
+    setNoData(fluctuationChart, "暂无规模变动数据");
+  }
+
+  if (detail.holderStructure.categories.length && holderChart) {
+    holderChart.setOption({
+      backgroundColor: "transparent",
+      textStyle: { color: textColor, fontFamily: "inherit" },
+      tooltip: {
+        ...baseTooltip,
+        trigger: "axis",
+        formatter: deepTooltipFormatter,
+      },
+      legend: {
+        data: detail.holderStructure.series.map((item) => item.name),
+        ...baseLegend,
+      },
+      grid: baseGrid,
+      dataZoom: baseDataZoom,
+      xAxis: { ...baseCategoryAxis, data: detail.holderStructure.categories },
+      yAxis: {
+        type: "value",
+        axisLabel: { formatter: "{value}%", color: textColor, fontSize: 11 },
+        splitLine: { lineStyle: { color: axisColor, type: "dashed" } },
+      },
+      series: detail.holderStructure.series.map((item, index) => ({
+        name: item.name,
+        type: "bar",
+        stack: "holder",
+        data: item.data,
+        itemStyle: { color: ["#5470c6", "#91cc75", "#fac858"][index] },
+        barMaxWidth: 40,
+        emphasis: { focus: "series" },
+      })),
+    });
+  } else {
+    setNoData(holderChart, "暂无持有人结构数据");
+  }
+
+  if (detail.assetAllocation.categories.length && assetChart) {
+    assetChart.setOption({
+      backgroundColor: "transparent",
+      textStyle: { color: textColor, fontFamily: "inherit" },
+      tooltip: {
+        ...baseTooltip,
+        trigger: "axis",
+        formatter: deepTooltipFormatter,
+      },
+      legend: {
+        data: detail.assetAllocation.series.map((item) => item.name),
+        ...baseLegend,
+      },
+      grid: baseGrid,
+      dataZoom: baseDataZoom,
+      xAxis: { ...baseCategoryAxis, data: detail.assetAllocation.categories },
+      yAxis: [
+        {
+          type: "value",
+          axisLabel: { formatter: "{value}%", color: textColor, fontSize: 11 },
+          splitLine: { lineStyle: { color: axisColor, type: "dashed" } },
+        },
+        {
+          type: "value",
+          axisLabel: { color: textColor, fontSize: 11 },
+          splitLine: { show: false },
+        },
+      ],
+      series: detail.assetAllocation.series.map((item, _index) => ({
+        name: item.name,
+        type: item.type === "line" ? "line" : "bar",
+        yAxisIndex: item.yAxis,
+        smooth: item.type === "line",
+        showSymbol: item.type === "line" ? false : true,
+        data: item.data,
+        lineStyle: item.type === "line" ? { width: 2 } : undefined,
+        barMaxWidth: 40,
+        emphasis: { focus: "series" },
+      })),
+    });
+  } else {
+    setNoData(assetChart, "暂无资产配置数据");
+  }
+
+  if (detail.performanceEvaluation.categories.length && performanceChart) {
+    performanceChart.setOption({
+      backgroundColor: "transparent",
+      textStyle: { color: textColor, fontFamily: "inherit" },
+      tooltip: {
+        ...baseTooltip,
+        trigger: "item",
+        formatter: (params: any) => {
+          let html = `<div style="font-weight:600;margin-bottom:6px;font-size:13px">${params.name}</div>`;
+          params.value.forEach((val: number, idx: number) => {
+            html += `<div style="display:flex;gap:8px;margin:3px 0">
+              <span style="flex:1;text-align:left;">${detail.performanceEvaluation.categories[idx]}</span>
+              <span style="font-weight:600">${val}</span>
+            </div>`;
+          });
+          return html;
+        },
+      },
+      radar: {
+        indicator: detail.performanceEvaluation.categories.map((name) => ({
+          name,
+          max: 100,
+        })),
+        splitArea: {
+          areaStyle: {
+            color: isDarkMode.value
+              ? ["rgba(255,255,255,0.02)", "rgba(255,255,255,0.04)"]
+              : ["rgba(0,0,0,0.02)", "rgba(0,0,0,0.04)"],
+          },
+        },
+        axisName: { color: textColor, fontSize: 11 },
+        splitLine: { lineStyle: { color: axisColor } },
+        axisLine: { lineStyle: { color: axisColor } },
+        center: ["50%", "55%"],
+        radius: "65%",
+      },
+      series: [
+        {
+          name: "业绩评价",
+          type: "radar",
+          data: [
+            {
+              value: detail.performanceEvaluation.data,
+              name: `平均 ${detail.performanceEvaluation.avr}`,
+              areaStyle: {
+                color: new echarts.graphic.RadialGradient(0.5, 0.5, 1, [
+                  { offset: 0, color: "rgba(84, 112, 198, 0.3)" },
+                  { offset: 1, color: "rgba(84, 112, 198, 0.1)" },
+                ]),
+              },
+              lineStyle: { color: "#5470c6", width: 2 },
+              itemStyle: { color: "#5470c6" },
+            },
+          ],
+          emphasis: {
+            lineStyle: { width: 3 },
+            areaStyle: { opacity: 0.5 },
+          },
+        },
+      ],
+    });
+  } else {
+    setNoData(performanceChart, "暂无业绩评价数据");
+  }
+
+  if (detail.buySedemption.categories.length && buySellChart) {
+    buySellChart.setOption({
+      backgroundColor: "transparent",
+      textStyle: { color: textColor, fontFamily: "inherit" },
+      tooltip: {
+        ...baseTooltip,
+        trigger: "axis",
+        formatter: deepTooltipFormatter,
+      },
+      legend: {
+        data: detail.buySedemption.series.map((item) => item.name),
+        ...baseLegend,
+      },
+      grid: baseGrid,
+      dataZoom: baseDataZoom,
+      xAxis: { ...baseCategoryAxis, data: detail.buySedemption.categories },
+      yAxis: {
+        type: "value",
+        axisLabel: { color: textColor, fontSize: 11 },
+        splitLine: { lineStyle: { color: axisColor, type: "dashed" } },
+      },
+      series: detail.buySedemption.series.map((item, index) => ({
+        name: item.name,
+        type: index === 2 ? "line" : "bar",
+        smooth: index === 2,
+        data: item.data,
+        itemStyle: { color: ["#5470c6", "#ee6666", "#91cc75"][index] },
+        lineStyle: index === 2 ? { width: 2 } : undefined,
+        showSymbol: index === 2 ? false : true,
+        barMaxWidth: 40,
+        emphasis: { focus: "series" },
+      })),
+    });
+  } else {
+    setNoData(buySellChart, "暂无申购赎回数据");
+  }
+
+  if (detail.sharePositionTrend.length && sharePositionChart) {
+    sharePositionChart.setOption({
+      backgroundColor: "transparent",
+      textStyle: { color: textColor, fontFamily: "inherit" },
+      tooltip: { ...baseTooltip, trigger: "axis" },
+      grid: baseGrid,
+      dataZoom: baseDataZoom,
+      xAxis: {
+        ...baseCategoryAxis,
+        data: detail.sharePositionTrend.map((item) => formatTsDate(item.date)),
+      },
+      yAxis: {
+        type: "value",
+        axisLabel: { formatter: "{value}%", color: textColor, fontSize: 11 },
+        splitLine: { lineStyle: { color: axisColor, type: "dashed" } },
+      },
+      series: [
+        {
+          name: "股票仓位",
+          type: "line",
+          data: detail.sharePositionTrend.map((item) => item.value),
+          showSymbol: false,
+          smooth: true,
+          lineStyle: { width: 2, color: "#5470c6" },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: "rgba(84, 112, 198, 0.3)" },
+              { offset: 1, color: "rgba(84, 112, 198, 0.05)" },
+            ]),
+          },
+        },
+      ],
+    });
+  } else {
+    setNoData(sharePositionChart, "暂无股票仓位测算数据");
+  }
+
+  if (detail.netWorthTrend.length && netWorthTrendChart) {
+    netWorthTrendChart.setOption({
+      backgroundColor: "transparent",
+      textStyle: { color: textColor, fontFamily: "inherit" },
+      tooltip: {
+        ...baseTooltip,
+        trigger: "axis",
+        formatter(params: any[]) {
+          const title = params[0]?.axisValueLabel || "";
+          const point = detail.netWorthTrend[params[0]?.dataIndex ?? 0];
+          let html = `<div style="font-weight:600;margin-bottom:6px;font-size:13px">${title}</div>`;
+          html += `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${params[0]?.color}"></span>
+            <span style="flex:1;text-align:left;">单位净值</span>
+            <span style="font-weight:600">${safeNum(point?.value).toFixed(4)}</span>
+          </div>`;
+          if (point) {
+            const returnColor =
+              point.equityReturn > 0
+                ? "#ee6666"
+                : point.equityReturn < 0
+                  ? "#91cc75"
+                  : textColor;
+            html += `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${returnColor}"></span>
+              <span style="flex:1;text-align:left;">净值回报</span>
+              <span style="font-weight:600;color:${returnColor}">${point.equityReturn > 0 ? "+" : ""}${point.equityReturn.toFixed(2)}%</span>
+            </div>`;
+            if (point.unitMoney) {
+              html += `<div style="display:flex;gap:8px;margin:3px 0">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${params[0]?.color}"></span>
+                <span style="flex:1;text-align:left;">每份派送金</span>
+                <span style="font-weight:600">${point.unitMoney}</span>
+              </div>`;
+            }
+          }
+          return html;
+        },
+      },
+      grid: baseGrid,
+      dataZoom: baseDataZoom,
+      xAxis: {
+        ...baseCategoryAxis,
+        data: detail.netWorthTrend.map((item) => formatTsDate(item.date)),
+      },
+      yAxis: {
+        type: "value",
+        axisLabel: { formatter: "{value}", color: textColor, fontSize: 11 },
+        splitLine: { lineStyle: { color: axisColor, type: "dashed" } },
+      },
+      series: [
+        {
+          name: "单位净值",
+          type: "line",
+          data: detail.netWorthTrend.map((item) => item.value),
+          showSymbol: false,
+          smooth: true,
+          lineStyle: { width: 2, color: "#91cc75" },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: "rgba(145, 204, 117, 0.3)" },
+              { offset: 1, color: "rgba(145, 204, 117, 0.05)" },
+            ]),
+          },
+        },
+      ],
+    });
+  } else {
+    setNoData(netWorthTrendChart, "暂无单位净值走势数据");
+  }
+
+  if (detail.acWorthTrend.length && acWorthTrendChart) {
+    acWorthTrendChart.setOption({
+      backgroundColor: "transparent",
+      textStyle: { color: textColor, fontFamily: "inherit" },
+      tooltip: { ...baseTooltip, trigger: "axis" },
+      grid: baseGrid,
+      dataZoom: baseDataZoom,
+      xAxis: {
+        ...baseCategoryAxis,
+        data: detail.acWorthTrend.map((item) => formatTsDate(item.date)),
+      },
+      yAxis: {
+        type: "value",
+        axisLabel: { formatter: "{value}", color: textColor, fontSize: 11 },
+        splitLine: { lineStyle: { color: axisColor, type: "dashed" } },
+      },
+      series: [
+        {
+          name: "累计净值",
+          type: "line",
+          data: detail.acWorthTrend.map((item) => item.value),
+          showSymbol: false,
+          smooth: true,
+          lineStyle: { width: 2, color: "#fac858" },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: "rgba(250, 200, 88, 0.3)" },
+              { offset: 1, color: "rgba(250, 200, 88, 0.05)" },
+            ]),
+          },
+        },
+      ],
+    });
+  } else {
+    setNoData(acWorthTrendChart, "暂无累计净值走势数据");
+  }
+
+  if (detail.rateInSimilarType.length && rankChart) {
+    const rankDates = detail.rateInSimilarType.map((item) =>
+      formatTsDate(item.x),
+    );
+    rankChart.setOption({
+      backgroundColor: "transparent",
+      textStyle: { color: textColor, fontFamily: "inherit" },
+      tooltip: { ...baseTooltip, formatter: deepTooltipFormatter },
+      legend: { data: ["排名", "百分位"], ...baseLegend },
+      grid: baseGrid,
+      dataZoom: baseDataZoom,
+      xAxis: { ...baseCategoryAxis, data: rankDates },
+      yAxis: [
+        {
+          type: "value",
+          inverse: true,
+          min: 1,
+          name: "排名",
+          nameTextStyle: { color: textColor, fontSize: 11 },
+          axisLabel: { color: textColor, fontSize: 11 },
+          splitLine: { lineStyle: { color: axisColor, type: "dashed" } },
+        },
+        {
+          type: "value",
+          name: "百分位(%)",
+          nameTextStyle: { color: textColor, fontSize: 11 },
+          axisLabel: { formatter: "{value}%", color: textColor, fontSize: 11 },
+          splitLine: { show: false },
+        },
+      ],
+      series: [
+        {
+          name: "排名",
+          type: "line",
+          data: detail.rateInSimilarType.map((item) => item.y),
+          showSymbol: false,
+          lineStyle: { width: 2, color: "#5470c6" },
+          smooth: true,
+        },
+        {
+          name: "百分位",
+          type: "line",
+          yAxisIndex: 1,
+          data: detail.rateInSimilarPersent.map((item) => item[1]),
+          showSymbol: false,
+          lineStyle: { width: 2, color: "#ee6666" },
+          smooth: true,
+        },
+      ],
+    });
+  } else {
+    setNoData(rankChart, "暂无同类排行数据");
+  }
+}
+
+function disposeDeepCharts() {
+  grandTotalChart?.dispose();
+  fluctuationChart?.dispose();
+  holderChart?.dispose();
+  assetChart?.dispose();
+  performanceChart?.dispose();
+  buySellChart?.dispose();
+  sharePositionChart?.dispose();
+  netWorthTrendChart?.dispose();
+  acWorthTrendChart?.dispose();
+  rankChart?.dispose();
+  grandTotalChart = null;
+  fluctuationChart = null;
+  holderChart = null;
+  assetChart = null;
+  performanceChart = null;
+  buySellChart = null;
+  sharePositionChart = null;
+  netWorthTrendChart = null;
+  acWorthTrendChart = null;
+  rankChart = null;
+}
+
 // ==================== 持仓明细辅助 ====================
 
 function stockChangeClass(changePercent: number | null) {
@@ -936,6 +2003,7 @@ function comparedClass(s: { changeType: string; changeRatio: number }) {
 // ==================== Tab 切换 & 数据加载 ====================
 
 async function switchTab(tab: string) {
+  localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, tab);
   activeTab.value = tab;
   scrollTabIntoCenter(tab);
   await loadTabOnce(tab);
@@ -1005,6 +2073,13 @@ async function loadTabData(tab: string) {
       }
       break;
     }
+    case "deep": {
+      if (!pingzhongDetail.value) {
+        pingzhongDetail.value = await fetchPingzhongDetailData(props.code);
+      }
+      await renderDeepCharts();
+      break;
+    }
     case "netValue": {
       await loadNetValueChart();
       break;
@@ -1020,6 +2095,8 @@ async function handleRefresh() {
   refreshing.value = true;
   try {
     loadedTabs.clear();
+    pingzhongDetail.value = null;
+    disposeDeepCharts();
     await fundService.fetchFundDetail(props.code);
     await loadTabOnce(activeTab.value);
   } finally {
@@ -1094,7 +2171,7 @@ async function renderNetValueChart(records: NetValueRecord[]) {
               <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${
                 p.color
               }; flex-shrink: 0;"></span>
-              <span style="flex: 1;">${p.seriesName}:</span>
+              <span style="flex: 1;;text-align:left;">${p.seriesName}:</span>
               <span style="color: ${p.color}; font-weight: 600;">${Number(
                 p.value,
               ).toFixed(4)}</span>
@@ -1103,10 +2180,11 @@ async function renderNetValueChart(records: NetValueRecord[]) {
           const idx = params[0]?.dataIndex;
           const rate = jzzzl[idx];
           if (rate != null && rate !== 0) {
-            const color = rate > 0 ? "#f56c6c" : rate < 0 ? "#4eb61b" : "inherit";
+            const color =
+              rate > 0 ? "#f56c6c" : rate < 0 ? "#4eb61b" : "inherit";
             html += `<div style="display: flex; align-items: center; margin-top: 6px; gap: 8px">
               <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #909399; flex-shrink: 0;"></span>
-              <span style="flex: 1;">日增长率:</span>
+              <span style="flex: 1;;text-align:left;">日增长率:</span>
               <span style="color: ${color}; font-weight: 600;">${rate}%</span>
             </div>`;
           }
@@ -1230,7 +2308,7 @@ async function renderProfitChart(records: YieldRecord[]) {
               <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${
                 p.color
               }; flex-shrink: 0;"></span>
-              <span style="flex: 1;">${p.seriesName}:</span>
+              <span style="flex: 1;text-align:left;">${p.seriesName}:</span>
               <span style="color: ${p.color}; font-weight: 600;">${Number(
                 p.value,
               ).toFixed(2)}%</span>
@@ -1406,6 +2484,42 @@ function goBack() {
 
 let resizeObs: ResizeObserver | null = null;
 
+function resizeAllCharts() {
+  netValueChart?.resize();
+  profitChart?.resize();
+  grandTotalChart?.resize();
+  fluctuationChart?.resize();
+  holderChart?.resize();
+  assetChart?.resize();
+  performanceChart?.resize();
+  buySellChart?.resize();
+  sharePositionChart?.resize();
+  netWorthTrendChart?.resize();
+  acWorthTrendChart?.resize();
+  rankChart?.resize();
+}
+
+function observeChartContainers(observer: ResizeObserver) {
+  const chartRefs = [
+    netValueChartRef,
+    profitChartRef,
+    grandTotalChartRef,
+    fluctuationChartRef,
+    holderChartRef,
+    assetChartRef,
+    performanceChartRef,
+    buySellChartRef,
+    sharePositionChartRef,
+    netWorthTrendChartRef,
+    acWorthTrendChartRef,
+    rankChartRef,
+  ];
+
+  for (const chartRef of chartRefs) {
+    if (chartRef.value) observer.observe(chartRef.value);
+  }
+}
+
 // ==================== 路由参数变化时重置 ====================
 
 watch(
@@ -1416,6 +2530,7 @@ watch(
     overview.value = null;
     managers.value = [];
     themes.value = [];
+    pingzhongDetail.value = null;
     periodIncrease.value = null;
     weekNavRecords.value = [];
     positionData.value = null;
@@ -1429,6 +2544,7 @@ watch(
     netValueChart = null;
     profitChart?.dispose();
     profitChart = null;
+    disposeDeepCharts();
 
     // 加载新基金数据
     if (!fundStore.fundDetails.has(newCode)) {
@@ -1467,17 +2583,20 @@ onMounted(async () => {
 
   // 图表 resize
   resizeObs = new ResizeObserver(() => {
-    netValueChart?.resize();
-    profitChart?.resize();
+    resizeAllCharts();
   });
-  if (netValueChartRef.value) resizeObs.observe(netValueChartRef.value);
-  if (profitChartRef.value) resizeObs.observe(profitChartRef.value);
+  observeChartContainers(resizeObs);
+
+  window.addEventListener("resize", resizeAllCharts);
+  await loadTabOnce(activeTab.value);
 });
 
 onUnmounted(() => {
   resizeObs?.disconnect();
+  window.removeEventListener("resize", resizeAllCharts);
   netValueChart?.dispose();
   profitChart?.dispose();
+  disposeDeepCharts();
 });
 </script>
 
@@ -1856,10 +2975,39 @@ onUnmounted(() => {
 }
 
 .loading-hint {
-  text-align: center;
-  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
   color: var(--el-text-color-secondary);
   font-size: 13px;
+}
+
+.loading-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(0, 0, 0, 0.08);
+  border-top-color: var(--el-color-primary);
+  border-radius: 50%;
+  animation: loading-spin 0.9s linear infinite;
+  box-sizing: border-box;
+}
+
+.loading-text {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 持仓明细 */
@@ -1900,9 +3048,338 @@ onUnmounted(() => {
   margin-top: 1px;
 }
 
+.deep-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.deep-summary-card,
+.deep-section-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  background: var(--el-bg-color);
+  min-width: 0;
+}
+
+.deep-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.deep-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.deep-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.deep-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--el-fill-color-lighter);
+}
+
+.deep-info-label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.deep-info-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.deep-return-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.deep-return-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--el-fill-color-lighter);
+}
+
+.deep-return-label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.deep-return-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.deep-charts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.deep-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 16px 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  background: var(--el-bg-color);
+}
+
+.deep-chart-container {
+  width: 100%;
+  height: 320px;
+}
+
+.deep-chart-container--radar {
+  height: 360px;
+}
+
+.deep-manager-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.deep-manager-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 6px;
+  background: var(--el-fill-color-lighter);
+}
+
+.deep-manager-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-direction: column;
+}
+
+.deep-manager-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--el-border-color);
+  flex-shrink: 0;
+}
+
+.deep-manager-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.deep-manager-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.deep-manager-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+}
+
+.deep-manager-meta span {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--el-fill-color);
+}
+
+.deep-manager-meta span:last-of-type::after {
+  content: "★";
+  margin: 0 4px;
+  color: var(--el-text-color-secondary);
+}
+
+.deep-manager-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.deep-manager-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--el-fill-color);
+}
+
+.deep-manager-stat .stat-label {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+}
+
+.deep-manager-stat .stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.deep-same-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.deep-same-type-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--el-fill-color-lighter);
+}
+
+.deep-same-type-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.deep-same-type-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.deep-same-type-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  padding: 4px 0;
+}
+
+.deep-same-type-name {
+  flex: 1 1 0;
+  min-width: 0;
+  color: var(--el-text-color-regular);
+  display: flex;
+  gap: 4px;
+}
+
+.deep-same-type-name span {
+  min-width: 50px;
+}
+
+.deep-same-type-name span:last-of-type {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deep-same-type-rate {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.deep-collapse {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.deep-codes-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.deep-codes-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deep-codes-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  text-align: left;
+}
+
+.deep-codes-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.deep-code-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
+  font-size: 12px;
+  font-family: "Consolas", "Monaco", monospace;
+  border: 1px solid var(--el-border-color-lighter);
+}
+
 @media (max-width: 768px) {
   .g-value {
     font-size: 14px;
+  }
+
+  .chart-grid-2col {
+    grid-template-columns: 1fr;
+  }
+
+  .deep-chart-container,
+  .deep-chart-container--radar {
+    height: 280px;
+  }
+
+  .deep-info-grid,
+  .deep-return-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+
+  .deep-manager-list,
+  .deep-same-type-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

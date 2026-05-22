@@ -405,6 +405,7 @@ function handleCopy() {
   font-size: 13px;
   font-weight: 600;
   color: var(--el-text-color-primary);
+  margin-right: 4px;
 }
 
 .tooltip-body {

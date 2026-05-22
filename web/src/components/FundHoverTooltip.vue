@@ -473,6 +473,7 @@ function handleCopy() {
   font-weight: 600;
   color: var(--el-text-color-primary);
   line-height: 1.4;
+  margin-right: 4px;
 }
 
 .tooltip-code {

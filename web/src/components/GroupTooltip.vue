@@ -48,121 +48,124 @@
               </div>
             </header>
 
-            <section class="group-tooltip-body">
-              <div class="info-row">
-                <span class="info-label">基金数量</span>
-                <span>{{ stats.fundCount }} 只</span>
-              </div>
-
-              <!-- 估算数据 -->
-              <div class="info-group">
-                <div class="info-row">
-                  <span class="info-label"
-                    >估算收益 ({{ stats.estimatedDate }})</span
-                  >
-                  <span :class="moneyClass(stats.estimatedGain)">{{
-                    fmtMoney(stats.estimatedGain)
-                  }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label"
-                    >估算涨幅 ({{ stats.estimatedDate }})</span
-                  >
-                  <span :class="pctClass(stats.estimatedChangePercent)">{{
-                    fmtPct(stats.estimatedChangePercent)
-                  }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label"
-                    >估算上涨/下跌 ({{ stats.estimatedDate }})</span
-                  >
-                  <span
-                    ><span class="positive">{{ stats.estimatedUpCount }}</span>
-                    /
-                    <span class="negative">{{
-                      stats.estimatedDownCount
-                    }}</span></span
-                  >
-                </div>
-              </div>
-
-              <!-- 当日数据 -->
-              <div class="info-group">
-                <div class="info-row">
-                  <span class="info-label"
-                    >当日收益 ({{ stats.dailyDate }})</span
-                  >
-                  <span :class="moneyClass(stats.dailyGain)">{{
-                    fmtMoney(stats.dailyGain)
-                  }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label"
-                    >当日涨幅 ({{ stats.dailyDate }})</span
-                  >
-                  <span :class="pctClass(stats.dailyChangePercent)">{{
-                    fmtPct(stats.dailyChangePercent)
-                  }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label"
-                    >当日上涨/下跌 ({{ stats.dailyDate }})</span
-                  >
-                  <span
-                    ><span class="positive">{{ stats.dailyUpCount }}</span> /
-                    <span class="negative">{{
-                      stats.dailyDownCount
-                    }}</span></span
-                  >
-                </div>
-              </div>
-
-              <!-- 持有数据 -->
-              <div class="info-group">
-                <div class="info-row">
-                  <span class="info-label"
-                    >持有收益 ({{ stats.holdingDate }})</span
-                  >
-                  <span :class="moneyClass(stats.holdingGain)">{{
-                    fmtMoney(stats.holdingGain)
-                  }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label"
-                    >持有收益率 ({{ stats.holdingDate }})</span
-                  >
-                  <span :class="pctClass(stats.holdingGainRate)">{{
-                    fmtPct(stats.holdingGainRate)
-                  }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label"
-                    >持有盈利/亏损 ({{ stats.holdingDate }})</span
-                  >
-                  <span
-                    ><span class="positive">{{
-                      stats.holdingProfitCount
+            <el-scrollbar>
+              <section class="group-tooltip-body">
+                <!-- 估算数据 -->
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="info-label">基金数量</span>
+                    <span>{{ stats.fundCount }} 只</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"
+                      >估算收益 ({{ stats.estimatedDate }})</span
+                    >
+                    <span :class="moneyClass(stats.estimatedGain)">{{
+                      fmtMoney(stats.estimatedGain)
                     }}</span>
-                    /
-                    <span class="negative">{{
-                      stats.holdingLossCount
-                    }}</span></span
-                  >
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"
+                      >估算涨幅 ({{ stats.estimatedDate }})</span
+                    >
+                    <span :class="pctClass(stats.estimatedChangePercent)">{{
+                      fmtPct(stats.estimatedChangePercent)
+                    }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"
+                      >估算上涨/下跌 ({{ stats.estimatedDate }})</span
+                    >
+                    <span
+                      ><span class="positive">{{
+                        stats.estimatedUpCount
+                      }}</span>
+                      /
+                      <span class="negative">{{
+                        stats.estimatedDownCount
+                      }}</span></span
+                    >
+                  </div>
                 </div>
-              </div>
 
-              <!-- 总计 -->
-              <div class="info-group">
-                <div class="info-row">
-                  <span class="info-label">总资产</span>
-                  <span>{{ fmtMoney(stats.totalAsset) }}</span>
+                <!-- 当日数据 -->
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="info-label"
+                      >当日收益 ({{ stats.dailyDate }})</span
+                    >
+                    <span :class="moneyClass(stats.dailyGain)">{{
+                      fmtMoney(stats.dailyGain)
+                    }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"
+                      >当日涨幅 ({{ stats.dailyDate }})</span
+                    >
+                    <span :class="pctClass(stats.dailyChangePercent)">{{
+                      fmtPct(stats.dailyChangePercent)
+                    }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"
+                      >当日上涨/下跌 ({{ stats.dailyDate }})</span
+                    >
+                    <span
+                      ><span class="positive">{{ stats.dailyUpCount }}</span> /
+                      <span class="negative">{{
+                        stats.dailyDownCount
+                      }}</span></span
+                    >
+                  </div>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">总成本</span>
-                  <span>{{ fmtMoney(stats.totalCost) }}</span>
+
+                <!-- 持有数据 -->
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="info-label"
+                      >持有收益 ({{ stats.holdingDate }})</span
+                    >
+                    <span :class="moneyClass(stats.holdingGain)">{{
+                      fmtMoney(stats.holdingGain)
+                    }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"
+                      >持有收益率 ({{ stats.holdingDate }})</span
+                    >
+                    <span :class="pctClass(stats.holdingGainRate)">{{
+                      fmtPct(stats.holdingGainRate)
+                    }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"
+                      >持有盈利/亏损 ({{ stats.holdingDate }})</span
+                    >
+                    <span
+                      ><span class="positive">{{
+                        stats.holdingProfitCount
+                      }}</span>
+                      /
+                      <span class="negative">{{
+                        stats.holdingLossCount
+                      }}</span></span
+                    >
+                  </div>
                 </div>
-              </div>
-            </section>
+
+                <!-- 总计 -->
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="info-label">总资产</span>
+                    <span>{{ fmtMoney(stats.totalAsset) }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">总成本</span>
+                    <span>{{ fmtMoney(stats.totalCost) }}</span>
+                  </div>
+                </div>
+              </section>
+            </el-scrollbar>
           </div>
         </Transition>
       </div>
@@ -280,22 +283,27 @@ function handleCopy() {
 }
 
 .group-tooltip-panel {
-  width: 100%;
-  max-width: 380px;
-  max-height: 85vh;
-  overflow: auto;
+  width: 75vw;
+  max-width: 420px;
+  height: 85vh;
+  max-height: 450px;
   background: var(--el-bg-color);
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--el-border-color-light);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.el-scrollbar {
+  flex: 1;
 }
 
 .group-tooltip-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
@@ -330,6 +338,7 @@ function handleCopy() {
   font-size: 16px;
   font-weight: 600;
   color: var(--el-text-color-primary);
+  margin-right: 4px;
 }
 
 .group-tooltip-body {
