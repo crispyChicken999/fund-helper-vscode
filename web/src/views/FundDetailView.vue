@@ -2932,7 +2932,7 @@ onUnmounted(() => {
   border-radius: 12px;
   cursor: pointer;
   user-select: none;
-  background: var(--el-fill-color-lighter);
+  background: var(--el-fill-color);
   color: var(--el-text-color-secondary);
   transition: all 0.2s;
 }
@@ -3060,7 +3060,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 12px;
   padding: 12px 16px 16px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--el-border-color);
   border-radius: 8px;
   background: var(--el-bg-color);
   min-width: 0;
@@ -3071,7 +3071,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 .deep-section-title {
@@ -3093,6 +3093,7 @@ onUnmounted(() => {
   padding: 12px;
   border-radius: 6px;
   background: var(--el-fill-color-lighter);
+  border: 1px solid var(--el-border-color);
 }
 
 .deep-info-label {
@@ -3120,6 +3121,7 @@ onUnmounted(() => {
   padding: 12px;
   border-radius: 6px;
   background: var(--el-fill-color-lighter);
+  border: 1px solid var(--el-border-color);
 }
 
 .deep-return-label {
@@ -3143,7 +3145,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 12px;
   padding: 10px 16px 16px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--el-border-color);
   border-radius: 8px;
   background: var(--el-bg-color);
 }
@@ -3260,7 +3262,7 @@ onUnmounted(() => {
   gap: 8px;
   padding: 12px;
   border-radius: 6px;
-  background: var(--el-fill-color-lighter);
+  background: var(--el-fill-color);
 }
 
 .deep-same-type-header {
@@ -3268,7 +3270,7 @@ onUnmounted(() => {
   font-weight: 600;
   color: var(--el-text-color-primary);
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 .deep-same-type-items {
@@ -3313,7 +3315,7 @@ onUnmounted(() => {
 }
 
 .deep-collapse {
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--el-border-color);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -3322,7 +3324,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--el-border-color);
   border-radius: 8px;
   padding: 16px;
 }

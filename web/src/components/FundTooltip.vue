@@ -345,14 +345,14 @@ function handleCopy() {
 }
 
 .fund-tooltip-panel {
-  width: 75vw;
+  width: 70vw;
   max-width: 420px;
   height: 85vh;
-  max-height: 686px;
+  max-height: 650px;
   background: var(--el-bg-color);
   border-radius: 8px;
   padding: 16px;
-  border: 1px solid var(--el-border-color-light);
+  border: 1px solid var(--el-border-color);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
@@ -385,7 +385,7 @@ function handleCopy() {
   height: 28px;
   border-radius: 6px;
   border: none;
-  background: var(--el-fill-color-light);
+  background: var(--el-fill-color);
   color: var(--el-text-color-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -450,7 +450,7 @@ function handleCopy() {
   gap: 8px;
   padding-top: 14px;
   margin-top: 4px;
-  border-top: 1px solid var(--el-border-color-lighter);
+  border-top: 1px solid var(--el-border-color);
 }
 
 .fund-tooltip-actions .el-button {

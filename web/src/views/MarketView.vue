@@ -82,17 +82,21 @@
                 {{ card.price.toFixed(2) }}
               </div>
               <div class="card-stats">
-                <div
-                  class="card-amount"
-                  :class="changeColorClass(card.changeAmount)"
-                >
-                  {{ fmtChange(card.changeAmount) }}
+                <div class="card-stat-item">
+                  <span
+                    class="card-change card-stat-value"
+                    :class="changeColorClass(card.changePercent)"
+                  >
+                    {{ fmtPct(card.changePercent) }}
+                  </span>
                 </div>
-                <div
-                  class="card-change"
-                  :class="changeColorClass(card.changePercent)"
-                >
-                  {{ fmtPct(card.changePercent) }}
+                <div class="card-stat-item card-stat-item--secondary">
+                  <span
+                    class="card-amount card-stat-value card-stat-value--muted"
+                    :class="changeColorClass(card.changeAmount)"
+                  >
+                    {{ fmtChange(card.changeAmount) }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -952,7 +956,7 @@ onUnmounted(() => {
 
 .index-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
   gap: 12px;
 }
 
@@ -983,35 +987,49 @@ onUnmounted(() => {
 }
 
 .card-name {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--el-text-color-secondary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.2px;
   text-align: left;
 }
 
 .card-price {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 900;
-  margin-bottom: 8px;
-  line-height: 1.2;
+  margin-bottom: 7px;
+  line-height: 1;
   text-align: left;
 }
 
 .card-stats {
   display: flex;
-  gap: 6px;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.card-change,
-.card-amount {
-  font-size: 12px;
-  font-weight: 600;
+.card-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.card-stat-item--secondary {
+  opacity: 0.72;
+}
+
+.card-stat-value {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.card-stat-value--muted {
+  font-size: 11px;
+  font-weight: 400;
 }
 
 .color-up {
@@ -1039,6 +1057,7 @@ onUnmounted(() => {
   display: flex;
   gap: 4px;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 .sub-tab-item {
@@ -1111,6 +1130,63 @@ html.dark .index-img-wrap img {
   .market-stat-bar {
     font-size: 12px;
     gap: 8px;
+  }
+
+  .index-cards {
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 8px;
+  }
+
+  .index-card {
+    padding: 8px;
+    border-left-width: 2px;
+  }
+
+  .card-name {
+    font-size: 11px;
+    margin-bottom: 4px;
+    letter-spacing: 0;
+  }
+
+  .card-price {
+    font-size: 18px;
+    margin-bottom: 5px;
+  }
+
+  .card-stats {
+    gap: 4px;
+  }
+
+  .card-stat-value--muted {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .index-cards {
+    grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+    gap: 6px;
+  }
+
+  .index-card {
+    padding: 7px 6px;
+  }
+
+  .card-name {
+    font-size: 11px;
+  }
+
+  .card-price {
+    font-size: 17px;
+  }
+
+  .card-stats {
+    gap: 2px;
+  }
+
+
+  .card-stat-value--muted {
+    font-size: 9px;
   }
 }
 </style>
