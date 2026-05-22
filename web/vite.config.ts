@@ -10,16 +10,17 @@ export default defineConfig(({ mode }) => {
   return {
     base: basePath,
   define: {
-    // 注入构建时间
-    __BUILD_TIME__: JSON.stringify(new Date().toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }))
+    // 注入构建时间（固定为东八区，避免受构建机器时区影响）
+    __BUILD_TIME__: JSON.stringify((() => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const now = new Date();
+      // 将本地时间转换为 UTC，再加上 8 小时（480 分钟）得到东八区时间
+      const tz8 = new Date(now.getTime() + (now.getTimezoneOffset() + 480) * 60000);
+      const s = `${tz8.getFullYear()}-${pad(tz8.getMonth() + 1)}-${pad(tz8.getDate())} ${pad(
+        tz8.getHours(),
+      )}:${pad(tz8.getMinutes())}:${pad(tz8.getSeconds())} (UTC+8)`;
+      return s;
+    })()),
   },
   plugins: [
     vue(),
