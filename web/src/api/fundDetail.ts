@@ -232,11 +232,12 @@ export async function fetchManagerAndThemes(code: string): Promise<{
 const RANGE_MAP: Record<string, string> = {
   '1w': 'y',
   '1m': 'y',
-  '3m': 'jn',
-  '6m': 'jn',
-  '1y': 'y',
-  '3y': '3y',
-  '5y': 'ln'
+  '3m': '3y',
+  '6m': '6y',
+  'n': 'n',
+  '3n': '3n',
+  '5n': '5n',
+  'ln': 'ln'
 }
 
 const RANGE_DAYS: Record<string, number> = {
@@ -244,9 +245,10 @@ const RANGE_DAYS: Record<string, number> = {
   '1m': 22,
   '3m': 66,
   '6m': 132,
-  '1y': 9999,
-  '3y': 9999,
-  '5y': 9999
+  'n': 9999,
+  '3n': 9999,
+  '5n': 9999,
+  'ln': 9999
 }
 
 export async function fetchNetValueHistory(
@@ -254,6 +256,7 @@ export async function fetchNetValueHistory(
   range: string = '1m'
 ): Promise<NetValueRecord[]> {
   const actualRange = RANGE_MAP[range] || 'y'
+  console.log('range: ', range);
   const url = `https://fundmobapi.eastmoney.com/FundMApi/FundNetDiagram.ashx?FCODE=${code}&RANGE=${actualRange}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&_=${Date.now()}`
 
   try {
@@ -279,11 +282,35 @@ export async function fetchNetValueHistory(
 
 // ==================== 累计收益（直接 fetch，无 CORS） ====================
 
+const History_RANGE_MAP: Record<string, string> = {
+  '1w': 'y',
+  '1m': 'y',
+  '3m': 'jn',
+  '6m': 'jn',
+  'n': 'n',
+  '3n': '3n',
+  '5n': '5n',
+  'ln': 'ln'
+}
+
+const History_RANGE_DAYS: Record<string, number> = {
+  '1w': 5,
+  '1m': 22,
+  '3m': 66,
+  '6m': 132,
+  'n': 9999,
+  '3n': 9999,
+  '5n': 9999,
+  'ln': 9999
+}
+
+
 export async function fetchHistoryYield(
   code: string,
   range: string = '1m'
 ): Promise<YieldRecord[]> {
-  const actualRange = RANGE_MAP[range] || 'y'
+  const actualRange = History_RANGE_MAP[range] || 'n'
+  console.log('range: ', range);
   const url = `https://dataapi.1234567.com.cn/dataapi/fund/FundVPageAcc?INDEXCODE=000300&CODE=${code}&FCODE=${code}&RANGE=${actualRange}&deviceid=Wap&product=EFund`
 
   try {
@@ -291,7 +318,7 @@ export async function fetchHistoryYield(
     if (!json || json.errorCode !== 0 || !json.data || json.data.length === 0) return []
 
     let dataList = json.data
-    const maxDays = RANGE_DAYS[range] || 9999
+    const maxDays = History_RANGE_DAYS[range] || 9999
     if (maxDays < dataList.length) {
       dataList = dataList.slice(-maxDays)
     }
