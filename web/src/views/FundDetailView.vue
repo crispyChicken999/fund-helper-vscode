@@ -58,66 +58,132 @@
     <div class="detail-main">
       <!-- 持仓信息 -->
       <div v-show="activeTab === 'holding'" class="tab-panel">
-        <div class="info-grid-2col" v-if="fundView">
-          <div class="grid-item">
-            <span class="g-label">持有金额</span>
-            <span class="g-value">{{ fmtMoney(holdingAmount) }}</span>
+        <div v-if="detailRow" class="holding-sections">
+          <div class="holding-section">
+            <div class="section-title">估算数据</div>
+            <div class="info-grid-2col">
+              <div class="grid-item">
+                <span class="g-label"
+                  >估算涨幅 ({{ detailRow.estimatedDateLabel }})</span
+                >
+                <span
+                  class="g-value"
+                  :class="estClass(detailRow.gszzl, detailRow.shouldShowEstimated)"
+                >
+                  {{
+                    fmtEstPct(detailRow.gszzl, detailRow.shouldShowEstimated)
+                  }}
+                </span>
+              </div>
+              <div class="grid-item">
+                <span class="g-label"
+                  >估算收益 ({{ detailRow.estimatedDateLabel }})</span
+                >
+                <span
+                  class="g-value"
+                  :class="estClass(
+                    detailRow.estimatedGain,
+                    detailRow.shouldShowEstimated,
+                  )"
+                >
+                  {{
+                    fmtEstMoney(
+                      detailRow.estimatedGain,
+                      detailRow.shouldShowEstimated,
+                    )
+                  }}
+                </span>
+              </div>
+            </div>
           </div>
-          <div class="grid-item">
-            <span class="g-label">持有份额</span>
-            <span class="g-value">{{ fmtNum(fundView.num) }}</span>
+
+          <div class="holding-section">
+            <div class="section-title">当日数据</div>
+            <div class="info-grid-2col">
+              <div class="grid-item">
+                <span class="g-label"
+                  >当日涨幅 ({{ detailRow.navDateLabel }})</span
+                >
+                <span class="g-value" :class="pctClass(detailRow.navChgRt)">
+                  {{ fmtPct(detailRow.navChgRt) }}
+                </span>
+              </div>
+              <div class="grid-item">
+                <span class="g-label"
+                  >当日收益 ({{ detailRow.navDateLabel }})</span
+                >
+                <span class="g-value" :class="pctClass(detailRow.dailyGain)">
+                  {{ fmtMoney(detailRow.dailyGain) }}
+                </span>
+              </div>
+            </div>
           </div>
-          <div class="grid-item">
-            <span class="g-label">成本价</span>
-            <span class="g-value">{{ fmtPrice(fundView.cost) }}</span>
+
+          <div class="holding-section">
+            <div class="section-title">持有收益</div>
+            <div class="info-grid-2col">
+              <div class="grid-item">
+                <span class="g-label">持有收益</span>
+                <span class="g-value" :class="pctClass(detailRow.holdingGain)">
+                  {{ fmtMoney(detailRow.holdingGain) }}
+                </span>
+              </div>
+              <div class="grid-item">
+                <span class="g-label">总收益率</span>
+                <span
+                  class="g-value"
+                  :class="pctClass(detailRow.holdingGainRate)"
+                >
+                  {{ fmtPct(detailRow.holdingGainRate) }}
+                </span>
+              </div>
+            </div>
           </div>
-          <div class="grid-item">
-            <span class="g-label">持有收益</span>
-            <span class="g-value" :class="pctClass(fundView.holdingGain)">
-              {{ fmtMoney(fundView.holdingGain) }}
-            </span>
+
+          <div class="holding-section">
+            <div class="section-title">持仓信息</div>
+            <div class="info-grid-2col">
+              <div class="grid-item">
+                <span class="g-label">持仓总额</span>
+                <span class="g-value">{{ fmtMoney(detailRow.costAmount) }}</span>
+              </div>
+              <div class="grid-item">
+                <span class="g-label">持有金额</span>
+                <span class="g-value">{{ fmtMoney(detailRow.holdingAmount) }}</span>
+              </div>
+              <div class="grid-item">
+                <span class="g-label">持有份额</span>
+                <span class="g-value">{{ fmtNum(detailRow.fund.num) }}</span>
+              </div>
+              <div class="grid-item">
+                <span class="g-label">成本价</span>
+                <span class="g-value">{{ fmtPrice(detailRow.fund.cost) }}</span>
+              </div>
+              <div class="grid-item">
+                <span class="g-label">估算净值</span>
+                <span class="g-value">{{ fmtPrice(detailRow.displayGsz) }}</span>
+              </div>
+              <div class="grid-item">
+                <span class="g-label">单位净值</span>
+                <span class="g-value">{{ fmtPrice(detailRow.dwjz) }}</span>
+              </div>
+            </div>
           </div>
-          <div class="grid-item">
-            <span class="g-label">持有收益率</span>
-            <span class="g-value" :class="pctClass(fundView.holdingGainRate)">
-              {{ fmtPct(fundView.holdingGainRate) }}
-            </span>
-          </div>
-          <div class="grid-item">
-            <span class="g-label">今日收益（估）</span>
-            <span class="g-value" :class="pctClass(estimatedDailyGain)">
-              {{ fmtMoney(estimatedDailyGain) }}
-            </span>
-          </div>
-          <div class="grid-item">
-            <span class="g-label">最新日收益</span>
-            <span class="g-value" :class="pctClass(actualDailyGain)">
-              {{ fmtMoney(actualDailyGain) }}
-            </span>
-          </div>
-          <div class="grid-item">
-            <span class="g-label">估算净值</span>
-            <span class="g-value" :class="pctClass(fundView.estimatedChange)">
-              {{
-                fundView.estimatedValue != null
-                  ? fmtPrice(fundView.estimatedValue)
-                  : "--"
-              }}
-            </span>
-          </div>
-          <div class="grid-item">
-            <span class="g-label">估算涨跌幅</span>
-            <span class="g-value" :class="pctClass(fundView.estimatedChange)">
-              {{ fmtPct(fundView.estimatedChange) }}
-            </span>
-          </div>
-          <div class="grid-item">
-            <span class="g-label">单位净值</span>
-            <span class="g-value">{{ fmtPrice(fundView.netValue) }}</span>
-          </div>
-          <div class="grid-item">
-            <span class="g-label">更新时间</span>
-            <span class="g-value">{{ fundView.updateTime || "--" }}</span>
+
+          <div class="holding-section">
+            <div class="section-title">其他信息</div>
+            <div class="info-grid-2col">
+              <div class="grid-item">
+                <span class="g-label">关联板块</span>
+                <span class="g-value">{{ detailRow.relateTheme || "--" }}</span>
+              </div>
+              <div class="grid-item">
+                <span class="g-label">更新时间</span>
+                <span class="g-value">
+                  {{ detailRow.fullUpdateTime || detailRow.updateTime || "--" }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -625,6 +691,10 @@ import { useFundStore, useSettingStore } from "@/stores";
 import { fundService } from "@/services";
 import { formatCurrency, formatNumber } from "@/utils/format";
 import { loadEcharts } from "@/utils/echarts";
+import { buildFundRowDisplay, type FundRowDisplay } from "@/utils/fundDisplay";
+import { normalizeFundInfo } from "@/utils/fundInfoNormalize";
+import { getChinaMarketStatus } from "@/utils/marketChina";
+import type { FundInfo } from "@/types";
 import {
   fetchFundOverview,
   fetchManagerAndThemes,
@@ -664,9 +734,10 @@ const rangeOptions = [
   { key: "1m", label: "近1月" },
   { key: "3m", label: "近3月" },
   { key: "6m", label: "近6月" },
-  { key: "1y", label: "近1年" },
-  { key: "3y", label: "近3年" },
-  { key: "5y", label: "近5年" },
+  { key: "n", label: "近1年" },
+  { key: "3n", label: "近3年" },
+  { key: "5n", label: "近5年" },
+  { key: "ln", label: "成立以来" },
 ];
 
 // ==================== 状态 ====================
@@ -751,28 +822,26 @@ async function navigateTo(targetCode: string | null) {
 
 const fundView = computed(() => fundStore.getFundView(props.code));
 const displayName = computed(() => fundView.value?.name || props.code);
-const holdingAmount = computed(() => {
-  const fv = fundView.value;
-  if (!fv) return 0;
-  return (fv.num || 0) * (fv.netValue || 0);
-});
-
-// 日收益（估）= 份额 × 净值 × 估算涨幅%
-const estimatedDailyGain = computed(() => {
-  const fv = fundView.value;
-  if (!fv) return 0;
-  const gszzl = fv.estimatedChange || fv.changePercent || 0;
-  if (!gszzl) return 0;
-  return ((fv.num || 0) * (fv.netValue || 0) * gszzl) / 100;
-});
-
-// 当日收益 = 份额 × 净值 × 当日涨幅%
-const actualDailyGain = computed(() => {
-  const fv = fundView.value;
-  if (!fv) return 0;
-  const navChgRt = fv.changePercent || 0;
-  if (!navChgRt) return 0;
-  return ((fv.num || 0) * (fv.netValue || 0) * navChgRt) / 100;
+const detailRow = computed<FundRowDisplay | null>(() => {
+  const fund = fundStore.getFund(props.code);
+  if (!fund) return null;
+  const raw = fundStore.fundDetails.get(props.code);
+  const info =
+    normalizeFundInfo(raw, fund.code) ||
+    ({
+      code: fund.code,
+      name: fund.code,
+      netValue: 0,
+      estimatedValue: null,
+      changePercent: 0,
+      updateTime: "",
+      netValueDate: "",
+      isRealValue: false,
+      navChgRt: 0,
+      shares: fund.num,
+      cost: fund.cost,
+    } as FundInfo);
+  return buildFundRowDisplay(fund, info, getChinaMarketStatus());
 });
 
 // 近一周收益率 = (最新净值 - 5个交易日前净值) / 5个交易日前净值 * 100
@@ -813,6 +882,21 @@ function pctClass(v: unknown) {
   if (n > 0) return "positive";
   if (n < 0) return "negative";
   return "";
+}
+
+function fmtEstMoney(v: number, show: boolean) {
+  if (!show) return "--";
+  return fmtMoney(v);
+}
+
+function fmtEstPct(v: number, show: boolean) {
+  if (!show) return "--";
+  return fmtPct(v);
+}
+
+function estClass(v: number, show: boolean) {
+  if (!show || settingStore.grayscaleMode) return "muted";
+  return pctClass(v) || "muted";
 }
 function riskLabel(level: string) {
   const map: Record<string, string> = {
@@ -1502,6 +1586,25 @@ onUnmounted(() => {
   gap: 16px;
 }
 
+.holding-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.holding-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+}
+
 /* 持仓信息网格 */
 .info-grid-2col {
   display: grid;
@@ -1746,6 +1849,10 @@ onUnmounted(() => {
 }
 .negative {
   color: var(--color-down);
+}
+
+.muted {
+  color: var(--el-text-color-placeholder);
 }
 
 .loading-hint {

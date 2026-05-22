@@ -1,5 +1,5 @@
 /** * 测试数据 * @type {arry} */ /*2026-05-14 06:54:33*/
-// url 调用 http://fund.eastmoney.com/pingzhongdata/018125.js
+// url 调用 http://fund.eastmoney.com/pingzhongdata/018125.js （content-type:application/javascript）
 var ishb = false;
 /*基金或股票信息*/ var fS_name = "永赢先进制造智选混合发起C";
 var fS_code = "018125";

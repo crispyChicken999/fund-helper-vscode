@@ -28,6 +28,15 @@ export function formatNetValueDate(netValueDate: string): string {
   return netValueDate
 }
 
+export function resolveNavDateLabel(info: FundInfo, market: ChinaMarketStatus): string {
+  const raw = info.netValueDate?.trim()
+  if (raw) return formatNetValueDate(raw)
+  if (info.isRealValue && info.updateTime && info.updateTime.length >= 10) {
+    return extractDate(info.updateTime, market)
+  }
+  return '—'
+}
+
 export function isGzTimeUpdatedToday(gztime: string | undefined, market: ChinaMarketStatus): boolean {
   if (!gztime) return false
   return extractDate(gztime, market) === market.todayDate
@@ -194,9 +203,7 @@ export function buildFundRowDisplay(
     estimatedDateLabel = extractDate(info.updateTime, market)
   }
 
-  const navDateLabel = info.netValueDate
-    ? formatNetValueDate(info.netValueDate)
-    : extractDate(info.updateTime, market)
+  const navDateLabel = resolveNavDateLabel(info, market)
 
   let fullUpdateTime = info.updateTime
     ? `${extractTime(info.updateTime)}`.trim()

@@ -1236,6 +1236,20 @@ const sortedRows = computed(() => {
 
 const showGroupTag = computed(() => selectedGroupKey.value === "all");
 
+function resolveHeaderNavDateLabel(): string {
+  const rows = sortedRows.value;
+  if (!rows.length) return "—";
+  const netValueRow = rows.find(
+    (row) => row.info.netValueDate && row.info.netValueDate.trim(),
+  );
+  const fromNetValue = netValueRow?.navDateLabel;
+  if (fromNetValue && fromNetValue !== "—") return fromNetValue;
+  const fallbackRow = rows.find(
+    (row) => row.navDateLabel && row.navDateLabel !== "—",
+  );
+  return fallbackRow?.navDateLabel || "—";
+}
+
 function headerSubLabel(col: string): string {
   const sample = sortedRows.value[0];
   if (!sample) return "—";
@@ -1249,7 +1263,7 @@ function headerSubLabel(col: string): string {
     case "holdingGainRate":
     case "amountShares":
     case "cost":
-      return sample.navDateLabel;
+      return resolveHeaderNavDateLabel();
     case "sector":
       return "";
     default:
