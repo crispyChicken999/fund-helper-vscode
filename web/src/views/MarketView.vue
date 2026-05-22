@@ -40,21 +40,40 @@
       <div v-show="activeMainTab === 'market'" class="tab-panel">
         <!-- 两市统计条 -->
         <div class="market-stat-bar">
-          <span
-            >两市合计成交额：<strong>{{
+          <div class="market-stat-heading">股市概况</div>
+          <div class="market-stat-meta">
+            <span class="market-stat-title">两市合计成交额：</span>
+            <strong class="market-stat-volume">{{
               marketStat?.totalVolume.toFixed(2) || 0
             }}</strong>
-            亿元</span
-          >
-          <span class="stat-up"
-            >上涨：<strong>{{ marketStat?.rising || 0 }}</strong></span
-          >
-          <span class="stat-flat"
-            >平盘：<strong>{{ marketStat?.flat || 0 }}</strong></span
-          >
-          <span class="stat-down"
-            >下跌：<strong>{{ marketStat?.falling || 0 }}</strong></span
-          >
+            <span class="market-stat-unit">亿元</span>
+          </div>
+          <div class="market-stat-progress" :class="{ empty: !marketStatTotalCount }">
+            <div
+              v-for="segment in marketStatSegments"
+              :key="segment.key"
+              class="market-stat-segment"
+              :class="segment.className"
+              :style="{ width: `${segment.percent}%` }"
+            ></div>
+            <div v-if="!marketStatTotalCount" class="market-stat-empty">
+              暂无数据
+            </div>
+          </div>
+          <div class="market-stat-legend">
+            <div class="market-stat-legend-item is-up">
+              <span class="market-stat-legend-label">上涨</span>
+              <strong>{{ marketStat?.rising || 0 }}</strong>
+            </div>
+            <div class="market-stat-legend-item is-flat">
+              <span class="market-stat-legend-label">平盘</span>
+              <strong>{{ marketStat?.flat || 0 }}</strong>
+            </div>
+            <div class="market-stat-legend-item is-down">
+              <span class="market-stat-legend-label">下跌</span>
+              <strong>{{ marketStat?.falling || 0 }}</strong>
+            </div>
+          </div>
         </div>
 
         <!-- 大盘指数卡片 -->
@@ -284,6 +303,45 @@ const currentGlobalIndexItems = computed(
 const updateHint = computed(() => {
   if (countdown.value > 0) return `${countdown.value}s 后刷新`;
   return "";
+});
+
+const marketStatTotalCount = computed(() => {
+  const stat = marketStat.value;
+  if (!stat) return 0;
+  return (stat.rising || 0) + (stat.flat || 0) + (stat.falling || 0);
+});
+
+const marketStatSegments = computed(() => {
+  const stat = marketStat.value;
+  const total = marketStatTotalCount.value;
+  const items = [
+    {
+      key: "rising",
+      label: "上涨",
+      value: stat?.rising || 0,
+      className: "is-up",
+    },
+    {
+      key: "flat",
+      label: "平盘",
+      value: stat?.flat || 0,
+      className: "is-flat",
+    },
+    {
+      key: "falling",
+      label: "下跌",
+      value: stat?.falling || 0,
+      className: "is-down",
+    },
+  ];
+
+  return items.map((item) => {
+    const percent = total > 0 ? (item.value / total) * 100 : 0;
+    return {
+      ...item,
+      percent: total > 0 ? percent : 0,
+    };
+  });
 });
 
 // ==================== 方法 ====================
@@ -916,23 +974,122 @@ onUnmounted(() => {
 /* 两市统计条 */
 .market-stat-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 13px;
-  padding: 10px 12px;
-  background: var(--el-fill-color);
-  border-radius: 8px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 14px 12px;
+  background: var(--el-bg-color);
+  border-radius: 12px;
   border: 1px solid var(--el-border-color);
 }
 
-.stat-up {
+.market-stat-heading {
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--el-text-color-primary);
+  text-align: center;
+}
+
+.market-stat-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.market-stat-title {
+  color: var(--el-text-color-secondary);
+}
+
+.market-stat-volume {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--el-text-color-primary);
+}
+
+.market-stat-unit {
+  color: var(--el-text-color-secondary);
+}
+
+.market-stat-progress {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color-light);
+}
+
+.market-stat-progress.empty {
+  justify-content: center;
+  align-items: center;
+  min-height: 28px;
+}
+
+.market-stat-segment {
+  min-width: 0;
+  transition: width 0.2s ease;
+}
+
+.market-stat-segment.is-up {
+  background: linear-gradient(90deg, #ef4444, #f97316);
+}
+
+.market-stat-segment.is-flat {
+  background: linear-gradient(90deg, #9ca3af, #d1d5db);
+}
+
+.market-stat-segment.is-down {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.market-stat-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.market-stat-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.market-stat-legend-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.market-stat-legend-item.is-up {
   color: var(--color-up);
 }
-.stat-down {
+
+.market-stat-legend-item.is-flat {
+  color: var(--color-flat);
+}
+
+.market-stat-legend-item.is-down {
   color: var(--color-down);
 }
-.stat-flat {
-  color: var(--color-flat);
+
+.market-stat-legend-label {
+  font-weight: 500;
 }
 
 /* 指数卡片 */
@@ -1128,8 +1285,32 @@ html.dark .index-img-wrap img {
 
 @media (max-width: 768px) {
   .market-stat-bar {
-    font-size: 12px;
     gap: 8px;
+    padding: 12px 10px 10px;
+  }
+
+  .market-stat-heading {
+    font-size: 16px;
+  }
+
+  .market-stat-meta {
+    font-size: 12px;
+  }
+
+  .market-stat-volume {
+    font-size: 16px;
+  }
+
+  .market-stat-progress {
+    min-height: 10px;
+  }
+
+  .market-stat-legend {
+    gap: 8px;
+  }
+
+  .market-stat-legend-item {
+    font-size: 12px;
   }
 
   .index-cards {
@@ -1163,6 +1344,39 @@ html.dark .index-img-wrap img {
 }
 
 @media (max-width: 480px) {
+  .market-stat-bar {
+    gap: 6px;
+    padding: 10px 8px 9px;
+    border-radius: 10px;
+  }
+
+  .market-stat-heading {
+    font-size: 15px;
+  }
+
+  .market-stat-meta {
+    gap: 4px;
+    line-height: 1.2;
+  }
+
+  .market-stat-volume {
+    font-size: 15px;
+  }
+
+  .market-stat-progress {
+    min-height: 10px;
+    border-radius: 12px;
+  }
+
+  .market-stat-legend {
+    gap: 6px;
+  }
+
+  .market-stat-legend-item {
+    font-size: 11px;
+    gap: 4px;
+  }
+
   .index-cards {
     grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
     gap: 6px;
