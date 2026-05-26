@@ -3,7 +3,23 @@
     <template #header>
       <div class="market-header">
         <div class="header-top">
-          <h2>行情中心</h2>
+          <div class="header-title-row">
+            <h2>行情中心</h2>
+            <el-popover
+              placement="bottom"
+              title="提示"
+              :width="200"
+              trigger="hover"
+              content="左右滑动切换不同板块"
+              class="swipe-hint-popover"
+            >
+              <template #reference>
+                <el-icon class="swipe-hint-icon">
+                  <QuestionFilled />
+                </el-icon>
+              </template>
+            </el-popover>
+          </div>
           <div class="header-actions">
             <span class="update-hint">{{ updateHint }}</span>
             <el-button
@@ -35,7 +51,13 @@
     </template>
 
     <!-- Tab 内容区 -->
-    <div class="market-content" ref="contentRef">
+    <div
+      class="market-content"
+      ref="contentRef"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+    >
       <!-- 大盘资金 Tab -->
       <div v-show="activeMainTab === 'market'" class="tab-panel">
         <!-- 两市统计条 -->
@@ -206,7 +228,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted, nextTick } from "vue";
-import { Refresh, Edit } from "@element-plus/icons-vue";
+import { Refresh, Edit, QuestionFilled } from "@element-plus/icons-vue";
 import MainLayout from "@/layouts/MainLayout.vue";
 import IndexFlowDialog from "@/components/IndexFlowDialog.vue";
 import IndexEditDialog from "@/components/IndexEditDialog.vue";
@@ -232,6 +254,14 @@ const mainTabs = [
   { key: "concept", label: "概念板块" },
   { key: "region", label: "地域板块" },
 ];
+
+// 移动端滑动切换Tab常量
+let touchStartY = 0;
+let touchStartX = 0;
+let touchStartTime = 0;
+const SWIPE_THRESHOLD = 50; // 滑动距离阈值（像素）
+const SWIPE_VELOCITY_THRESHOLD = 0.3; // 滑动速度阈值（像素/毫秒）
+const MAX_VERTICAL_DEVIATION = 80; // 最大垂直偏移（像素），允许一定的垂直移动
 
 const plateTabs = mainTabs.filter((t) => t.key !== "market");
 
@@ -501,6 +531,77 @@ async function handleRefresh() {
     await loadTabOnce(activeMainTab.value);
   } finally {
     refreshing.value = false;
+  }
+}
+
+// ==================== 移动端滑动切换Tab ====================
+
+function handleTouchStart(e: TouchEvent) {
+  const touch = e.touches[0];
+  if (!touch) return;
+
+  touchStartY = touch.clientY;
+  touchStartX = touch.clientX;
+  touchStartTime = Date.now();
+}
+
+function handleTouchMove(_e: TouchEvent) {
+  // 不阻止默认行为，允许页面正常滚动
+}
+
+function handleTouchEnd(e: TouchEvent) {
+  const touch = e.changedTouches[0];
+  if (!touch) return;
+
+  const touchEndY = touch.clientY;
+  const touchEndX = touch.clientX;
+  const touchEndTime = Date.now();
+
+  const deltaY = touchEndY - touchStartY;
+  const deltaX = touchEndX - touchStartX;
+  const deltaTime = touchEndTime - touchStartTime;
+
+  // 检查是否为有效的水平滑动
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+  const velocity = absX / (deltaTime || 1);
+
+  // 如果垂直滑动距离大于水平滑动，说明是在滚动页面，不处理
+  if (absY > absX) return;
+
+  // 如果垂直偏移太大，可能是斜向滑动，不处理
+  if (absY > MAX_VERTICAL_DEVIATION) return;
+
+  // 如果时间太长（超过600ms），可能是在浏览内容，不处理
+  if (deltaTime > 600 && velocity < SWIPE_VELOCITY_THRESHOLD) return;
+
+  // 检查是否满足滑动条件（距离或速度）
+  const isValidSwipe =
+    absX > SWIPE_THRESHOLD || velocity > SWIPE_VELOCITY_THRESHOLD;
+
+  if (!isValidSwipe) return;
+
+  // 获取当前tab索引
+  const currentIndex = mainTabs.findIndex((t) => t.key === activeMainTab.value);
+  if (currentIndex === -1) return;
+
+  // 向左滑动（deltaX < 0）切换到下一个tab
+  // 向右滑动（deltaX > 0）切换到上一个tab
+  let targetIndex = currentIndex;
+
+  if (deltaX < 0 && currentIndex < mainTabs.length - 1) {
+    // 向左滑动，切换到下一个tab
+    targetIndex = currentIndex + 1;
+  } else if (deltaX > 0 && currentIndex > 0) {
+    // 向右滑动，切换到上一个tab
+    targetIndex = currentIndex - 1;
+  }
+
+  if (targetIndex !== currentIndex) {
+    const targetTab = mainTabs[targetIndex];
+    if (targetTab) {
+      switchMainTab(targetTab.key);
+    }
   }
 }
 
@@ -962,11 +1063,30 @@ onUnmounted(() => {
   padding: 12px 16px 0;
 }
 
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .header-top h2 {
   margin: 0;
   font-size: 18px;
   color: var(--text-primary);
   font-weight: 600;
+}
+
+.swipe-hint-icon {
+  display: none;
+  cursor: help;
+  color: var(--el-color-info);
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .swipe-hint-icon {
+    display: inline-block;
+  }
 }
 
 .header-actions {
@@ -1012,6 +1132,7 @@ onUnmounted(() => {
 /* Tab 内容 */
 .market-content {
   padding: 12px 16px;
+  min-height: calc(100vh - 200px);
 }
 
 .tab-panel {

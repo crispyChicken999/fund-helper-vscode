@@ -8,6 +8,20 @@
             <span class="fund-name">{{ displayName }}</span>
             <div class="fund-code-row">
               <span class="fund-code">{{ code }}</span>
+              <el-popover
+                placement="bottom"
+                title="提示"
+                :width="200"
+                trigger="hover"
+                content="左右滑动切换上下个基金"
+                class="swipe-hint-popover"
+              >
+                <template #reference>
+                  <el-icon class="swipe-hint-icon">
+                    <QuestionFilled />
+                  </el-icon>
+                </template>
+              </el-popover>
               <div class="fund-nav-btns">
                 <el-button
                   size="small"
@@ -1299,7 +1313,7 @@ import {
   type FormInstance,
   type FormRules,
 } from "element-plus";
-import { ArrowLeft, Refresh } from "@element-plus/icons-vue";
+import { ArrowLeft, Refresh, QuestionFilled } from "@element-plus/icons-vue";
 import DetailLayout from "@/layouts/DetailLayout.vue";
 import { useFundStore, useSettingStore } from "@/stores";
 import { fundService } from "@/services";
@@ -3069,6 +3083,20 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.swipe-hint-icon {
+  display: none;
+  cursor: help;
+  color: var(--el-color-info);
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+@media (max-width: 768px) {
+  .swipe-hint-icon {
+    display: inline-block;
+  }
 }
 
 .fund-nav-btns {
