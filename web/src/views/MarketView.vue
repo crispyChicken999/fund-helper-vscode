@@ -553,6 +553,12 @@ function handleTouchEnd(e: TouchEvent) {
   const touch = e.changedTouches[0];
   if (!touch) return;
 
+  // 检查是否在chart容器内滑动，如果是则不处理
+  const target = e.target as HTMLElement;
+  if (target?.closest(".chart-container") || target?.closest(".chart-plate")) {
+    return;
+  }
+
   const touchEndY = touch.clientY;
   const touchEndX = touch.clientX;
   const touchEndTime = Date.now();
@@ -1383,7 +1389,6 @@ onUnmounted(() => {
 .sub-tabs {
   display: flex;
   gap: 4px;
-  margin-bottom: 10px;
   flex-wrap: wrap;
 }
 
