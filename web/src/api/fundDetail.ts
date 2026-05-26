@@ -148,6 +148,8 @@ const DETAIL_URL = 'https://dgs.tiantianfunds.com/merge/m/api/jjxqy1_2'
 export async function fetchManagerAndThemes(code: string): Promise<{
   managers: FundManager[]
   themes: RelateThemeItem[]
+  uniqueInfo: any | null
+  periodIncreaseList: any[]
 }> {
   const params = new URLSearchParams({
     deviceid: 'fd7dac76-c5e9-4723-8fe6-7b436b2b1443',
@@ -160,7 +162,7 @@ export async function fetchManagerAndThemes(code: string): Promise<{
     ISRG: '0',
     indexfields: '_id,INDEXCODE,BKID,INDEXNAME,INDEXVALUA,NEWINDEXTEXCH,PEP100',
     fields: 'BENCH,ESTDIFF,INDEXNAME,LINKZSB,INDEXCODE,NEWTEXCH,FTYPE,FCODE,BAGTYPE,RISKLEVEL,TTYPENAME,ESTABDATE,JJGS,JJGSID,ENDNAV,SHORTNAME,TTYPE,FSRQ,DWJZ,LJJZ,SYL_1N,SYL_LN,SYL_Z,SOURCERATE,RATE',
-    fundUniqueInfo_fIELDS: 'FCODE,SHARP1,SHARP_1NRANK,MAXRETRA1,MAXRETRA_1NRANK',
+    fundUniqueInfo_fIELDS: 'FCODE,SHARP1,SHARP_1NRANK,MAXRETRA1,MAXRETRA_1NRANK,SHARP2,SHARP3,SHARP5,MAXRETRA2,MAXRETRA3,MAXRETRA5,STDDEV1,STDDEV2,STDDEV3,STDDEV5,SHARP_3NRANK,SHARP_5NRANK,MAXRETRA_3NRANK,MAXRETRA_5NRANK,STDDEV_1NRANK,STDDEV_3NRANK,STDDEV_5NRANK',
     fundUniqueInfo_fLFIELDS: 'FCODE,BUSINESSTYPE,BUSINESSTEXT,BUSINESSCODE,BUSINESSSUBTYPE,MARK',
     cfhFundFInfo_fields: 'INVESTMENTIDEAR,INVESTMENTIDEARIMG',
     relateThemeFields: 'FCODE,SEC_CODE,SEC_NAME,CORR_1Y,OL2TOP'
@@ -177,7 +179,7 @@ export async function fetchManagerAndThemes(code: string): Promise<{
       body: params.toString(),
       signal: AbortSignal.timeout(12000)
     })
-    if (!res.ok) return { managers: [], themes: [] }
+    if (!res.ok) return { managers: [], themes: [], uniqueInfo: null, periodIncreaseList: [] }
     const json = await res.json()
 
     // 解析经理 — 使用 FundManagerInformation.currentManagerInfos
@@ -221,9 +223,13 @@ export async function fetchManagerAndThemes(code: string): Promise<{
       }))
       .sort((a, b) => b.corr1y - a.corr1y)
 
-    return { managers, themes }
+    // 解析高级特色数据
+    const uniqueInfo = json?.data?.uniqueInfo?.[0] || null
+    const periodIncreaseList = json?.data?.FundPeriodIncrease || []
+
+    return { managers, themes, uniqueInfo, periodIncreaseList }
   } catch {
-    return { managers: [], themes: [] }
+    return { managers: [], themes: [], uniqueInfo: null, periodIncreaseList: [] }
   }
 }
 
@@ -507,6 +513,97 @@ export async function fetchRelateThemes(code: string): Promise<RelateThemeItem[]
 export async function fetchPeriodIncrease(code: string): Promise<PeriodIncreaseData | null> {
   const { periodIncrease } = await fetchFundOverview(code)
   return periodIncrease
+}
+
+async function parseResponseJson(res: Response): Promise<any | null> {
+  const buffer = await res.arrayBuffer().catch(() => null)
+  if (!buffer) return null
+
+  try {
+    const text = new TextDecoder('utf-8').decode(buffer)
+    return JSON.parse(text)
+  } catch {
+    try {
+      const text = new TextDecoder('gb18030').decode(buffer)
+      return JSON.parse(text)
+    } catch {
+      return null
+    }
+  }
+}
+
+/**
+ * 获取基金特色数据（风险指标、交易参数等）
+ * 使用与持仓信息相同的降级策略处理CORS和跨域限制
+ */
+async function fetchFundFeatureDataWithFallback(code: string): Promise<any> {
+  const url = `https://fundmobapi.eastmoney.com/FundMApi/FundBaseTypeInformation.ashx?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
+
+  // 策略 1: codetabs.com 代理
+  try {
+    const proxy1Url = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`
+    const res = await fetch(proxy1Url, { signal: AbortSignal.timeout(60000) })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Proxy1 fetch failed`)
+    }
+    const data = await parseResponseJson(res)
+    if (!data?.Datas) {
+      throw new Error('Proxy1 invalid data structure')
+    }
+    console.log('[FundFeature] 第一层直接代理(codetabs.com)请求成功')
+    return data
+  } catch (proxy1Error) {
+    console.warn('[FundFeature] 第一层代理失败，尝试第二层代理...', proxy1Error)
+  }
+
+  // 策略 2: allorigins.win 代理
+  try {
+    const proxy2Url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    const res = await fetch(proxy2Url, { signal: AbortSignal.timeout(60000) })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Proxy2 fetch failed`)
+    }
+    const data = await parseResponseJson(res)
+    if (!data?.Datas) {
+      throw new Error('Proxy2 invalid data structure')
+    }
+    console.log('[FundFeature] 第二层代理(allorigins.win)请求成功')
+    return data
+  } catch (proxy1Error) {
+    console.warn('[FundFeature] 第二层代理失败，尝试第三层代理...', proxy1Error)
+  }
+
+  // 策略 3: codetabs.com 双层代理
+  try {
+    const encodedTarget = encodeURIComponent(url)
+    const firstLayerUrl = `https://api.allorigins.win/raw?url=${encodedTarget}`
+    const encodedFirstLayer = encodeURIComponent(firstLayerUrl)
+    const proxy3Url = `https://api.codetabs.com/v1/proxy/?quest=${encodedFirstLayer}`
+
+    const res = await fetch(proxy3Url, { signal: AbortSignal.timeout(60000) })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Proxy3 fetch failed`)
+    }
+    const data = await parseResponseJson(res)
+    if (!data?.Datas) {
+      throw new Error('Proxy3 invalid data structure')
+    }
+    console.log('[FundFeature] 第三层代理(codetabs.com)请求成功')
+    return data
+  } catch (proxy2Error) {
+    console.warn('[FundFeature] 第三层代理也失败', proxy2Error)
+    return null
+  }
+}
+
+export async function fetchFundFeatureData(code: string): Promise<any> {
+  try {
+    const data = await fetchFundFeatureDataWithFallback(code)
+    return data?.Datas || null
+  } catch (error) {
+    console.error('[FundFeature] 获取特色数据失败:', error)
+    return null
+  }
 }
 
 export function getPageSize(range: string): number {

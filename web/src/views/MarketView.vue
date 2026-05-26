@@ -1090,7 +1090,7 @@ onUnmounted(() => {
 }
 
 .market-stat-segment.is-flat {
-  background: linear-gradient(90deg, #9ca3af, #b1b5bb);
+  background: #9ca3af;
 }
 
 .market-stat-segment.is-down {

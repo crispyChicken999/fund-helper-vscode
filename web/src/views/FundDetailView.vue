@@ -369,13 +369,6 @@
           <div class="info-row">
             <span>累计净值</span><span>{{ overview.accNav || "--" }}</span>
           </div>
-          <div
-            class="info-row"
-            v-if="overview.buyStatus || overview.sellStatus"
-          >
-            <span>交易状态</span
-            ><span>{{ overview.buyStatus }} / {{ overview.sellStatus }}</span>
-          </div>
           <div class="info-row" v-if="overview.indexName">
             <span>跟踪指数</span><span>{{ overview.indexName }}</span>
           </div>
@@ -495,6 +488,61 @@
           </div>
         </div>
 
+        <!-- 交易与费率信息 -->
+        <div v-if="featureRaw" class="info-list" style="margin-top: 12px">
+          <div class="info-row section-title">
+            <span>交易与费率信息</span><span></span>
+          </div>
+          <div class="info-row">
+            <span>首次认购最低额</span
+            ><span>{{
+              featureRaw.MINRG ? featureRaw.MINRG + " 元" : "--"
+            }}</span>
+          </div>
+          <div class="info-row">
+            <span>首次申购最低额</span
+            ><span>{{
+              featureRaw.MINSG ? featureRaw.MINSG + " 元" : "--"
+            }}</span>
+          </div>
+          <div class="info-row">
+            <span>最小定投金额</span
+            ><span>{{
+              featureRaw.MINDT ? featureRaw.MINDT + " 元" : "--"
+            }}</span>
+          </div>
+          <div class="info-row">
+            <span>当前申购费率</span><span>{{ featureRaw.RATE || "--" }}</span>
+          </div>
+          <div class="info-row">
+            <span>原始申购费率</span
+            ><span>{{ featureRaw.SOURCERATE || "--" }}</span>
+          </div>
+          <div class="info-row">
+            <span>认购起始日期</span
+            ><span>{{
+              featureRaw.ISSBDATE ? featureRaw.ISSBDATE.split(" ")[0] : "--"
+            }}</span>
+          </div>
+          <div class="info-row">
+            <span>认购截止日期</span
+            ><span>{{
+              featureRaw.ISSEDATE ? featureRaw.ISSEDATE.split(" ")[0] : "--"
+            }}</span>
+          </div>
+          <div class="info-row">
+            <span>基金封闭运作期</span
+            ><span>{{ featureRaw.CYCLE || "无封闭期(即开即赎)" }}</span>
+          </div>
+          <div class="info-row">
+            <span>申购/赎回状态</span
+            ><span
+              >{{ featureRaw.SGZT || "--" }} /
+              {{ featureRaw.SHZT || "--" }}</span
+            >
+          </div>
+        </div>
+
         <el-empty v-if="!overview && !tabLoading" description="暂无概况数据" />
         <div v-if="tabLoading && !overview" class="loading-hint">
           <div class="loading-box">
@@ -502,6 +550,183 @@
             <div class="loading-text">加载中...</div>
           </div>
         </div>
+      </div>
+
+      <!-- 特色数据 -->
+      <div
+        v-show="activeTab === 'feature'"
+        class="tab-panel"
+        v-loading="tabLoading"
+        :element-loading-text="'加载中...'"
+      >
+        <div v-if="featureData" class="feature-container">
+          <!-- 期限选择器 -->
+          <div class="range-tabs">
+            <span
+              class="range-item"
+              :class="{ active: activeFeatureRange === '1n' }"
+              @click="activeFeatureRange = '1n'"
+            >
+              近1年
+            </span>
+            <span
+              class="range-item"
+              :class="{ active: activeFeatureRange === '3n' }"
+              @click="activeFeatureRange = '3n'"
+            >
+              近3年
+            </span>
+            <span
+              class="range-item"
+              :class="{ active: activeFeatureRange === '5n' }"
+              @click="activeFeatureRange = '5n'"
+            >
+              近5年
+            </span>
+          </div>
+
+          <!-- 指标卡片列表 -->
+          <div v-if="currentFeatureMetrics" class="feature-card-list">
+            <!-- 波动率 / 移动率 -->
+            <div class="feature-card">
+              <div class="feature-card-header">
+                <div class="feature-metric-info">
+                  <span class="feature-value">
+                    {{
+                      currentFeatureMetrics.stddev != null
+                        ? currentFeatureMetrics.stddev.toFixed(2) + "%"
+                        : "--"
+                    }}
+                  </span>
+                  <span class="feature-label">移动率（波动率）</span>
+                </div>
+                <div class="feature-rank-info">
+                  <span
+                    v-if="currentFeatureMetrics.stddevRatio != null"
+                    class="feature-rank-desc"
+                  >
+                    领先
+                    <span class="highlight-text"
+                      >{{ currentFeatureMetrics.stddevRatio.toFixed(2) }}%</span
+                    >
+                    同类
+                  </span>
+                  <span v-else class="feature-rank-desc">暂无排名</span>
+                </div>
+              </div>
+              <!-- 进度条轨道 -->
+              <div class="feature-progress-track stddev-track">
+                <div
+                  v-if="currentFeatureMetrics.stddevRatio != null"
+                  class="feature-progress-fill stddev-fill"
+                  :style="{ width: currentFeatureMetrics.stddevRatio + '%' }"
+                ></div>
+                <div
+                  v-if="currentFeatureMetrics.stddevRatio != null"
+                  class="progress-indicator stddev-indicator"
+                  :style="{ left: currentFeatureMetrics.stddevRatio + '%' }"
+                >
+                  <div class="indicator-arrow"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 夏普比率 -->
+            <div class="feature-card">
+              <div class="feature-card-header">
+                <div class="feature-metric-info">
+                  <span class="feature-value">
+                    {{
+                      currentFeatureMetrics.sharp != null
+                        ? currentFeatureMetrics.sharp.toFixed(4)
+                        : "--"
+                    }}
+                  </span>
+                  <span class="feature-label">夏普比率</span>
+                </div>
+                <div class="feature-rank-info">
+                  <span
+                    v-if="currentFeatureMetrics.sharpRatio != null"
+                    class="feature-rank-desc"
+                  >
+                    领先
+                    <span class="highlight-text"
+                      >{{ currentFeatureMetrics.sharpRatio.toFixed(2) }}%</span
+                    >
+                    同类
+                  </span>
+                  <span v-else class="feature-rank-desc">暂无排名</span>
+                </div>
+              </div>
+              <!-- 进度条轨道 -->
+              <div class="feature-progress-track sharp-track">
+                <div
+                  v-if="currentFeatureMetrics.sharpRatio != null"
+                  class="feature-progress-fill sharp-fill"
+                  :style="{ width: currentFeatureMetrics.sharpRatio + '%' }"
+                ></div>
+                <div
+                  v-if="currentFeatureMetrics.sharpRatio != null"
+                  class="progress-indicator sharp-indicator"
+                  :style="{ left: currentFeatureMetrics.sharpRatio + '%' }"
+                >
+                  <div class="indicator-arrow"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 最大回撤 -->
+            <div class="feature-card">
+              <div class="feature-card-header">
+                <div class="feature-metric-info">
+                  <span class="feature-value">
+                    {{
+                      currentFeatureMetrics.maxRetra != null
+                        ? currentFeatureMetrics.maxRetra.toFixed(2) + "%"
+                        : "--"
+                    }}
+                  </span>
+                  <span class="feature-label">最大回撤</span>
+                </div>
+                <div class="feature-rank-info">
+                  <span
+                    v-if="currentFeatureMetrics.maxRetraRatio != null"
+                    class="feature-rank-desc"
+                  >
+                    领先
+                    <span class="highlight-text"
+                      >{{
+                        currentFeatureMetrics.maxRetraRatio.toFixed(2)
+                      }}%</span
+                    >
+                    同类
+                  </span>
+                  <span v-else class="feature-rank-desc">暂无排名</span>
+                </div>
+              </div>
+              <!-- 进度条轨道 -->
+              <div class="feature-progress-track maxretra-track">
+                <div
+                  v-if="currentFeatureMetrics.maxRetraRatio != null"
+                  class="feature-progress-fill maxretra-fill"
+                  :style="{ width: currentFeatureMetrics.maxRetraRatio + '%' }"
+                ></div>
+                <div
+                  v-if="currentFeatureMetrics.maxRetraRatio != null"
+                  class="progress-indicator maxretra-indicator"
+                  :style="{ left: currentFeatureMetrics.maxRetraRatio + '%' }"
+                >
+                  <div class="indicator-arrow"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <el-empty v-else description="该期限下暂无特色指标数据" />
+        </div>
+        <el-empty
+          v-if="!featureData && !tabLoading"
+          description="暂无特色数据"
+        />
       </div>
 
       <!-- 基金经理 -->
@@ -1077,6 +1302,7 @@ import {
   fetchNetValueHistory,
   fetchHistoryYield,
   fetchInvestmentPosition,
+  fetchFundFeatureData,
   type FundOverview,
   type PeriodIncreaseData,
   type FundManager,
@@ -1099,6 +1325,7 @@ const tabs = [
   { key: "holding", label: "持仓信息" },
   { key: "position", label: "持仓明细" },
   { key: "overview", label: "基金概况" },
+  { key: "feature", label: "特色数据" },
   { key: "manager", label: "基金经理" },
   { key: "theme", label: "关联板块" },
   { key: "deep", label: "深度数据" },
@@ -1140,6 +1367,12 @@ const pingzhongDetail = ref<PingzhongDetailData | null>(null);
 const periodIncrease = ref<PeriodIncreaseData | null>(null);
 const weekNavRecords = ref<NetValueRecord[]>([]);
 const positionData = ref<PositionData | null>(null);
+
+// 高级特色数据状态
+const featureData = ref<any>(null);
+const periodIncreaseList = ref<any[]>([]);
+const activeFeatureRange = ref<"1n" | "3n" | "5n">("3n");
+const featureRaw = ref<any>(null);
 
 const netValueRange = ref("1m");
 const profitRange = ref("1m");
@@ -1272,6 +1505,96 @@ const calcWeekRate = computed((): number | null => {
   const older = records[idx]!;
   if (!older.netValue || older.netValue === 0) return null;
   return ((latest.netValue - older.netValue) / older.netValue) * 100;
+});
+
+const currentSc = computed(() => {
+  if (!periodIncreaseList.value || periodIncreaseList.value.length === 0)
+    return 0;
+  // 映射 activeFeatureRange 的值：1n -> 1N, 3n -> 3N, 5n -> 5N
+  const targetTitle = activeFeatureRange.value.toUpperCase();
+  const found = periodIncreaseList.value.find(
+    (item) => item.title === targetTitle,
+  );
+  return found ? parseInt(found.sc) || 0 : 0;
+});
+
+const currentFeatureMetrics = computed(() => {
+  const fd = featureData.value;
+  if (!fd) return null;
+
+  const range = activeFeatureRange.value; // '1n' | '3n' | '5n'
+  const sc = currentSc.value;
+
+  // 根据不同期限提取对应的值和排名
+  let stddev: any = "--";
+  let stddevRank = 0;
+  let sharp: any = "--";
+  let sharpRank = 0;
+  let maxRetra: any = "--";
+  let maxRetraRank = 0;
+
+  if (range === "1n") {
+    stddev = fd.STDDEV1;
+    stddevRank = parseInt(fd.STDDEV_1NRANK) || 0;
+    sharp = fd.SHARP1;
+    sharpRank = parseInt(fd.SHARP_1NRANK) || 0;
+    maxRetra = fd.MAXRETRA1;
+    maxRetraRank = parseInt(fd.MAXRETRA_1NRANK) || 0;
+  } else if (range === "3n") {
+    stddev = fd.STDDEV3;
+    stddevRank = parseInt(fd.STDDEV_3NRANK) || 0;
+    sharp = fd.SHARP3;
+    sharpRank = parseInt(fd.SHARP_3NRANK) || 0;
+    maxRetra = fd.MAXRETRA3;
+    maxRetraRank = parseInt(fd.MAXRETRA_3NRANK) || 0;
+  } else if (range === "5n") {
+    stddev = fd.STDDEV5;
+    stddevRank = parseInt(fd.STDDEV_5NRANK) || 0;
+    sharp = fd.SHARP5;
+    sharpRank = parseInt(fd.SHARP_5NRANK) || 0;
+    maxRetra = fd.MAXRETRA5;
+    maxRetraRank = parseInt(fd.MAXRETRA_5NRANK) || 0;
+  }
+
+  // 辅助计算领先同类百分比
+  const calcRatio = (rank: number, total: number) => {
+    if (!rank || !total) return null;
+    // 领先百分比 = (total - rank) / total * 100
+    const ratio = ((total - rank) / total) * 100;
+    return Math.max(0, Math.min(100, ratio)); // 限制在 0-100% 之间
+  };
+
+  const stddevRatio = calcRatio(stddevRank, sc);
+  const sharpRatio = calcRatio(sharpRank, sc);
+  const maxRetraRatio = calcRatio(maxRetraRank, sc);
+
+  return {
+    stddev:
+      typeof stddev === "number"
+        ? stddev
+        : typeof stddev === "string" && stddev !== "" && stddev !== "--"
+          ? parseFloat(stddev)
+          : null,
+    stddevRank,
+    stddevRatio,
+    sharp:
+      typeof sharp === "number"
+        ? sharp
+        : typeof sharp === "string" && sharp !== "" && sharp !== "--"
+          ? parseFloat(sharp)
+          : null,
+    sharpRank,
+    sharpRatio,
+    maxRetra:
+      typeof maxRetra === "number"
+        ? maxRetra
+        : typeof maxRetra === "string" && maxRetra !== "" && maxRetra !== "--"
+          ? parseFloat(maxRetra)
+          : null,
+    maxRetraRank,
+    maxRetraRatio,
+    sc,
+  };
 });
 
 // ==================== 格式化 ====================
@@ -2049,27 +2372,39 @@ async function loadTabData(tab: string) {
       positionData.value = result;
       break;
     }
+    case "feature":
     case "overview":
     case "manager": {
-      const [overviewResult, managerResult, weekNav] = await Promise.all([
-        fetchFundOverview(props.code),
-        fetchManagerAndThemes(props.code),
-        fetchNetValueHistory(props.code, "1w"),
-      ]);
+      const [overviewResult, managerResult, weekNav, featureRawData] =
+        await Promise.all([
+          fetchFundOverview(props.code),
+          fetchManagerAndThemes(props.code),
+          fetchNetValueHistory(props.code, "1w"),
+          fetchFundFeatureData(props.code),
+        ]);
       overview.value = overviewResult.overview;
       periodIncrease.value = overviewResult.periodIncrease;
       managers.value = managerResult.managers;
       themes.value = managerResult.themes;
       weekNavRecords.value = weekNav;
+
+      // 存储高级特色数据
+      featureData.value = managerResult.uniqueInfo || null;
+      periodIncreaseList.value = managerResult.periodIncreaseList || [];
+      featureRaw.value = featureRawData || null;
+
       loadedTabs.add("overview");
       loadedTabs.add("manager");
       loadedTabs.add("theme");
+      loadedTabs.add("feature");
       break;
     }
     case "theme": {
       if (!themes.value.length) {
         const result = await fetchManagerAndThemes(props.code);
         themes.value = result.themes;
+        featureData.value = result.uniqueInfo || null;
+        periodIncreaseList.value = result.periodIncreaseList || [];
       }
       break;
     }
@@ -3383,5 +3718,182 @@ onUnmounted(() => {
   .deep-same-type-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==================== 特色数据 Tab 精美样式 ==================== */
+.feature-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 4px;
+}
+
+.feature-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feature-card {
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--el-border-color-lighter);
+  background: var(--el-bg-color-overlay);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.feature-card:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.feature-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.feature-metric-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.feature-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--el-text-color-primary);
+  line-height: 1.1;
+  font-family:
+    "Inter",
+    "Outfit",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+
+.feature-label {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  font-weight: 500;
+}
+
+.feature-rank-info {
+  text-align: right;
+  padding-bottom: 2px;
+}
+
+.feature-rank-desc {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
+
+.highlight-text {
+  font-weight: 600;
+  color: var(--el-color-primary);
+}
+
+/* 进度条轨道 */
+.feature-progress-track {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  margin-top: 20px;
+  margin-bottom: 6px;
+  overflow: visible; /* 允许小三角溢出 */
+}
+
+/* 填充条 */
+.feature-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 波动率（浅蓝背景，深蓝填充） */
+.stddev-track {
+  background: var(--el-fill-color-dark);
+}
+.stddev-fill {
+  background: linear-gradient(90deg, #c2e9fb 0%, #3b82f6 100%);
+}
+
+/* 夏普比率（浅红背景，深红填充） */
+.sharp-track {
+  background: var(--el-fill-color-dark);
+}
+.sharp-fill {
+  background: linear-gradient(90deg, #ff9a9e 0%, #ef4444 100%);
+}
+
+/* 最大回撤（浅绿背景，深绿填充） */
+.maxretra-track {
+  background: var(--el-fill-color-dark);
+}
+.maxretra-fill {
+  background: linear-gradient(90deg, #d4fc79 0%, #10b981 100%);
+}
+
+/* 指示小圆形 */
+.progress-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 2;
+}
+
+.stddev-indicator {
+  background: #3b82f6;
+}
+.sharp-indicator {
+  background: #ef4444;
+}
+.maxretra-indicator {
+  background: #10b981;
+}
+
+/* 倒三角指示器 */
+.indicator-arrow {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  transition: border-top-color 0.3s;
+}
+
+.stddev-indicator .indicator-arrow {
+  border-top: 6px solid #3b82f6;
+}
+.sharp-indicator .indicator-arrow {
+  border-top: 6px solid #ef4444;
+}
+.maxretra-indicator .indicator-arrow {
+  border-top: 6px solid #10b981;
+}
+
+/* 暗黑模式自适应阴影和背景适配 */
+.dark .feature-range-selector {
+  background: rgba(255, 255, 255, 0.05);
+}
+.dark .feature-card {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.dark .progress-indicator {
+  border-color: #1e1e1e;
 }
 </style>
