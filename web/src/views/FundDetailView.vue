@@ -55,7 +55,12 @@
       </div>
     </template>
 
-    <div class="detail-main">
+    <div
+      class="detail-main"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+    >
       <!-- 持仓信息 -->
       <div v-show="activeTab === 'holding'" class="tab-panel">
         <div v-if="detailRow" class="holding-sections">
@@ -217,7 +222,10 @@
           </div>
         </div>
         <template v-else-if="positionData">
-          <div class="position-header">
+          <div
+            class="position-header"
+            v-if="positionData.stocks.length || positionData.bonds.length"
+          >
             <span class="position-date"
               >截止日期：{{ positionData.expansion }}</span
             >
@@ -328,6 +336,11 @@
               </el-table-column>
             </el-table>
           </div>
+
+          <el-empty
+            v-if="!positionData.stocks.length && !positionData.bonds.length"
+            description="暂无持仓数据"
+          />
         </template>
         <el-empty v-else-if="!tabLoading" description="暂无持仓数据" />
       </div>
@@ -556,10 +569,8 @@
       <div
         v-show="activeTab === 'feature'"
         class="tab-panel"
-        v-loading="tabLoading"
-        :element-loading-text="'加载中...'"
       >
-        <div v-if="featureData" class="feature-container">
+        <div v-if="featureData && !tabLoading" class="feature-container">
           <!-- 期限选择器 -->
           <div class="range-tabs">
             <span
@@ -727,6 +738,12 @@
           v-if="!featureData && !tabLoading"
           description="暂无特色数据"
         />
+        <div v-if="tabLoading" class="loading-hint">
+          <div class="loading-box">
+            <div class="spinner" role="status" aria-label="加载中"></div>
+            <div class="loading-text">加载中...</div>
+          </div>
+        </div>
       </div>
 
       <!-- 基金经理 -->
@@ -1322,12 +1339,12 @@ const props = defineProps<Props>();
 // ==================== 常量 ====================
 
 const tabs = [
-  { key: "holding", label: "持仓信息" },
-  { key: "position", label: "持仓明细" },
-  { key: "overview", label: "基金概况" },
-  { key: "feature", label: "特色数据" },
+  { key: "holding", label: "持仓概况" },
+  { key: "overview", label: "基金信息" },
+  { key: "position", label: "基金持仓" },
   { key: "manager", label: "基金经理" },
   { key: "theme", label: "关联板块" },
+  { key: "feature", label: "特色数据" },
   { key: "deep", label: "深度数据" },
   { key: "netValue", label: "历史净值" },
   { key: "profit", label: "累计收益" },
@@ -2332,6 +2349,84 @@ async function switchTab(tab: string) {
   await loadTabOnce(tab);
 }
 
+// ==================== 移动端滑动切换Tab ====================
+
+let touchStartY = 0;
+let touchStartX = 0;
+let touchStartTime = 0;
+const SWIPE_THRESHOLD = 50; // 滑动距离阈值（像素）
+const SWIPE_VELOCITY_THRESHOLD = 0.3; // 滑动速度阈值（像素/毫秒）
+const MAX_VERTICAL_DEVIATION = 80; // 最大垂直偏移（像素），允许一定的垂直移动
+
+function handleTouchStart(e: TouchEvent) {
+  const touch = e.touches[0];
+  if (!touch) return;
+
+  touchStartY = touch.clientY;
+  touchStartX = touch.clientX;
+  touchStartTime = Date.now();
+}
+
+function handleTouchMove(_e: TouchEvent) {
+  // 不阻止默认行为，允许页面正常滚动
+}
+
+function handleTouchEnd(e: TouchEvent) {
+  const touch = e.changedTouches[0];
+  if (!touch) return;
+
+  const touchEndY = touch.clientY;
+  const touchEndX = touch.clientX;
+  const touchEndTime = Date.now();
+
+  const deltaY = touchEndY - touchStartY;
+  const deltaX = touchEndX - touchStartX;
+  const deltaTime = touchEndTime - touchStartTime;
+
+  // 检查是否为有效的水平滑动
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+  const velocity = absX / (deltaTime || 1);
+
+  // 如果垂直滑动距离大于水平滑动，说明是在滚动页面，不处理
+  if (absY > absX) return;
+
+  // 如果垂直偏移太大，可能是斜向滑动，不处理
+  if (absY > MAX_VERTICAL_DEVIATION) return;
+
+  // 如果时间太长（超过600ms），可能是在浏览内容，不处理
+  if (deltaTime > 600 && velocity < SWIPE_VELOCITY_THRESHOLD) return;
+
+  // 检查是否满足滑动条件（距离或速度）
+  const isValidSwipe =
+    absX > SWIPE_THRESHOLD || velocity > SWIPE_VELOCITY_THRESHOLD;
+
+  if (!isValidSwipe) return;
+
+  // 获取当前tab索引
+  const currentIndex = tabs.findIndex((t) => t.key === activeTab.value);
+  if (currentIndex === -1) return;
+
+  // 向左滑动（deltaX < 0）切换到下一个tab
+  // 向右滑动（deltaX > 0）切换到上一个tab
+  let targetIndex = currentIndex;
+
+  if (deltaX < 0 && currentIndex < tabs.length - 1) {
+    // 向左滑动，切换到下一个tab
+    targetIndex = currentIndex + 1;
+  } else if (deltaX > 0 && currentIndex > 0) {
+    // 向右滑动，切换到上一个tab
+    targetIndex = currentIndex - 1;
+  }
+
+  if (targetIndex !== currentIndex) {
+    const targetTab = tabs[targetIndex];
+    if (targetTab) {
+      switchTab(targetTab.key);
+    }
+  }
+}
+
 function scrollTabIntoCenter(tabKey: string) {
   nextTick(() => {
     const inner = tabsInnerRef.value;
@@ -3032,6 +3127,9 @@ onUnmounted(() => {
 
 .detail-main {
   padding: 16px;
+  touch-action: pan-y; /* 允许垂直滚动，水平滑动用于切换tab */
+  position: relative;
+  min-height: calc(100vh - 140px);
 }
 
 .tab-panel {
@@ -3097,7 +3195,7 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color-light);
   font-size: 13px;
 }
 
@@ -3236,7 +3334,7 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color-light);
   font-size: 13px;
 }
 
@@ -3367,7 +3465,7 @@ onUnmounted(() => {
   font-weight: 600;
   color: var(--el-text-color-secondary);
   padding: 4px 0;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color-light);
   margin-bottom: 8px;
 }
 
@@ -3692,7 +3790,7 @@ onUnmounted(() => {
   color: var(--el-text-color-regular);
   font-size: 12px;
   font-family: "Consolas", "Monaco", monospace;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--el-border-color-light);
 }
 
 @media (max-width: 768px) {
@@ -3724,8 +3822,7 @@ onUnmounted(() => {
 .feature-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 8px 4px;
+  gap: 8px;
 }
 
 .feature-card-list {
@@ -3737,7 +3834,7 @@ onUnmounted(() => {
 .feature-card {
   padding: 18px;
   border-radius: 12px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--el-border-color-light);
   background: var(--el-bg-color-overlay);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -3895,5 +3992,44 @@ onUnmounted(() => {
 }
 .dark .progress-indicator {
   border-color: #1e1e1e;
+}
+
+/* ==================== 移动端滑动优化 ==================== */
+@media (max-width: 768px) {
+  .detail-main {
+    /* 优化移动端触摸体验 */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  .tab-panel {
+    /* 添加轻微的过渡效果 */
+    animation: fadeIn 0.2s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 移动端tab项优化 */
+  .tab-item {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  /* 移动端detail-tabs优化 */
+  .detail-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
 }
 </style>
