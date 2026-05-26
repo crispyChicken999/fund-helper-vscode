@@ -376,7 +376,7 @@
                 <div class="cell-stack">
                   <div>{{ formatValue(row.holdingAmount) }}</div>
                   <div class="td-sub muted">
-                    {{ formatShares(row.fund.num) }} 份
+                    {{ formatPercent(getPositionRatio(row.holdingAmount), false) }}
                   </div>
                 </div>
               </template>
@@ -384,7 +384,7 @@
                 <div class="cell-stack">
                   <div>{{ formatNumber(row.fund.cost, 4) }}</div>
                   <div class="td-sub muted">
-                    {{ formatNumber(row.dwjz, 4) }}
+                    {{ formatShares(row.fund.num) }} 份
                   </div>
                 </div>
               </template>
@@ -929,7 +929,7 @@ const TABLE_COL_META: Record<string, TableColMeta> = {
     align: "right",
   },
   amountShares: {
-    title: "金额/份额",
+    title: "金额/仓位",
     sortProp: "amountShares",
     minWidth: 100,
     align: "right",
@@ -948,10 +948,10 @@ const TABLE_COL_META: Record<string, TableColMeta> = {
   },
   sector: { title: "关联板块", minWidth: 104, align: "center" },
   cost: {
-    title: "成本/最新",
+    title: "成本/份额",
     sortProp: "cost",
     minWidth: 100,
-    align: "center",
+    align: "right",
   },
 };
 
@@ -1287,14 +1287,20 @@ function formatValue(value: number | undefined) {
   return formatPrivacy(formatCurrency(value), settingStore.privacyMode);
 }
 
-function formatPercent(value: number | undefined) {
+function formatPercent(value: number | undefined, prefix: boolean = true) {
   if (value === undefined) return "-";
-  const formatted = `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
+  const formatted = `${prefix ? value > 0 ? "+" : "": ""}${value.toFixed(2)}%`;
   return formatPrivacy(formatted, settingStore.privacyMode);
 }
 
 function formatShares(n: number) {
   return formatPrivacy(formatNumber(n, 2), settingStore.privacyMode);
+}
+
+function getPositionRatio(amount: number): number {
+  const total = totalAsset.value;
+  if (total <= 0) return 0;
+  return (amount / total) * 100;
 }
 
 function getValueClass(value: number | undefined) {

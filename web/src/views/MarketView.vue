@@ -48,7 +48,10 @@
             }}</strong>
             <span class="market-stat-unit">亿元</span>
           </div>
-          <div class="market-stat-progress" :class="{ empty: !marketStatTotalCount }">
+          <div
+            class="market-stat-progress"
+            :class="{ empty: !marketStatTotalCount }"
+          >
             <div
               v-for="segment in marketStatSegments"
               :key="segment.key"
@@ -179,6 +182,8 @@
         <div
           :ref="(el) => setPlateChartRef(pt.key, el as HTMLElement)"
           class="chart-container chart-plate"
+          v-loading="plateLoading[pt.key]"
+          :element-loading-text="'加载中...'"
         ></div>
       </div>
     </div>
@@ -279,6 +284,12 @@ const activePlateRank = reactive<Record<string, PlateRankField>>({
   style: "f62",
   concept: "f62",
   region: "f62",
+});
+const plateLoading = reactive<Record<string, boolean>>({
+  industry: false,
+  style: false,
+  concept: false,
+  region: false,
 });
 
 // ECharts
@@ -416,9 +427,14 @@ async function loadMarketTab() {
 }
 
 async function loadPlateTab(tab: string) {
-  const field = activePlateRank[tab] ?? "f62";
-  const data = await fetchPlateData(tab, field);
-  await renderPlateChart(tab, data);
+  plateLoading[tab] = true;
+  try {
+    const field = activePlateRank[tab] ?? "f62";
+    const data = await fetchPlateData(tab, field);
+    await renderPlateChart(tab, data);
+  } finally {
+    plateLoading[tab] = false;
+  }
 }
 
 async function loadTabOnce(tab: string) {
@@ -468,8 +484,13 @@ function switchMainTab(tab: string, event?: MouseEvent) {
 
 async function switchPlateRank(tab: string, field: PlateRankField) {
   activePlateRank[tab] = field;
-  const data = await fetchPlateData(tab, field);
-  await renderPlateChart(tab, data);
+  plateLoading[tab] = true;
+  try {
+    const data = await fetchPlateData(tab, field);
+    await renderPlateChart(tab, data);
+  } finally {
+    plateLoading[tab] = false;
+  }
 }
 
 async function handleRefresh() {
@@ -591,18 +612,29 @@ async function renderFlowChart(
   const times = time_arr("hs");
   // data-grayscale 属性控制是否启用灰度模式，配合 CSS filter 实现全图灰度
   const isGrayScale = document.documentElement.dataset.grayscale === "true";
+
+  // 根据不同模式调整series颜色
+  const getSeriesColors = () => {
+    if (isGrayScale) {
+      return ["#6b7280", "#808080", "#6b7280", "#707070", "#787878"];
+    }
+    return ["#3b82f6", "#ef4444", "#06b6d4", "#22c55e", "#f97316"];
+  };
+
+  const seriesColors = getSeriesColors();
+
   const option = {
     tooltip: {
       trigger: "axis",
       backgroundColor: isDarkMode.value
-        ? "rgba(30, 30, 30, 0.9)"
+        ? "rgba(30, 30, 30, 0.95)"
         : "rgba(255, 255, 255, 0.95)",
       borderColor: isDarkMode.value
         ? "rgba(255, 255, 255, 0.2)"
         : "rgba(0, 0, 0, 0.1)",
       borderWidth: 1,
       textStyle: {
-        color: isDarkMode.value ? "#fff" : "#000",
+        color: isDarkMode.value ? "#f0f0f0" : "#1f2937",
         fontSize: 12,
         fontFamily: "inherit",
       },
@@ -613,16 +645,16 @@ async function renderFlowChart(
         : "0 4px 12px rgba(0, 0, 0, 0.15)",
       formatter(params: any[]) {
         const time = params[0]?.axisValue || "";
-        let html = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDarkMode.value ? "#fff" : "#333"}">${time}</div>`;
+        let html = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDarkMode.value ? "#f0f0f0" : "#1f2937"}">${time}</div>`;
         params.forEach((p: any) => {
           const color = isGrayScale
-            ? "var(--el-text-color)"
-            : p.value >= 0
-              ? "var(--color-up)"
-              : "var(--color-down)";
+            ? isDarkMode.value
+              ? "#9ca3af"
+              : "#6b7280"
+            : p.color;
           html += `<div style="display: flex; align-items: center; margin: 4px 0; gap: 8px">
             <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${p.color}; flex-shrink: 0;"></span>
-            <span style="flex: 1;">${p.seriesName}:</span>
+            <span style="flex: 1; color: ${isDarkMode.value ? "#d1d5db" : "#4b5563"}">${p.seriesName}:</span>
             <span style="color: ${color}; font-weight: 600;">${p.value.toFixed(2)} 亿</span>
           </div>`;
         });
@@ -638,31 +670,48 @@ async function renderFlowChart(
         "小单净流入",
       ],
       top: 0,
-      textStyle: { fontSize: 11, color: isDarkMode.value ? "#fff" : "#000" },
+      textStyle: {
+        fontSize: 11,
+        color: isDarkMode.value ? "#d1d5db" : "#4b5563",
+      },
     },
     grid: { left: 50, right: 16, top: 50, bottom: 40 },
     xAxis: {
       type: "category",
       data: times,
-      axisLabel: { fontSize: 10 },
+      axisLabel: {
+        fontSize: 10,
+        color: isDarkMode.value ? "#9ca3af" : "#6b7280",
+      },
+      axisLine: {
+        lineStyle: {
+          color: isDarkMode.value
+            ? "rgba(255, 255, 255, 0.1)"
+            : "rgba(0, 0, 0, 0.1)",
+        },
+      },
     },
     yAxis: {
       type: "value",
-      axisLabel: { fontSize: 10, formatter: "{value}亿" },
+      axisLabel: {
+        fontSize: 10,
+        formatter: "{value}亿",
+        color: isDarkMode.value ? "#9ca3af" : "#6b7280",
+      },
       axisLine: {
         show: true,
         lineStyle: {
-          color: isGrayScale ? "#fff" : isDarkMode.value ? "#888" : "#333",
+          color: isDarkMode.value
+            ? "rgba(255, 255, 255, 0.1)"
+            : "rgba(0, 0, 0, 0.1)",
         },
       },
       splitLine: {
         lineStyle: {
           type: "dashed",
-          color: isGrayScale
-            ? "#fff"
-            : isDarkMode.value
-              ? "rgba(255, 255, 255, 0.1)"
-              : "rgba(0, 0, 0, 0.3)",
+          color: isDarkMode.value
+            ? "rgba(255, 255, 255, 0.08)"
+            : "rgba(0, 0, 0, 0.1)",
         },
       },
     },
@@ -674,7 +723,7 @@ async function renderFlowChart(
         smooth: false,
         lineStyle: { width: 2 },
         symbol: "none",
-        color: "#3b82f6",
+        color: seriesColors[0],
       },
       {
         name: "超大单净流入",
@@ -683,7 +732,7 @@ async function renderFlowChart(
         smooth: false,
         lineStyle: { width: 1.5 },
         symbol: "none",
-        color: "#ef4444",
+        color: seriesColors[1],
       },
       {
         name: "大单净流入",
@@ -692,7 +741,7 @@ async function renderFlowChart(
         smooth: false,
         lineStyle: { width: 1.5 },
         symbol: "none",
-        color: "#06b6d4",
+        color: seriesColors[2],
       },
       {
         name: "中单净流入",
@@ -701,7 +750,7 @@ async function renderFlowChart(
         smooth: false,
         lineStyle: { width: 1.5 },
         symbol: "none",
-        color: "#22c55e",
+        color: seriesColors[3],
       },
       {
         name: "小单净流入",
@@ -710,7 +759,7 @@ async function renderFlowChart(
         smooth: false,
         lineStyle: { width: 1.5 },
         symbol: "none",
-        color: "#f97316",
+        color: seriesColors[4],
       },
     ],
   };
@@ -1041,7 +1090,7 @@ onUnmounted(() => {
 }
 
 .market-stat-segment.is-flat {
-  background: linear-gradient(90deg, #9ca3af, #d1d5db);
+  background: linear-gradient(90deg, #9ca3af, #b1b5bb);
 }
 
 .market-stat-segment.is-down {
@@ -1397,7 +1446,6 @@ html.dark .index-img-wrap img {
   .card-stats {
     gap: 2px;
   }
-
 
   .card-stat-value--muted {
     font-size: 9px;
