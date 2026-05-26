@@ -852,14 +852,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  watch,
-  nextTick,
-  onMounted,
-  onUnmounted,
-} from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import {
   ElMessage,
@@ -900,6 +893,7 @@ import { getChinaMarketStatus } from "@/utils/marketChina";
 import type { Group, FundView } from "@/types";
 import type { FundRowDisplay } from "@/utils/fundDisplay";
 import { registerPendingCheckCallback } from "@/appInit";
+import { onMNFInfoCacheUpdate, clearLastMNFRefreshTime } from "@/api/fundEastmoney";
 import { getPendingCount, type BuyRecord } from "@/services/pendingBuyService";
 
 type TableColMeta = {
@@ -1474,6 +1468,10 @@ function handleQuickAdd() {
 }
 
 async function handleRefresh() {
+  // 强制刷新所有基金数据，清除本地缓存时间戳，确保从服务器获取最新数据
+  localStorage.removeItem("fund_mnf_info_cache_time");
+  clearLastMNFRefreshTime();
+  console.log("[ForceRefresh] 用户手动刷新，清除缓存时间戳，强制从服务器获取最新数据");
   refreshing.value = true;
   try {
     await fundService.refreshAllFunds();
@@ -2524,6 +2522,13 @@ onMounted(async () => {
   });
   // 初始化 pending 角标数量
   refreshBatchPendingCount();
+
+  // onMNFInfoCacheUpdate
+  onMNFInfoCacheUpdate(() => {
+    // MNF信息更新时刷新表格数据（特别是估值相关列）
+    console.log("[MNFInfoCacheUpdate] 监听到 MNF 信息更新，刷新基金数据");
+    fundService.refreshAllFunds().catch(() => {});
+  });
 });
 
 onUnmounted(() => {

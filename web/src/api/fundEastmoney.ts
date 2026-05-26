@@ -199,8 +199,8 @@ async function fetchWithProxyFallback(url: string, timeout: number = 12000): Pro
 
   // 策略 2: allorigins.win 代理
   try {
-    // const proxyUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url.replace('fundmobapi.eastmoney.com', atob('ZnVuZC5yYWJ0LnRvcA==')))}`
-    // const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+    // const proxy1Url = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url.replace('fundmobapi.eastmoney.com', atob('ZnVuZC5yYWJ0LnRvcA==')))}`
+    // const proxy1Url = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
     const proxy1Url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
     const res = await fetch(proxy1Url, { signal: AbortSignal.timeout(60000) })
     if (!res.ok) {
@@ -406,6 +406,10 @@ function toFundInfoFromMerge(
 let backgroundMNFRefreshPromise: Promise<Map<string, any>> | null = null
 let lastMNFRefreshTime: number = localStorage.getItem(MNF_INFO_CACHE_TIME_KEY) ? parseInt(localStorage.getItem(MNF_INFO_CACHE_TIME_KEY)!, 10) : 0
 const MNF_REFRESH_INTERVAL = 15 * 60 * 1000  // 15分钟强制刷新一次
+
+export function clearLastMNFRefreshTime() {
+  lastMNFRefreshTime = 0
+}
 
 /** 缓存更新回调函数列表 */
 const cacheUpdateCallbacks: Array<() => void> = []
