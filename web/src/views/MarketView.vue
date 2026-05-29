@@ -351,8 +351,15 @@ const isDarkMode = computed(() => useSettingStore().theme === "dark");
 // data-grayscale 属性控制是否启用灰度模式，配合 CSS filter 实现全图灰度
 const isGrayScale = computed(() => useSettingStore().grayscaleMode);
 
-watch([isDarkMode, isGrayScale], () => {
+watch(isDarkMode, () => {
   // 切换主题时刷新图表以适配新主题
+  nextTick(() => {
+    handleRefresh();
+  });
+});
+
+watch(isGrayScale, () => {
+  // 切换灰度模式时刷新图表以适配新模式
   nextTick(() => {
     handleRefresh();
   });

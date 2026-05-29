@@ -47,7 +47,10 @@
           </ul>
         </el-collapse-item>
 
-        <el-form label-position="right" :label-width="formLabelWidth">
+        <el-form
+          :label-position="formLabelPosition"
+          :label-width="formLabelWidth"
+        >
           <!-- 显示设置 -->
           <el-collapse-item name="display" class="settings-collapse-item">
             <template #title>
@@ -564,7 +567,9 @@ const themeMode = computed({
     // 将实际应用的主题同步到 DOM 并更新 PWA 主题色
     document.documentElement.dataset.theme = settingStore.theme;
     updateThemeColor(settingStore.theme);
-    ElMessage.success(`已切换到${value === 'auto' ? '跟随系统' : value === 'light' ? '浅色' : '深色'}主题`);
+    ElMessage.success(
+      `已切换到${value === "auto" ? "跟随系统" : value === "light" ? "浅色" : "深色"}主题`,
+    );
   },
 });
 
@@ -594,10 +599,12 @@ const autoRefreshEnabled = computed({
 // ==================== 宽度设置相关 ====================
 
 // 预设宽度列表
-const presetWidths = [375, 425, 768, 1024, 1280, 1440, 1920, 2560];
+const presetWidths = [320, 375, 425, 768, 1024, 1280, 1440, 1920, 2560];
 
-// 预设宽度滑块位置
-const presetWidthSlider = ref(1); // 默认 1024
+// 预设宽度滑块位置 // 默认 1024
+const presetWidthSlider = ref(
+  presetWidths.indexOf(1024) >= 0 ? presetWidths.indexOf(1024) : 4,
+);
 
 // 自定义宽度
 const customWidth = ref(1024);
@@ -607,13 +614,18 @@ const maxContentWidthMode = computed({
   get: () => settingStore.maxContentWidthMode,
   set: async (value: "full" | "preset" | "custom") => {
     await settingStore.setMaxContentWidthMode(value);
+    const currentWidth = settingStore.maxContentWidth;
     // 设置初始宽度
     if (value === "preset") {
-      const currentWidth = settingStore.maxContentWidth;
       const index = presetWidths.indexOf(currentWidth);
       presetWidthSlider.value = index >= 0 ? index : 1;
+      formLabelPosition.value = currentWidth <= 375 ? "top" : "right"; // 根据宽度调整标签位置
     } else if (value === "custom") {
       customWidth.value = settingStore.maxContentWidth;
+      formLabelPosition.value =
+        currentWidth <= 375 ? "top" : "right"; // 根据宽度调整标签位置
+    } else {
+      formLabelPosition.value = "right"; // 铺满宽度时默认标签在右侧
     }
   },
 });
@@ -621,6 +633,9 @@ const maxContentWidthMode = computed({
 // 预设宽度改变时的处理
 async function onPresetWidthChange() {
   const width = presetWidths[presetWidthSlider.value];
+  if (settingStore.maxContentWidthMode === "preset") {
+    formLabelPosition.value = width <= 375 ? "top" : "right"; // 根据宽度调整标签位置
+  }
   if (width) {
     await settingStore.setMaxContentWidth(width);
     ElMessage.success(`宽度已设置为 ${width}px`);
@@ -630,6 +645,10 @@ async function onPresetWidthChange() {
 // 自定义宽度改变时的处理
 async function onCustomWidthChange() {
   await settingStore.setMaxContentWidth(customWidth.value);
+  if (settingStore.maxContentWidthMode === "custom") {
+    formLabelPosition.value =
+      customWidth.value <= 375 ? "top" : "right"; // 根据宽度调整标签位置
+  }
   ElMessage.success(`宽度已设置为 ${customWidth.value}px`);
 }
 
@@ -657,6 +676,15 @@ const activeCollapseItems = ref([
 
 // 移动端label宽度适配
 const formLabelWidth = computed(() => "90px");
+
+// 当宽度较小时将标签位置调整到顶部，避免空间不足导致的布局问题
+const formLabelPosition = ref(
+  settingStore.maxContentWidthMode !== "full"
+    ? settingStore.maxContentWidth <= 375
+      ? "top"
+      : "right"
+    : "right",
+);
 
 const jsonboxNameChanged = computed(
   () => jsonboxName.value !== savedJsonboxName.value,

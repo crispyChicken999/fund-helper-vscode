@@ -81,6 +81,7 @@ const contentStyle = computed(() => {
   background: var(--el-bg-color);
   border-left: 1px solid var(--el-border-color);
   border-right: 1px solid var(--el-border-color);
+  transition: width 0.3s;
 }
 
 @media (max-width: 768px) {
