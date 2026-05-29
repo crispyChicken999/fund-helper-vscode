@@ -11,8 +11,8 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --heading: system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
@@ -162,8 +162,6 @@ code {
 }
 
 #app {
-  width: 1126px;
-  max-width: 100%;
   margin: 0 auto;
   text-align: center;
   border-inline: 1px solid var(--border);
@@ -284,36 +282,36 @@ code {
   /* 基础颜色 - 使用 Element Plus 的内置变量 */
   --color-primary: var(--el-color-primary);
   --color-primary-hover: var(--el-color-primary-light-1);
-  
+
   /* A 股习惯：涨红跌绿 */
   --color-up: #ef4444;
   --color-down: #22c55e;
   --color-flat: var(--el-color-info);
-  
+
   /* 背景和文本 - 使用 Element Plus 变量 */
   --bg-primary: var(--el-bg-color);
   --bg-secondary: var(--el-fill-color-light);
   --bg-card: var(--el-bg-color);
-  
+
   --text-primary: var(--el-text-color-primary);
   --text-secondary: var(--el-text-color-regular);
   --text-muted: var(--el-text-color-secondary);
-  
+
   --border-color: var(--el-border-color);
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   --bg-card-hover: var(--el-fill-color-light);
 }
 
-[data-grayscale='true'] {
+[data-grayscale="true"] {
   --color-up: var(--text-primary);
   --color-down: var(--text-primary);
   filter: grayscale(1);
 }
 
 /* 深色模式玻璃拟态 */
-[data-theme='dark'] .glass-card {
+[data-theme="dark"] .glass-card {
   background: rgba(26, 32, 53, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -323,7 +321,8 @@ code {
 
 /* 全局字体 */
 body {
-  font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-family:
+    "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -334,7 +333,7 @@ body {
 
   &::before,
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -4.5px;
     border: 5px solid transparent;
@@ -364,4 +363,21 @@ body {
 }
 .el-dialog {
   border: 1px solid var(--el-border-color-lighter);
+}
+
+.el-table--border:after,
+.el-table--border:before,
+.el-table--border .el-table__inner-wrapper:after,
+.el-table__inner-wrapper:before,
+.el-table__border-left-patch {
+  display: none !important;
+}
+
+.el-table {
+  --el-table-border-color: var(--el-border-color-light);
+}
+
+.el-table.is-scrolling-middle .el-table-fixed-column--left.is-last-column.el-table__cell,
+.el-table.is-scrolling-right .el-table-fixed-column--left.is-last-column.el-table__cell {
+  border-right: 1px solid transparent;
 }

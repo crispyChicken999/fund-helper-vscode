@@ -134,6 +134,10 @@ export interface Settings {
   columnOrder: string[]     // 列顺序
   visibleColumns: string[]  // 可见列
   sortMethod: string        // 默认排序方法 (如: "holdingGainRate_desc")
+  
+  // 宽度设置
+  maxContentWidthMode: 'full' | 'preset' | 'custom' // 最大宽度模式
+  maxContentWidth: number   // 自定义最大宽度(px)，仅在 custom 模式下使用
 }
 
 // 列定义

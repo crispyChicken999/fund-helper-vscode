@@ -1,5 +1,5 @@
 <template>
-  <div class="detail-layout">
+  <div class="detail-layout" :style="contentStyle">
     <div class="layout-header">
       <slot name="header" />
     </div>
@@ -11,6 +11,33 @@
   </div>
 </template>
 
+<script setup lang="ts">
+import { computed } from "vue";
+import { useSettingStore } from "@/stores";
+
+const settingStore = useSettingStore();
+
+const contentStyle = computed(() => {
+  const mode = settingStore.maxContentWidthMode;
+  if (mode === "full") {
+    return {};
+  }
+
+  let maxWidth: number;
+  if (mode === "preset") {
+    maxWidth = settingStore.maxContentWidth;
+  } else {
+    maxWidth = settingStore.maxContentWidth;
+  }
+
+  return {
+    width: `${maxWidth}px`,
+    maxWidth: `100%`,
+    margin: "0 auto",
+  };
+});
+</script>
+
 <style scoped>
 .detail-layout {
   display: flex;
@@ -18,6 +45,8 @@
   overflow: hidden;
   flex-direction: column;
   background: var(--el-bg-color);
+  border-left: 1px solid var(--el-border-color);
+  border-right: 1px solid var(--el-border-color);
 }
 
 @media (max-width: 768px) {

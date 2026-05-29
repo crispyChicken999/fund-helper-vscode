@@ -46,7 +46,9 @@ const defaultSettings: Settings = {
     'sector',
     'cost'
   ],
-  sortMethod: 'holdingGainRate_desc'
+  sortMethod: 'holdingGainRate_desc',
+  maxContentWidthMode: 'preset',
+  maxContentWidth: 1024
 }
 
 // 列定义
@@ -108,6 +110,16 @@ export const useSettingStore = defineStore('setting', {
     // 排序方法
     sortMethod(): string {
       return this.settings.sortMethod
+    },
+
+    // 最大宽度模式
+    maxContentWidthMode(): 'full' | 'preset' | 'custom' {
+      return this.settings.maxContentWidthMode
+    },
+
+    // 最大内容宽度
+    maxContentWidth(): number {
+      return this.settings.maxContentWidth
     }
   },
 
@@ -176,6 +188,18 @@ export const useSettingStore = defineStore('setting', {
     // 设置主题
     async setTheme(theme: 'light' | 'dark') {
       this.settings.theme = theme
+      storageService.saveSettings(this.getSettings())
+    },
+
+    // 设置最大宽度模式
+    async setMaxContentWidthMode(mode: 'full' | 'preset' | 'custom') {
+      this.settings.maxContentWidthMode = mode
+      storageService.saveSettings(this.getSettings())
+    },
+
+    // 设置最大内容宽度
+    async setMaxContentWidth(width: number) {
+      this.settings.maxContentWidth = width
       storageService.saveSettings(this.getSettings())
     },
 

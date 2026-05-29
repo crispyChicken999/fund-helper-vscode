@@ -1,16 +1,16 @@
 <template>
-  <div class="main-layout">
+  <div class="main-layout" :style="contentStyle">
     <div class="layout-header">
       <slot name="header" />
     </div>
 
     <div class="layout-content">
-      <template v-if="route.path === '/'">
-        <slot />
-      </template>
-      <el-scrollbar v-else>
-        <slot />
-      </el-scrollbar>
+        <template v-if="route.path === '/'">
+          <slot />
+        </template>
+        <el-scrollbar v-else>
+          <slot />
+        </el-scrollbar>
     </div>
 
     <nav class="layout-footer bottom-nav" aria-label="主导航">
@@ -45,8 +45,31 @@
 <script setup lang="ts">
 import { useRoute } from "vue-router";
 import { HomeFilled, TrendCharts, Setting } from "@element-plus/icons-vue";
+import { computed } from "vue";
+import { useSettingStore } from "@/stores";
 
 const route = useRoute();
+const settingStore = useSettingStore();
+
+const contentStyle = computed(() => {
+  const mode = settingStore.maxContentWidthMode;
+  if (mode === "full") {
+    return {};
+  }
+
+  let maxWidth: number;
+  if (mode === "preset") {
+    maxWidth = settingStore.maxContentWidth;
+  } else {
+    maxWidth = settingStore.maxContentWidth;
+  }
+
+  return {
+    width: `${maxWidth}px`,
+    maxWidth: `100%`,
+    margin: "0 auto",
+  };
+});
 </script>
 
 <style scoped>
@@ -56,6 +79,8 @@ const route = useRoute();
   flex-direction: column;
   overflow: hidden;
   background: var(--el-bg-color);
+  border-left: 1px solid var(--el-border-color);
+  border-right: 1px solid var(--el-border-color);
 }
 
 @media (max-width: 768px) {

@@ -18,23 +18,31 @@
           </template>
           <ul class="usage-guide-list">
             <li>
-              ➕ 点击首页右上角 <strong>+</strong> 按钮，可添加新基金，支持按代码或名称搜索，支持批量加减仓
+              ➕ 点击首页右上角
+              <strong>+</strong>
+              按钮，可添加新基金，支持按代码或名称搜索，支持批量加减仓
             </li>
             <li>
-              ✏️ <strong>点击基金名称</strong>，可查看基金详情、编辑持仓成本、份额和进行删除等操作
+              ✏️
+              <strong>点击基金名称</strong
+              >，可查看基金详情、编辑持仓成本、份额和进行删除等操作
             </li>
             <li>
               📌<strong>长按分组</strong>，可查看该分组的详情信息（持仓汇总、收益统计等）
             </li>
             <li>↕️ 默认排序时，<strong>拖动基金行</strong> 可调整排列顺序</li>
             <li>
-              🗂️ <strong>点击分组设置按钮</strong>，以文件夹形式管理分组、分组下的基金，支持拖拽修改分组
+              🗂️
+              <strong>点击分组设置按钮</strong
+              >，以文件夹形式管理分组、分组下的基金，支持拖拽修改分组
             </li>
             <li>
               🔒 开启<strong>隐私模式</strong>后所有数值将被隐藏，适合截图分享
             </li>
             <li>
-              ☁️ 配置 <strong>Box Name</strong>后，可在多设备间（VSCode插件、PC、Mobile）云同步数据，支持扫码同步
+              ☁️ 配置
+              <strong>Box Name</strong
+              >后，可在多设备间（VSCode插件、PC、Mobile）云同步数据，支持扫码同步
             </li>
           </ul>
         </el-collapse-item>
@@ -83,6 +91,69 @@
                 <el-option label="1分钟" :value="60" />
                 <el-option label="5分钟" :value="300" />
               </el-select>
+            </el-form-item>
+
+            <!-- 内容最大宽度设置 -->
+            <el-form-item label="内容宽度">
+              <el-radio-group v-model="maxContentWidthMode">
+                <el-radio value="full">铺满宽度</el-radio>
+                <el-radio value="preset">预设宽度</el-radio>
+                <el-radio value="custom">自定义</el-radio>
+              </el-radio-group>
+              <div class="form-item-tip">设置主体内容的最大宽度</div>
+            </el-form-item>
+
+            <!-- 预设宽度滑块 -->
+            <el-form-item
+              v-if="maxContentWidthMode !== 'full'"
+              label="宽度设置"
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 16px;
+                  width: 100%;
+                  padding: 0 10px;
+                "
+              >
+                <el-slider
+                  v-if="maxContentWidthMode === 'preset'"
+                  v-model="presetWidthSlider"
+                  :min="0"
+                  :max="presetWidths.length - 1"
+                  :step="1"
+                  show-stops
+                  :format-tooltip="(val: number) => presetWidths[val] + 'px'"
+                  @change="onPresetWidthChange"
+                  style="flex: 1"
+                />
+                <el-input-number
+                  v-else
+                  v-model="customWidth"
+                  :min="320"
+                  :max="5000"
+                  :step="10"
+                  @change="onCustomWidthChange"
+                  style="width: 150px"
+                  placeholder="输入宽度(px)"
+                />
+                <span class="width-display">
+                  {{
+                    maxContentWidthMode === "preset"
+                      ? presetWidths[presetWidthSlider]
+                      : customWidth
+                  }}
+                  px
+                </span>
+              </div>
+              <div class="form-item-tip">
+                {{
+                  maxContentWidthMode === "preset"
+                    ? "快速选择常见屏幕宽度"
+                    : "输入自定义宽度（320-5000px）"
+                }}
+              </div>
             </el-form-item>
           </el-collapse-item>
 
@@ -287,7 +358,7 @@
             <el-form-item label="版本" label-width="120px">
               <span>1.0.0</span>
             </el-form-item>
-            
+
             <el-form-item label="打包时间" label-width="120px">
               <span>{{ buildTime }}</span>
             </el-form-item>
@@ -519,6 +590,48 @@ const autoRefreshEnabled = computed({
   },
 });
 
+// ==================== 宽度设置相关 ====================
+
+// 预设宽度列表
+const presetWidths = [375, 425, 768, 1024, 1280, 1440, 1920, 2560];
+
+// 预设宽度滑块位置
+const presetWidthSlider = ref(1); // 默认 1024
+
+// 自定义宽度
+const customWidth = ref(1024);
+
+// 最大宽度模式
+const maxContentWidthMode = computed({
+  get: () => settingStore.maxContentWidthMode,
+  set: async (value: "full" | "preset" | "custom") => {
+    await settingStore.setMaxContentWidthMode(value);
+    // 设置初始宽度
+    if (value === "preset") {
+      const currentWidth = settingStore.maxContentWidth;
+      const index = presetWidths.indexOf(currentWidth);
+      presetWidthSlider.value = index >= 0 ? index : 1;
+    } else if (value === "custom") {
+      customWidth.value = settingStore.maxContentWidth;
+    }
+  },
+});
+
+// 预设宽度改变时的处理
+async function onPresetWidthChange() {
+  const width = presetWidths[presetWidthSlider.value];
+  if (width) {
+    await settingStore.setMaxContentWidth(width);
+    ElMessage.success(`宽度已设置为 ${width}px`);
+  }
+}
+
+// 自定义宽度改变时的处理
+async function onCustomWidthChange() {
+  await settingStore.setMaxContentWidth(customWidth.value);
+  ElMessage.success(`宽度已设置为 ${customWidth.value}px`);
+}
+
 const jsonboxName = ref("");
 const savedJsonboxName = ref("");
 const showSyncDialog = ref(false);
@@ -601,6 +714,12 @@ onMounted(async () => {
 
   await nextTick();
   initColumnSortable();
+  // 同步宽度设置初始值
+  // 预设模式：将存储的宽度映射到滑块位置
+  const storedWidth = settingStore.maxContentWidth;
+  const presetIndex = presetWidths.indexOf(storedWidth);
+  if (presetIndex >= 0) presetWidthSlider.value = presetIndex;
+  customWidth.value = storedWidth;
 });
 
 onUnmounted(() => {

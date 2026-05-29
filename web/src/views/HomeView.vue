@@ -376,7 +376,9 @@
                 <div class="cell-stack">
                   <div>{{ formatValue(row.holdingAmount) }}</div>
                   <div class="td-sub muted">
-                    {{ formatPercent(getPositionRatio(row.holdingAmount), false) }}
+                    {{
+                      formatPercent(getPositionRatio(row.holdingAmount), false)
+                    }}
                   </div>
                 </div>
               </template>
@@ -893,7 +895,10 @@ import { getChinaMarketStatus } from "@/utils/marketChina";
 import type { Group, FundView } from "@/types";
 import type { FundRowDisplay } from "@/utils/fundDisplay";
 import { registerPendingCheckCallback } from "@/appInit";
-import { onMNFInfoCacheUpdate, clearLastMNFRefreshTime } from "@/api/fundEastmoney";
+import {
+  onMNFInfoCacheUpdate,
+  clearLastMNFRefreshTime,
+} from "@/api/fundEastmoney";
 import { getPendingCount, type BuyRecord } from "@/services/pendingBuyService";
 
 type TableColMeta = {
@@ -1289,7 +1294,7 @@ function formatValue(value: number | undefined) {
 
 function formatPercent(value: number | undefined, prefix: boolean = true) {
   if (value === undefined) return "-";
-  const formatted = `${prefix ? value > 0 ? "+" : "": ""}${value.toFixed(2)}%`;
+  const formatted = `${prefix ? (value > 0 ? "+" : "") : ""}${value.toFixed(2)}%`;
   return formatPrivacy(formatted, settingStore.privacyMode);
 }
 
@@ -1477,7 +1482,9 @@ async function handleRefresh() {
   // 强制刷新所有基金数据，清除本地缓存时间戳，确保从服务器获取最新数据
   localStorage.removeItem("fund_mnf_info_cache_time");
   clearLastMNFRefreshTime();
-  console.log("[ForceRefresh] 用户手动刷新，清除缓存时间戳，强制从服务器获取最新数据");
+  console.log(
+    "[ForceRefresh] 用户手动刷新，清除缓存时间戳，强制从服务器获取最新数据",
+  );
   refreshing.value = true;
   try {
     await fundService.refreshAllFunds();
@@ -2737,7 +2744,7 @@ html.dark .group-tag-item.active {
   align-items: center;
   gap: 8px;
   padding: 8px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color);
   background: var(--bg-card);
 }
 
@@ -2771,6 +2778,7 @@ html.dark .group-tag-item.active {
 
 .fund-name-cell {
   cursor: pointer;
+  width: 100%;
 }
 
 .fund-name-cell:hover {
