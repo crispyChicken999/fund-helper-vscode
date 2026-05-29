@@ -167,13 +167,13 @@
             <div class="section-title">持仓信息</div>
             <div class="info-grid-2col">
               <div class="grid-item">
-                <span class="g-label">持仓总额</span>
+                <span class="g-label">持有成本</span>
                 <span class="g-value">{{
                   fmtMoney(detailRow.costAmount)
                 }}</span>
               </div>
               <div class="grid-item">
-                <span class="g-label">持有金额</span>
+                <span class="g-label">持有市值</span>
                 <span class="g-value">{{
                   fmtMoney(detailRow.holdingAmount)
                 }}</span>
@@ -1490,7 +1490,7 @@ const nextCode = computed(() => {
 
 async function navigateTo(targetCode: string | null) {
   if (!targetCode) return;
-  await router.push(`/fund/${targetCode}`);
+  await router.push(`/detail/${targetCode}`);
 }
 
 // ==================== 计算属性 ====================

@@ -60,7 +60,7 @@
                   >
                 </div>
                 <div class="confirm-row">
-                  <span class="confirm-label">持仓总额</span>
+                  <span class="confirm-label">持有成本</span>
                   <span
                     >{{ item.oldAmount.toFixed(2) }} →
                     <strong>{{ item.newAmount.toFixed(2) }}</strong> 元</span

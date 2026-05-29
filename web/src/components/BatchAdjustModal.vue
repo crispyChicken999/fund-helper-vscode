@@ -247,7 +247,7 @@
                     >
                   </div>
                   <div class="preview-row">
-                    <span class="preview-label">持仓总额</span>
+                    <span class="preview-label">持有成本</span>
                     <span
                       >{{ calcOldAmount(item).toFixed(2) }} →
                       <strong>{{ calcNewAmount(item).toFixed(2) }}</strong>
@@ -372,7 +372,7 @@
                     <span>{{ calcSellCost(item).toFixed(4) }}（不变）</span>
                   </div>
                   <div class="preview-row">
-                    <span class="preview-label">持仓总额</span>
+                    <span class="preview-label">持有成本</span>
                     <span
                       >{{ calcSellOldAmount(item).toFixed(2) }} →
                       <strong>{{ calcSellNewAmount(item).toFixed(2) }}</strong>

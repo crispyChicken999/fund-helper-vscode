@@ -112,16 +112,20 @@
                 <!-- 持仓信息 -->
                 <div class="info-group">
                   <div class="info-row">
-                    <span class="info-label">持仓总额</span>
+                    <span class="info-label">持有成本</span>
                     <span>{{ fmt4Price(row.fund.num * row.fund.cost) }}</span>
                   </div>
                   <div class="info-row">
-                    <span class="info-label">持有金额</span>
+                    <span class="info-label">持有市值</span>
                     <span>{{ fmtMoney(row.holdingAmount) }}</span>
                   </div>
                   <div class="info-row">
                     <span class="info-label">持有份额</span>
                     <span>{{ fmtShares(row.fund.num) }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">持有仓位</span>
+                    <span>{{ fmtPct(getHoldingPosition(row.holdingAmount), true, false) }}</span>
                   </div>
                 </div>
                 <div class="info-group">
@@ -218,12 +222,15 @@ import {
   Folder,
   Delete,
 } from "@element-plus/icons-vue";
+import { useFundStore } from "@/stores";
 
 const props = defineProps<{
   visible: boolean;
   row: FundRowDisplay | null;
   privacyMode: boolean;
 }>();
+
+const fundStore = useFundStore();
 
 defineEmits<{
   close: [];
@@ -262,11 +269,19 @@ function fmtShares(v: unknown) {
   return formatNumber(safeNum(v), 2);
 }
 
-function fmtPct(v: unknown, show: boolean) {
+function getHoldingPosition(amount: unknown) {
+  const totalAsset = fundStore.getTotalAsset;
+  const value = safeNum(amount);
+  if (totalAsset <= 0) return 0;
+  return (value / totalAsset) * 100;
+}
+
+function fmtPct(v: unknown, show: boolean, showSign = true) {
   if (!show) return "—";
   const n = safeNum(v);
-  return `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
+  return `${showSign ? (n > 0 ? "+" : "") : ""}${n.toFixed(2)}%`;
 }
+
 
 function pctClass(v: unknown) {
   const n = safeNum(v);
@@ -308,9 +323,10 @@ function handleCopy() {
     `持有收益：${fmtMoney(r.holdingGain)}`,
     `总收益率：${rawPct(r.holdingGainRate, true)}`,
     SEP,
-    `持仓总额：${fmt4Price(r.fund.num * r.fund.cost)}`,
-    `持有金额：${fmtMoney(r.holdingAmount)}`,
+    `持有成本：${fmt4Price(r.fund.num * r.fund.cost)}`,
+    `持有市值：${fmtMoney(r.holdingAmount)}`,
     `持有份额：${fmtShares(r.fund.num)}`,
+    `持有仓位：${fmtPct(getHoldingPosition(r.holdingAmount), true, false)}`,
     SEP,
     `成本价：${fmt4(r.fund.cost)}`,
     `估算净值：${fmt4(r.displayGsz)}`,
@@ -348,7 +364,7 @@ function handleCopy() {
   width: 70vw;
   max-width: 420px;
   height: 85vh;
-  max-height: 650px;
+  max-height: 700px;
   background: var(--el-bg-color);
   border-radius: 8px;
   padding: 16px;

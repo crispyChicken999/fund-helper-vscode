@@ -6,7 +6,7 @@
           <div class="header-title-row">
             <h2>行情中心</h2>
             <el-popover
-              placement="bottom"
+              placement="bottom-start"
               title="提示"
               :width="200"
               trigger="hover"

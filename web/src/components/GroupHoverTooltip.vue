@@ -141,12 +141,16 @@
           <!-- 总计 -->
           <div class="info-group info-group-last">
             <div class="info-row">
-              <span class="info-label">总资产</span>
+              <span class="info-label">总市值</span>
               <span>{{ fmtMoney(stats.totalAsset) }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">总成本</span>
               <span>{{ fmtMoney(stats.totalCost) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">总仓位</span>
+              <span>{{ fmtPct(stats.totalPosition * 100, false) }}</span>
             </div>
           </div>
         </section>
@@ -300,9 +304,9 @@ function fmtMoney(v: unknown) {
   return formatCurrency(safeNum(v));
 }
 
-function fmtPct(v: unknown) {
+function fmtPct(v: unknown, showSign = true) {
   const n = safeNum(v);
-  return `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
+  return `${showSign ? n > 0 ? "+" : "" : ""}${n.toFixed(2)}%`;
 }
 
 function pctClass(v: unknown) {
@@ -336,8 +340,9 @@ function handleCopy() {
     `持有收益率 (${s.holdingDate})：${fmtPct(s.holdingGainRate)}`,
     `持有盈利/亏损 (${s.holdingDate})：${s.holdingProfitCount} / ${s.holdingLossCount}`,
     SEP,
-    `总资产：${fmtMoney(s.totalAsset)}`,
+    `总市值：${fmtMoney(s.totalAsset)}`,
     `总成本：${fmtMoney(s.totalCost)}`,
+    `总仓位：${fmtPct(s.totalPosition * 100, false)}`,
   ];
   navigator.clipboard
     .writeText(lines.join("\n"))

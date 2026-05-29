@@ -27,7 +27,7 @@ const router = createRouter({
       meta: { title: '设置' }
     },
     {
-      path: '/fund/:code',
+      path: '/detail/:code',
       name: 'fundDetail',
       component: () => import('@/views/FundDetailView.vue'),
       meta: { title: '基金详情' },

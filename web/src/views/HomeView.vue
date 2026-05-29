@@ -1000,6 +1000,7 @@ const groupTooltipStats = ref<GroupStats>({
   holdingDate: "",
   totalAsset: 0,
   totalCost: 0,
+  totalPosition: 0,
 });
 
 const fundForm = ref({ code: "", num: 0, cost: 0, groupKey: "" });
@@ -1058,6 +1059,7 @@ const groupHoverStats = ref<GroupStats>({
   holdingDate: "",
   totalAsset: 0,
   totalCost: 0,
+  totalPosition: 0,
 });
 const groupHoverX = ref(0);
 const groupHoverY = ref(0);
@@ -1757,6 +1759,7 @@ function onGroupMouseEnter(group: Group, e: MouseEvent) {
       holdingDate: dailyDate,
       totalAsset,
       totalCost,
+      totalPosition: (fundStore.getTotalAsset || 0) > 0 ? totalAsset / (fundStore.getTotalAsset || 0) : 0,
     };
     // 基于分组元素位置，智能显示在左下角或右下角
     const groupTagEl = (e.target as HTMLElement).closest(".group-tag-item");
@@ -1891,6 +1894,7 @@ function onAllGroupMouseEnter(e: MouseEvent) {
       holdingDate: dailyDate,
       totalAsset,
       totalCost,
+      totalPosition: (fundStore.getTotalAsset || 0) > 0 ? totalAsset / (fundStore.getTotalAsset || 0) : 0,
     };
 
     // "全部"项在左侧，显示在right bottom
@@ -1958,6 +1962,7 @@ function showAllGroupStats() {
     holdingDate: dailyDate,
     totalAsset,
     totalCost,
+    totalPosition: (fundStore.getTotalAsset || 0) > 0 ? totalAsset / (fundStore.getTotalAsset || 0) : 0,
   };
 
   groupTooltipVisible.value = true;
@@ -1966,7 +1971,7 @@ function showAllGroupStats() {
 function onHoverTooltipDetail() {
   if (!fundHoverRow.value) return;
   closeFundHover();
-  router.push(`/fund/${fundHoverRow.value.code}`);
+  router.push(`/detail/${fundHoverRow.value.code}`);
 }
 
 function onHoverTooltipAdjust(isAdd: boolean) {
@@ -2047,7 +2052,7 @@ function onTableTouchEnd(e: TouchEvent) {
 function onTooltipDetail() {
   if (!tooltipRow.value) return;
   tooltipVisible.value = false;
-  router.push(`/fund/${tooltipRow.value.code}`);
+  router.push(`/detail/${tooltipRow.value.code}`);
 }
 
 async function onTooltipAdjust(isAdd: boolean) {
@@ -2425,6 +2430,7 @@ function showGroupStats(group: Group) {
     holdingDate: dailyDate,
     totalAsset,
     totalCost,
+    totalPosition: (fundStore.getTotalAsset || 0) > 0 ? totalAsset / (fundStore.getTotalAsset || 0) : 0,
   };
   groupTooltipVisible.value = true;
 }
