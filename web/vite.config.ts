@@ -73,7 +73,7 @@ export default defineConfig(({ mode }) => {
             // API 缓存策略：网络优先，确保数据最新
             {
               urlPattern: /^https:\/\/api\.|^https:\/\/.*\.(api|proxy).*|^\/api-proxy\//i,
-              handler: 'NetworkFirst',
+              handler: 'NetworkOnly',
               options: {
                 cacheName: 'api-cache',
                 expiration: {
@@ -88,7 +88,7 @@ export default defineConfig(({ mode }) => {
             // 基金数据接口
             {
               urlPattern: /^https:\/\/(push2\.eastmoney|data\.eastmoney|fundmobapi\.eastmoney|dgs\.tiantianfunds|api\.fund\.eastmoney)\.com\/.*/i,
-              handler: 'NetworkFirst',
+              handler: 'NetworkOnly',
               options: {
                 cacheName: 'fund-data-cache',
                 expiration: {
