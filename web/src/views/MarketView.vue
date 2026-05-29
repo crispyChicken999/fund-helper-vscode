@@ -24,6 +24,7 @@
             <span class="update-hint">{{ updateHint }}</span>
             <el-button
               size="small"
+              round
               :loading="refreshing"
               @click="handleRefresh"
             >
@@ -39,6 +40,7 @@
                 v-for="tab in mainTabs"
                 :key="tab.key"
                 class="main-tab-item"
+                :data-tab-key="tab.key"
                 :class="{ active: activeMainTab === tab.key }"
                 @click="switchMainTab(tab.key, $event)"
               >
@@ -149,7 +151,7 @@
 
         <!-- 全球指数子 Tab -->
         <div class="sub-section">
-          <div class="sub-tabs">
+          <div class="sub-tabs" style="margin-bottom: 10px;">
             <span
               v-for="g in globalIndexGroups"
               :key="g"
@@ -477,18 +479,12 @@ async function loadTabOnce(tab: string) {
   }
 }
 
-function switchMainTab(tab: string, event?: MouseEvent) {
-  activeMainTab.value = tab;
-  loadTabOnce(tab);
-  // Resize charts after tab switch (DOM visibility change)
+function scrollTabIntoView(tabKey: string) {
   nextTick(() => {
-    flowChartInstance?.resize();
-    Object.values(plateChartInstances).forEach((c: any) => c?.resize());
-  });
-
-  nextTick(() => {
-    const target = event?.currentTarget as HTMLElement | null;
-    if (!target) return;
+    const tabElement = document.querySelector(
+      `.main-tab-item[data-tab-key="${tabKey}"]`,
+    ) as HTMLElement | null;
+    if (!tabElement) return;
 
     const scrollbar = mainTabsScrollbar.value as any;
     const wrap: HTMLElement | null =
@@ -497,7 +493,7 @@ function switchMainTab(tab: string, event?: MouseEvent) {
       null;
     if (!wrap) return;
 
-    const targetCenter = target.offsetLeft + target.offsetWidth / 2;
+    const targetCenter = tabElement.offsetLeft + tabElement.offsetWidth / 2;
     const maxScroll = wrap.scrollWidth - wrap.clientWidth;
     const nextScrollLeft = Math.min(
       Math.max(0, targetCenter - wrap.clientWidth / 2),
@@ -510,6 +506,18 @@ function switchMainTab(tab: string, event?: MouseEvent) {
       wrap.scrollTo({ left: nextScrollLeft, behavior: "smooth" });
     }
   });
+}
+
+function switchMainTab(tab: string, event?: MouseEvent) {
+  activeMainTab.value = tab;
+  loadTabOnce(tab);
+  // Resize charts after tab switch (DOM visibility change)
+  nextTick(() => {
+    flowChartInstance?.resize();
+    Object.values(plateChartInstances).forEach((c: any) => c?.resize());
+  });
+
+  scrollTabIntoView(tab);
 }
 
 async function switchPlateRank(tab: string, field: PlateRankField) {
@@ -606,7 +614,13 @@ function handleTouchEnd(e: TouchEvent) {
   if (targetIndex !== currentIndex) {
     const targetTab = mainTabs[targetIndex];
     if (targetTab) {
-      switchMainTab(targetTab.key);
+      activeMainTab.value = targetTab.key;
+      loadTabOnce(targetTab.key);
+      nextTick(() => {
+        flowChartInstance?.resize();
+        Object.values(plateChartInstances).forEach((c: any) => c?.resize());
+      });
+      scrollTabIntoView(targetTab.key);
     }
   }
 }
@@ -1030,6 +1044,48 @@ function setupResize() {
   if (contentRef.value) resizeObserver.observe(contentRef.value);
 }
 
+// --- 滚动阴影效果 ---
+
+function updateScrollShadows(scrollable: HTMLElement) {
+  const scrollLeft = scrollable.scrollLeft;
+  const scrollWidth = scrollable.scrollWidth;
+  const clientWidth = scrollable.clientWidth;
+  
+  // 判断滚动位置状态
+  const isAtStart = scrollLeft < 1;
+  const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 1;
+  
+  // 更新 CSS 变量
+  scrollable.style.setProperty('--scroll-shadow-left', isAtStart ? '0' : '1');
+  scrollable.style.setProperty('--scroll-shadow-right', isAtEnd ? '0' : '1');
+}
+
+function setupScrollShadows() {
+  const scrollbar = mainTabsScrollbar.value as any;
+  if (!scrollbar) return;
+  
+  // 获取滚动容器
+  const wrap = scrollbar?.$el?.querySelector('.el-scrollbar__wrap');
+  if (!wrap) return;
+  
+  // 初始化
+  updateScrollShadows(wrap);
+  
+  // 监听滚动事件
+  const handleScroll = () => updateScrollShadows(wrap);
+  wrap.addEventListener('scroll', handleScroll);
+  
+  // 保存清理函数
+  (globalThis as any).__marketViewScrollCleanup = () => {
+    wrap.removeEventListener('scroll', handleScroll);
+  };
+}
+
+function cleanupScrollShadows() {
+  const cleanup = (globalThis as any).__marketViewScrollCleanup;
+  if (cleanup) cleanup();
+}
+
 // ==================== 生命周期 ====================
 
 onMounted(async () => {
@@ -1046,10 +1102,16 @@ onMounted(async () => {
   await loadTabOnce("market");
   setupAutoRefresh();
   setupResize();
+  
+  // 延迟一帧以确保 DOM 已完全挂载
+  nextTick(() => {
+    setupScrollShadows();
+  });
 });
 
 onUnmounted(() => {
   clearAutoRefresh();
+  cleanupScrollShadows();
   resizeObserver?.disconnect();
   flowChartInstance?.dispose();
   Object.values(plateChartInstances).forEach((c: any) => c?.dispose());
@@ -1066,7 +1128,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px 0;
+  padding: 12px 12px 0;
 }
 
 .header-title-row {
@@ -1107,12 +1169,34 @@ onUnmounted(() => {
 }
 
 .main-tabs {
-  padding: 10px 16px 0;
+  padding: 10px 0px 0;
+  --scroll-shadow-left: 0;
+  --scroll-shadow-right: 1;
+}
+
+:deep(.main-tabs .el-scrollbar__wrap) {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  /* 动态阴影效果：左右两侧的 inset 阴影 */
+  box-shadow:
+    inset calc(var(--scroll-shadow-left) * 12px) 0 6px -4px rgba(0, 0, 0, 0.08),
+    inset calc(var(--scroll-shadow-right) * -12px) 0 6px -4px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.dark :deep(.main-tabs .el-scrollbar__wrap) {
+  box-shadow:
+    inset calc(var(--scroll-shadow-left) * 12px) 0 6px -4px rgba(255, 255, 255, 0.06),
+    inset calc(var(--scroll-shadow-right) * -12px) 0 6px -4px rgba(255, 255, 255, 0.06);
+}
+
+:deep(.main-tabs .el-scrollbar__bar) {
+  display: none !important;
 }
 
 .main-tabs-inner {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .main-tab-item {
@@ -1124,7 +1208,17 @@ onUnmounted(() => {
   user-select: none;
   color: var(--el-text-color-regular);
   transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
+
+.main-tab-item:first-of-type {
+  margin-left: 12px;
+}
+
+.main-tab-item:last-of-type {
+  margin-right: 12px;
+}
+
 
 .main-tab-item:hover {
   background: var(--el-fill-color-light);
@@ -1144,7 +1238,7 @@ onUnmounted(() => {
 .tab-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 /* 两市统计条 */
@@ -1388,18 +1482,19 @@ onUnmounted(() => {
 
 .sub-tabs {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .sub-tab-item {
   padding: 2px 12px;
   font-size: 12px;
-  border-radius: 12px;
+  border-radius: 20px;
   cursor: pointer;
   user-select: none;
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color-lighter);
   transition: all 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
@@ -1407,6 +1502,7 @@ onUnmounted(() => {
 .sub-tab-item.active {
   background: var(--el-color-primary-light-7);
   color: var(--el-color-primary);
+  border-color: var(--el-color-primary-light-5);
   font-weight: 500;
 }
 
@@ -1444,6 +1540,36 @@ html.dark .index-img-wrap img {
 .img-label {
   font-size: 11px;
   color: var(--el-text-color-secondary);
+}
+
+@media (max-width: 768px) {
+  .index-images {
+    gap: 8px;
+  }
+
+  .index-img-wrap img {
+    width: 75px;
+    height: 88px;
+  }
+
+  .img-label {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .index-images {
+    gap: 6px;
+  }
+
+  .index-img-wrap img {
+    width: 65px;
+    height: 77px;
+  }
+
+  .img-label {
+    font-size: 9px;
+  }
 }
 
 /* 图表容器 */
@@ -1516,6 +1642,19 @@ html.dark .index-img-wrap img {
   .card-stat-value--muted {
     font-size: 10px;
   }
+
+  .index-images {
+    gap: 8px;
+  }
+
+  .index-img-wrap img {
+    width: 75px;
+    height: 88px;
+  }
+
+  .img-label {
+    font-size: 10px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1574,6 +1713,19 @@ html.dark .index-img-wrap img {
   }
 
   .card-stat-value--muted {
+    font-size: 9px;
+  }
+
+  .index-images {
+    gap: 6px;
+  }
+
+  .index-img-wrap img {
+    width: 65px;
+    height: 77px;
+  }
+
+  .img-label {
     font-size: 9px;
   }
 }

@@ -3,7 +3,7 @@
     <template #header>
       <div class="detail-header">
         <div class="header-left">
-          <el-button plain :icon="ArrowLeft" @click="goBack">返回</el-button>
+          <el-button plain :icon="ArrowLeft" @click="goBack" round>返回</el-button>
           <div class="header-info">
             <span class="fund-name">{{ displayName }}</span>
             <div class="fund-code-row">
@@ -13,7 +13,7 @@
                 title="提示"
                 :width="200"
                 trigger="hover"
-                content="左右滑动切换上下个基金"
+                content="左右滑动切换 Tab"
                 class="swipe-hint-popover"
               >
                 <template #reference>
@@ -46,7 +46,7 @@
             </div>
           </div>
         </div>
-        <el-button size="small" :loading="refreshing" @click="handleRefresh">
+        <el-button size="small" :loading="refreshing" @click="handleRefresh" round>
           <el-icon><Refresh /></el-icon>
         </el-button>
       </div>
@@ -1402,7 +1402,7 @@ const positionData = ref<PositionData | null>(null);
 // 高级特色数据状态
 const featureData = ref<any>(null);
 const periodIncreaseList = ref<any[]>([]);
-const activeFeatureRange = ref<"1n" | "3n" | "5n">("3n");
+const activeFeatureRange = ref<"1n" | "3n" | "5n">("1n");
 const featureRaw = ref<any>(null);
 
 const netValueRange = ref("1m");
@@ -3012,6 +3012,48 @@ watch(
   },
 );
 
+// --- 滚动阴影效果 ---
+
+function updateTabScrollShadows(scrollable: HTMLElement) {
+  const scrollLeft = scrollable.scrollLeft;
+  const scrollWidth = scrollable.scrollWidth;
+  const clientWidth = scrollable.clientWidth;
+  
+  // 判断滚动位置状态
+  const isAtStart = scrollLeft < 1;
+  const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 1;
+  
+  // 更新 CSS 变量
+  scrollable.style.setProperty('--tab-scroll-shadow-left', isAtStart ? '0' : '1');
+  scrollable.style.setProperty('--tab-scroll-shadow-right', isAtEnd ? '0' : '1');
+}
+
+function setupTabScrollShadows() {
+  const scrollbar = tabScrollbarRef.value as any;
+  if (!scrollbar) return;
+  
+  // 获取滚动容器
+  const wrap = scrollbar?.$el?.querySelector('.el-scrollbar__wrap');
+  if (!wrap) return;
+  
+  // 初始化
+  updateTabScrollShadows(wrap);
+  
+  // 监听滚动事件
+  const handleScroll = () => updateTabScrollShadows(wrap);
+  wrap.addEventListener('scroll', handleScroll);
+  
+  // 保存清理函数
+  (globalThis as any).__fundDetailViewScrollCleanup = () => {
+    wrap.removeEventListener('scroll', handleScroll);
+  };
+}
+
+function cleanupTabScrollShadows() {
+  const cleanup = (globalThis as any).__fundDetailViewScrollCleanup;
+  if (cleanup) cleanup();
+}
+
 // ==================== 生命周期 ====================
 
 onMounted(async () => {
@@ -3038,10 +3080,16 @@ onMounted(async () => {
   observeChartContainers(resizeObs);
 
   window.addEventListener("resize", resizeAllCharts);
+  
+  // 延迟一帧以确保 DOM 已完全挂载
+  await nextTick();
+  setupTabScrollShadows();
+  
   await loadTabOnce(activeTab.value);
 });
 
 onUnmounted(() => {
+  cleanupTabScrollShadows();
   resizeObs?.disconnect();
   window.removeEventListener("resize", resizeAllCharts);
   netValueChart?.dispose();
@@ -3134,7 +3182,29 @@ onUnmounted(() => {
 .detail-tabs {
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color);
-  padding: 0 16px;
+  padding: 0;
+  --tab-scroll-shadow-left: 0;
+  --tab-scroll-shadow-right: 1;
+}
+
+:deep(.detail-tabs .el-scrollbar__wrap) {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  /* 动态阴影效果：左右两侧的 inset 阴影 */
+  box-shadow:
+    inset calc(var(--tab-scroll-shadow-left) * 12px) 0 6px -4px rgba(0, 0, 0, 0.08),
+    inset calc(var(--tab-scroll-shadow-right) * -12px) 0 6px -4px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.dark :deep(.detail-tabs .el-scrollbar__wrap) {
+  box-shadow:
+    inset calc(var(--tab-scroll-shadow-left) * 12px) 0 6px -4px rgba(255, 255, 255, 0.06),
+    inset calc(var(--tab-scroll-shadow-right) * -12px) 0 6px -4px rgba(255, 255, 255, 0.06);
+}
+
+:deep(.detail-tabs .el-scrollbar__bar) {
+  display: none !important;
 }
 
 .detail-tabs-inner {
@@ -3151,6 +3221,7 @@ onUnmounted(() => {
   color: var(--el-text-color-regular);
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tab-item.active {

@@ -30,6 +30,10 @@
   }
 }
 
+html {
+  background: var(--bg);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
@@ -52,6 +56,7 @@
 
 body {
   margin: 0;
+  background: var(--bg);
 }
 
 h1,

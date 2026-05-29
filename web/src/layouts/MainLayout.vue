@@ -51,10 +51,12 @@ const route = useRoute();
 
 <style scoped>
 .main-layout {
-  height: 100dvh;
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--el-bg-color);
 }
 
 .layout-header {

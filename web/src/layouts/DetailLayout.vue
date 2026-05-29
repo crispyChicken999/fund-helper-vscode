@@ -13,10 +13,12 @@
 
 <style scoped>
 .detail-layout {
-  height: 100dvh;
   display: flex;
-  flex-direction: column;
+  position: fixed;
+  inset: 0;
   overflow: hidden;
+  flex-direction: column;
+  background: var(--el-bg-color);
 }
 
 .layout-header {
@@ -26,6 +28,7 @@
 .layout-content {
   flex: 1;
   min-height: 0;
+  background: var(--el-bg-color);
   -webkit-overflow-scrolling: touch;
 }
 </style>

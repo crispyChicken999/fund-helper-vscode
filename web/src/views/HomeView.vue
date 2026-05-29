@@ -1029,8 +1029,8 @@ const fundHoverX = ref(0);
 const fundHoverY = ref(0);
 let fundHoverTimer: ReturnType<typeof setTimeout> | null = null;
 let fundHoverHideTimer: ReturnType<typeof setTimeout> | null = null;
-const HOVER_SHOW_DELAY = 350;
-const HOVER_HIDE_DELAY = 200;
+const HOVER_SHOW_DELAY = 550;
+const HOVER_HIDE_DELAY = 250;
 
 const groupHoverVisible = ref(false);
 const groupHoverStats = ref<GroupStats>({
@@ -2736,7 +2736,7 @@ html.dark .group-tag-item.active {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 8px;
   border-bottom: 1px solid var(--el-border-color-lighter);
   background: var(--bg-card);
 }
