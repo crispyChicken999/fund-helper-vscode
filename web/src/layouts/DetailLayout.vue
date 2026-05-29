@@ -5,7 +5,7 @@
     </div>
     <div class="layout-content">
       <el-scrollbar>
-        <slot  />
+        <slot />
       </el-scrollbar>
     </div>
   </div>
@@ -14,11 +14,17 @@
 <style scoped>
 .detail-layout {
   display: flex;
-  position: fixed;
-  inset: 0;
+  height: 100dvh;
   overflow: hidden;
   flex-direction: column;
   background: var(--el-bg-color);
+}
+
+@media (max-width: 768px) {
+  .detail-layout {
+    position: fixed;
+    inset: 0;
+  }
 }
 
 .layout-header {

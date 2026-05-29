@@ -51,12 +51,18 @@ const route = useRoute();
 
 <style scoped>
 .main-layout {
-  position: fixed;
-  inset: 0;
   display: flex;
+  height: 100dvh;
   flex-direction: column;
   overflow: hidden;
   background: var(--el-bg-color);
+}
+
+@media (max-width: 768px) {
+  .main-layout {
+    position: fixed;
+    inset: 0;
+  }
 }
 
 .layout-header {
