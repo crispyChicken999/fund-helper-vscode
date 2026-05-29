@@ -842,45 +842,6 @@
       <!-- 深度数据 -->
       <div v-show="activeTab === 'deep'" class="tab-panel">
         <div v-if="pingzhongDetail" class="deep-sections">
-          <!-- 基本信息摘要 -->
-          <div class="deep-summary-card">
-            <div class="deep-section-header">
-              <span class="deep-section-title">基本信息</span>
-            </div>
-            <div class="deep-info-grid">
-              <div class="deep-info-item">
-                <span class="deep-info-label">原费率</span>
-                <span class="deep-info-value">{{
-                  pingzhongDetail.sourceRate || "--"
-                }}</span>
-              </div>
-              <div class="deep-info-item">
-                <span class="deep-info-label">现费率</span>
-                <span class="deep-info-value">{{
-                  pingzhongDetail.currentRate || "--"
-                }}</span>
-              </div>
-              <div class="deep-info-item">
-                <span class="deep-info-label">最小申购</span>
-                <span class="deep-info-value">{{
-                  pingzhongDetail.minPurchase || "--"
-                }}</span>
-              </div>
-              <div class="deep-info-item">
-                <span class="deep-info-label">股票持仓数</span>
-                <span class="deep-info-value">{{
-                  pingzhongDetail.stockCodes.length
-                }}</span>
-              </div>
-              <div class="deep-info-item">
-                <span class="deep-info-label">债券持仓数</span>
-                <span class="deep-info-value">{{
-                  pingzhongDetail.bondCodes.length
-                }}</span>
-              </div>
-            </div>
-          </div>
-
           <!-- 阶段收益率 -->
           <div class="deep-summary-card">
             <div class="deep-section-header">
@@ -1169,6 +1130,45 @@
                   class="deep-code-chip"
                   >{{ code }}</span
                 >
+              </div>
+            </div>
+          </div>
+
+          <!-- 基本信息摘要 -->
+          <div class="deep-summary-card">
+            <div class="deep-section-header">
+              <span class="deep-section-title">基本信息</span>
+            </div>
+            <div class="deep-info-grid">
+              <div class="deep-info-item">
+                <span class="deep-info-label">原费率</span>
+                <span class="deep-info-value">{{
+                  pingzhongDetail.sourceRate || "--"
+                }}</span>
+              </div>
+              <div class="deep-info-item">
+                <span class="deep-info-label">现费率</span>
+                <span class="deep-info-value">{{
+                  pingzhongDetail.currentRate || "--"
+                }}</span>
+              </div>
+              <div class="deep-info-item">
+                <span class="deep-info-label">最小申购</span>
+                <span class="deep-info-value">{{
+                  pingzhongDetail.minPurchase || "--"
+                }}</span>
+              </div>
+              <div class="deep-info-item">
+                <span class="deep-info-label">股票持仓数</span>
+                <span class="deep-info-value">{{
+                  pingzhongDetail.stockCodes.length
+                }}</span>
+              </div>
+              <div class="deep-info-item">
+                <span class="deep-info-label">债券持仓数</span>
+                <span class="deep-info-value">{{
+                  pingzhongDetail.bondCodes.length
+                }}</span>
               </div>
             </div>
           </div>
