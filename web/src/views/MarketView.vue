@@ -508,7 +508,7 @@ function scrollTabIntoView(tabKey: string) {
   });
 }
 
-function switchMainTab(tab: string, event?: MouseEvent) {
+function switchMainTab(tab: string, _event?: MouseEvent) {
   activeMainTab.value = tab;
   loadTabOnce(tab);
   // Resize charts after tab switch (DOM visibility change)
