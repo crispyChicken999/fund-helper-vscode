@@ -21,6 +21,7 @@ const defaultSettings: Settings = {
   grayscaleMode: false,
   refreshInterval: 20,
   theme: 'light',
+  themeMode: 'auto',
   language: 'zh-CN',
   columnOrder: [
     'name',
@@ -90,6 +91,11 @@ export const useSettingStore = defineStore('setting', {
     // 主题
     theme(): 'light' | 'dark' {
       return this.settings.theme
+    },
+
+    // 主题模式
+    themeMode(): 'light' | 'dark' | 'auto' {
+      return (this.settings as any).themeMode
     },
 
     // JSONBox名称
@@ -185,9 +191,30 @@ export const useSettingStore = defineStore('setting', {
       storageService.saveSettings(this.getSettings())
     },
 
-    // 设置主题
+    // 设置主题（应用的实际主题：light/dark）
     async setTheme(theme: 'light' | 'dark') {
       this.settings.theme = theme
+      storageService.saveSettings(this.getSettings())
+    },
+
+    // 设置主题模式（用户选择：light/dark/auto）
+    async setThemeMode(mode: 'light' | 'dark' | 'auto') {
+      ;(this.settings as any).themeMode = mode
+
+      // 计算应应用的实际主题
+      let applied: 'light' | 'dark' = 'light'
+      if (mode === 'auto') {
+        try {
+          applied = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        } catch (e) {
+          applied = 'light'
+        }
+      } else {
+        applied = mode
+      }
+
+      // 设置实际主题
+      this.settings.theme = applied
       storageService.saveSettings(this.getSettings())
     },
 
@@ -225,6 +252,16 @@ export const useSettingStore = defineStore('setting', {
       }
       const box = ensureBoxName()
       this.settings.jsonboxName = box
+
+      // 如果用户选择了跟随系统模式，计算并设置实际主题
+      if ((this.settings as any).themeMode === 'auto') {
+        try {
+          const applied = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          this.settings.theme = applied
+        } catch (e) {
+          // ignore
+        }
+      }
     },
 
     // 重置设置

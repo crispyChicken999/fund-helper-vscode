@@ -151,7 +151,7 @@
 
         <!-- 全球指数子 Tab -->
         <div class="sub-section">
-          <div class="sub-tabs" style="margin-bottom: 10px;">
+          <div class="sub-tabs" style="margin-bottom: 10px">
             <span
               v-for="g in globalIndexGroups"
               :key="g"
@@ -225,15 +225,27 @@
       :index-cards="indexCardsConfig"
       @save="handleSaveIndexCards"
     />
+
+    <!-- 主题切换悬浮按钮 -->
+    <ThemeToggleFloat />
   </MainLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted, nextTick } from "vue";
+import {
+  ref,
+  computed,
+  reactive,
+  onMounted,
+  onUnmounted,
+  nextTick,
+  watch,
+} from "vue";
 import { Refresh, Edit, QuestionFilled } from "@element-plus/icons-vue";
 import MainLayout from "@/layouts/MainLayout.vue";
 import IndexFlowDialog from "@/components/IndexFlowDialog.vue";
 import IndexEditDialog from "@/components/IndexEditDialog.vue";
+import ThemeToggleFloat from "@/components/ThemeToggleFloat.vue";
 import {
   fetchIndexCards,
   fetchMarketStat,
@@ -336,6 +348,15 @@ const countdown = ref(0);
 let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
 const isDarkMode = computed(() => useSettingStore().theme === "dark");
+// data-grayscale 属性控制是否启用灰度模式，配合 CSS filter 实现全图灰度
+const isGrayScale = computed(() => useSettingStore().grayscaleMode);
+
+watch([isDarkMode, isGrayScale], () => {
+  // 切换主题时刷新图表以适配新主题
+  nextTick(() => {
+    handleRefresh();
+  });
+});
 
 // ==================== 计算属性 ====================
 
@@ -731,12 +752,10 @@ async function renderFlowChart(
 
   // data.map((d) => d.time.split(" ").pop() ?? d.time);
   const times = time_arr("hs");
-  // data-grayscale 属性控制是否启用灰度模式，配合 CSS filter 实现全图灰度
-  const isGrayScale = document.documentElement.dataset.grayscale === "true";
 
   // 根据不同模式调整series颜色
   const getSeriesColors = () => {
-    if (isGrayScale) {
+    if (isGrayScale.value) {
       return ["#6b7280", "#808080", "#6b7280", "#707070", "#787878"];
     }
     return ["#3b82f6", "#ef4444", "#06b6d4", "#22c55e", "#f97316"];
@@ -768,7 +787,7 @@ async function renderFlowChart(
         const time = params[0]?.axisValue || "";
         let html = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDarkMode.value ? "#f0f0f0" : "#1f2937"}">${time}</div>`;
         params.forEach((p: any) => {
-          const color = isGrayScale
+          const color = isGrayScale.value
             ? isDarkMode.value
               ? "#9ca3af"
               : "#6b7280"
@@ -1050,34 +1069,34 @@ function updateScrollShadows(scrollable: HTMLElement) {
   const scrollLeft = scrollable.scrollLeft;
   const scrollWidth = scrollable.scrollWidth;
   const clientWidth = scrollable.clientWidth;
-  
+
   // 判断滚动位置状态
   const isAtStart = scrollLeft < 1;
   const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 1;
-  
+
   // 更新 CSS 变量
-  scrollable.style.setProperty('--scroll-shadow-left', isAtStart ? '0' : '1');
-  scrollable.style.setProperty('--scroll-shadow-right', isAtEnd ? '0' : '1');
+  scrollable.style.setProperty("--scroll-shadow-left", isAtStart ? "0" : "1");
+  scrollable.style.setProperty("--scroll-shadow-right", isAtEnd ? "0" : "1");
 }
 
 function setupScrollShadows() {
   const scrollbar = mainTabsScrollbar.value as any;
   if (!scrollbar) return;
-  
+
   // 获取滚动容器
-  const wrap = scrollbar?.$el?.querySelector('.el-scrollbar__wrap');
+  const wrap = scrollbar?.$el?.querySelector(".el-scrollbar__wrap");
   if (!wrap) return;
-  
+
   // 初始化
   updateScrollShadows(wrap);
-  
+
   // 监听滚动事件
   const handleScroll = () => updateScrollShadows(wrap);
-  wrap.addEventListener('scroll', handleScroll);
-  
+  wrap.addEventListener("scroll", handleScroll);
+
   // 保存清理函数
   (globalThis as any).__marketViewScrollCleanup = () => {
-    wrap.removeEventListener('scroll', handleScroll);
+    wrap.removeEventListener("scroll", handleScroll);
   };
 }
 
@@ -1102,7 +1121,7 @@ onMounted(async () => {
   await loadTabOnce("market");
   setupAutoRefresh();
   setupResize();
-  
+
   // 延迟一帧以确保 DOM 已完全挂载
   nextTick(() => {
     setupScrollShadows();
@@ -1180,14 +1199,17 @@ onUnmounted(() => {
   /* 动态阴影效果：左右两侧的 inset 阴影 */
   box-shadow:
     inset calc(var(--scroll-shadow-left) * 12px) 0 6px -4px rgba(0, 0, 0, 0.08),
-    inset calc(var(--scroll-shadow-right) * -12px) 0 6px -4px rgba(0, 0, 0, 0.08);
+    inset calc(var(--scroll-shadow-right) * -12px) 0 6px -4px
+      rgba(0, 0, 0, 0.08);
   transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html.dark :deep(.main-tabs .el-scrollbar__wrap) {
   box-shadow:
-    inset calc(var(--scroll-shadow-left) * 12px) 0 6px -4px rgba(255, 255, 255, 0.06),
-    inset calc(var(--scroll-shadow-right) * -12px) 0 6px -4px rgba(255, 255, 255, 0.06);
+    inset calc(var(--scroll-shadow-left) * 12px) 0 6px -4px
+      rgba(255, 255, 255, 0.06),
+    inset calc(var(--scroll-shadow-right) * -12px) 0 6px -4px
+      rgba(255, 255, 255, 0.06);
 }
 
 :deep(.main-tabs .el-scrollbar__bar) {
@@ -1218,7 +1240,6 @@ html.dark :deep(.main-tabs .el-scrollbar__wrap) {
 .main-tab-item:last-of-type {
   margin-right: 12px;
 }
-
 
 .main-tab-item:hover {
   background: var(--el-fill-color-light);

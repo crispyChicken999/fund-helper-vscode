@@ -127,7 +127,10 @@ export interface Settings {
   privacyMode: boolean      // 隐私模式
   grayscaleMode: boolean    // 灰色模式
   refreshInterval: number   // 自动刷新间隔(秒)
-  theme: 'light' | 'dark'   // 主题
+  // 主题：用于存储当前应用的实际主题（light/dark）
+  theme: 'light' | 'dark'
+  // 主题模式：用户选择的模式（light/dark/auto，auto 表示跟随系统）
+  themeMode: 'light' | 'dark' | 'auto'
   language: 'zh-CN' | 'en-US' // 语言
   
   // 列表配置

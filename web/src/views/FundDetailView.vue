@@ -1301,6 +1301,9 @@
         >
       </template>
     </el-dialog>
+
+    <!-- 主题切换悬浮按钮 -->
+    <ThemeToggleFloat />
   </DetailLayout>
 </template>
 
@@ -1315,6 +1318,7 @@ import {
 } from "element-plus";
 import { ArrowLeft, Refresh, QuestionFilled } from "@element-plus/icons-vue";
 import DetailLayout from "@/layouts/DetailLayout.vue";
+import ThemeToggleFloat from "@/components/ThemeToggleFloat.vue";
 import { useFundStore, useSettingStore } from "@/stores";
 import { fundService } from "@/services";
 import { formatCurrency, formatNumber } from "@/utils/format";
@@ -1434,6 +1438,11 @@ let acWorthTrendChart: any = null;
 let rankChart: any = null;
 
 const isDarkMode = computed(() => settingStore.theme === "dark");
+
+watch(isDarkMode, async ()=> {
+  loadedTabs.clear();
+  await loadTabOnce(activeTab.value);
+})
 
 // Tab 滚动
 const tabScrollbarRef = ref<InstanceType<

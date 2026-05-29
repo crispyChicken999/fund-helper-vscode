@@ -64,9 +64,10 @@
             </el-form-item>
 
             <el-form-item label="主题">
-              <el-radio-group v-model="theme">
+              <el-radio-group v-model="themeMode">
                 <el-radio value="light">浅色</el-radio>
                 <el-radio value="dark">深色</el-radio>
+                <el-radio value="auto">跟随系统</el-radio>
               </el-radio-group>
             </el-form-item>
 
@@ -556,14 +557,14 @@ const grayscaleMode = computed({
   },
 });
 
-const theme = computed({
-  get: () => settingStore.theme,
-  set: async (value: "light" | "dark") => {
-    await settingStore.setTheme(value);
-    document.documentElement.dataset.theme = value;
-    // 动态更新 PWA 主题色
-    updateThemeColor(value);
-    ElMessage.success(`已切换到${value === "light" ? "浅色" : "深色"}主题`);
+const themeMode = computed({
+  get: () => (settingStore as any).themeMode,
+  set: async (value: "light" | "dark" | "auto") => {
+    await settingStore.setThemeMode(value);
+    // 将实际应用的主题同步到 DOM 并更新 PWA 主题色
+    document.documentElement.dataset.theme = settingStore.theme;
+    updateThemeColor(settingStore.theme);
+    ElMessage.success(`已切换到${value === 'auto' ? '跟随系统' : value === 'light' ? '浅色' : '深色'}主题`);
   },
 });
 

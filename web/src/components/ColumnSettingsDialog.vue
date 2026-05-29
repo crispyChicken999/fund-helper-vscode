@@ -19,8 +19,8 @@
       "
     >
       <div style="font-size: 13px; line-height: 1.6; text-align: left">
-        <p>● 勾选显示，取消隐藏；</p>
-        <p>● 拖动 ☰ 或点击箭头调整顺序</p>
+        <p>• 勾选显示，取消隐藏；</p>
+        <p>• 拖动 ☰ 或点击箭头调整顺序</p>
       </div>
     </el-alert>
 
