@@ -43,10 +43,8 @@ import { useSettingStore } from '@/stores'
 const settingStore = useSettingStore()
 const isExpanded = ref(false)
 
-// 主题模式：'light' | 'dark' | 'auto'
-// 我们在localStorage中存储用户的选择
-const THEME_MODE_KEY = 'fund_helper_theme_mode'
-const themeMode = ref<'light' | 'dark' | 'auto'>('light')
+// 直接使用共享的设置源，避免不同页面维护两套主题模式
+const themeMode = computed(() => settingStore.themeMode as 'light' | 'dark' | 'auto')
 
 // 灰色模式
 const grayscaleMode = computed(() => settingStore.grayscaleMode)
@@ -69,8 +67,6 @@ function toggleExpanded() {
 
 // 设置主题模式
 async function setThemeMode(mode: 'light' | 'dark' | 'auto') {
-  themeMode.value = mode
-  localStorage.setItem(THEME_MODE_KEY, mode)
   // 同步到 settingStore 的主题模式
   await settingStore.setThemeMode(mode)
   applyTheme()
@@ -120,16 +116,6 @@ function handleClickOutside(e: MouseEvent) {
 }
 
 onMounted(() => {
-  // 加载保存的主题模式
-  const savedMode = localStorage.getItem(THEME_MODE_KEY) as 'light' | 'dark' | 'auto' | null
-  if (savedMode) {
-    themeMode.value = savedMode
-  } else {
-    // 默认跟随系统
-    themeMode.value = 'auto'
-    localStorage.setItem(THEME_MODE_KEY, 'auto')
-  }
-
   // 设置系统主题监听
   mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
   mediaQuery.addEventListener('change', handleSystemThemeChange)

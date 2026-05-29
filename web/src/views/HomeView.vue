@@ -72,14 +72,11 @@
               </button>
               <button
                 class="btn-icon"
-                :class="{ active: settingStore.theme === 'dark' }"
-                @click="toggleDarkMode($event)"
-                title="主题切换"
+                :class="{ active: themeMode !== 'light' }"
+                @click="toggleThemeMode($event)"
+                :title="themeModeTitle"
               >
-                <el-icon v-if="settingStore.theme === 'light'"
-                  ><Sunny
-                /></el-icon>
-                <el-icon v-else><Moon /></el-icon>
+                <el-icon><component :is="themeModeIcon" /></el-icon>
               </button>
               <span class="stat-label-spacer"></span>
               <el-badge
@@ -871,6 +868,7 @@ import {
   Moon,
   Sunny,
   Edit,
+  Monitor,
 } from "@element-plus/icons-vue";
 import { useDebounceFn, useMediaQuery } from "@vueuse/core";
 import Sortable from "sortablejs";
@@ -1123,10 +1121,28 @@ const groupFormRules: FormRules = {
   ],
 };
 
+type ThemeMode = "light" | "dark" | "auto";
+const THEME_MODE_SEQUENCE: ThemeMode[] = ["light", "dark", "auto"];
+const THEME_MODE_LABELS: Record<ThemeMode, string> = {
+  light: "亮色",
+  dark: "暗色",
+  auto: "跟随系统",
+};
+
 const totalAsset = computed(() => fundStore.getTotalAsset);
 const totalHoldingGain = computed(() => fundStore.getTotalHoldingGain);
 const totalDailyGain = computed(() => fundStore.getTotalDailyGain);
 const groupList = computed(() => groupStore.getGroupList);
+const themeMode = computed(() => settingStore.themeMode as ThemeMode);
+const themeModeIcon = computed(() => {
+  if (themeMode.value === "auto") return Monitor;
+  if (themeMode.value === "dark") return Moon;
+  return Sunny;
+});
+const themeModeTitle = computed(() => {
+  const nextMode = getNextThemeMode(themeMode.value);
+  return `当前：${THEME_MODE_LABELS[themeMode.value]}，点击切换到${THEME_MODE_LABELS[nextMode]}`;
+});
 
 const holdingGainRate = computed(() => {
   const asset = totalAsset.value;
@@ -1355,20 +1371,30 @@ function toggleGrayscale() {
   );
 }
 
+function getNextThemeMode(mode: ThemeMode): ThemeMode {
+  const currentIndex = THEME_MODE_SEQUENCE.indexOf(mode);
+  return THEME_MODE_SEQUENCE[(currentIndex + 1) % THEME_MODE_SEQUENCE.length]!;
+}
+
 function computeMaxRadius(x: number, y: number): number {
   const maxX = Math.max(x, window.innerWidth - x);
   const maxY = Math.max(y, window.innerHeight - y);
   return Math.hypot(maxX, maxY);
 }
 
-async function toggleDarkMode(event: MouseEvent) {
+async function applyThemeMode(mode: ThemeMode) {
+  await settingStore.setThemeMode(mode);
+  await nextTick();
+}
+
+async function toggleThemeMode(event: MouseEvent) {
+  const nextMode = getNextThemeMode(themeMode.value);
   const isSupported =
     (document.startViewTransition as any) &&
     !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   if (!isSupported) {
-    const newTheme = settingStore.theme === "light" ? "dark" : "light";
-    settingStore.setTheme(newTheme);
+    await applyThemeMode(nextMode);
     return;
   }
 
@@ -1377,9 +1403,7 @@ async function toggleDarkMode(event: MouseEvent) {
   const endRadius = computeMaxRadius(x, y);
 
   const transition = (document.startViewTransition as any)(async () => {
-    const newTheme = settingStore.theme === "light" ? "dark" : "light";
-    settingStore.setTheme(newTheme);
-    await nextTick();
+    await applyThemeMode(nextMode);
   });
 
   transition.ready.then(() => {
@@ -1402,6 +1426,14 @@ async function toggleDarkMode(event: MouseEvent) {
       } as any,
     );
   });
+}
+
+let systemThemeQuery: MediaQueryList | null = null;
+
+function handleSystemThemeChange() {
+  if (themeMode.value === "auto") {
+    settingStore.setThemeMode("auto");
+  }
 }
 
 function selectGroup(key: string) {
@@ -2548,11 +2580,15 @@ onMounted(async () => {
     console.log("[MNFInfoCacheUpdate] 监听到 MNF 信息更新，刷新基金数据");
     fundService.refreshAllFunds().catch(() => {});
   });
+
+  systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  systemThemeQuery.addEventListener("change", handleSystemThemeChange);
 });
 
 onUnmounted(() => {
   onGroupPointerUp();
   destroyFundTableSortable();
+  systemThemeQuery?.removeEventListener("change", handleSystemThemeChange);
 });
 </script>
 
