@@ -1417,6 +1417,7 @@ function handleShowUninstallGuide() {
   color: var(--el-text-color-secondary);
   margin-top: 4px;
   margin-left: 4px;
+  text-align: left;
 }
 
 .column-settings-list {
