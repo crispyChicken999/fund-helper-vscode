@@ -20,6 +20,7 @@ import { MarketWebview } from "./marketWebview";
 import { DonateWebview } from "./donate";
 import { FundWebviewViewProvider } from "./sidebar/webview";
 import { FundDataManager } from "./fundDataManager";
+import { FundConfig, FundInfo } from "./fundModel";
 import {
   initCore,
   deactivateCore,
@@ -215,8 +216,9 @@ export async function activate(context: vscode.ExtensionContext) {
     ),
     vscode.commands.registerCommand(
       "fund-helper.viewFundDetail",
-      (item: FundTreeItem) =>
-        item?.fundInfo &&
+      (item: FundTreeItem) => {
+        if (!item?.fundInfo) return;
+        
         FundDetailWebview.createOrShow(
           context.extensionUri,
           item.fundInfo,
@@ -224,7 +226,36 @@ export async function activate(context: vscode.ExtensionContext) {
             await fundDataManager.refreshFundData();
             return fundDataManager.getCachedFundData().find((fund) => fund.code === code);
           },
-        )
+          () => {
+            // 从缓存获取，如果缓存为空则从配置读取
+            const cached = fundDataManager.getCachedFundData();
+            if (cached.length > 0) {
+              return cached;
+            }
+            // 缓存为空时，从配置中读取基金代码列表，创建基本的FundInfo对象
+            const configs = vscode.workspace
+              .getConfiguration("fund-helper")
+              .get<FundConfig[]>("funds", []);
+            if (configs.length === 0) {
+              // 如果配置也为空，返回空数组，避免导航功能失效
+              return [];
+            }
+            return configs.map(config => ({
+              code: config.code,
+              name: config.code || '未命名',
+              shares: parseFloat(config.num) || 0,
+              cost: parseFloat(config.cost) || 0,
+              netValue: 0,
+              estimatedValue: null,
+              updateTime: '',
+              changePercent: 0,
+              navChgRt: 0,
+              netValueDate: '',
+              isRealValue: false
+            } as FundInfo));
+          }
+        );
+      }
     ),
 
     vscode.commands.registerCommand("fund-helper.openMarket", () => {

@@ -11,6 +11,7 @@ export class FundDetailWebview {
   private readonly _panel: vscode.WebviewPanel;
   private readonly _extensionUri: vscode.Uri;
   private _refreshCurrentFund?: (code: string) => Promise<FundInfo | undefined>;
+  private _getAllFunds?: () => FundInfo[];
   private _currentFund: FundInfo;
   private _activeTab = 'holding';
   private _refreshing = false;
@@ -19,7 +20,8 @@ export class FundDetailWebview {
   public static createOrShow(
     extensionUri: vscode.Uri,
     fund: FundInfo,
-    refreshCurrentFund?: (code: string) => Promise<FundInfo | undefined>
+    refreshCurrentFund?: (code: string) => Promise<FundInfo | undefined>,
+    getAllFunds?: () => FundInfo[]
   ) {
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
@@ -29,6 +31,7 @@ export class FundDetailWebview {
     const existing = FundDetailWebview.panels.get(fund.code);
     if (existing) {
       existing._refreshCurrentFund = refreshCurrentFund;
+      existing._getAllFunds = getAllFunds;
       existing.update(fund);
       existing._panel.reveal(column);
       return;
@@ -49,6 +52,7 @@ export class FundDetailWebview {
       extensionUri,
       fund,
       refreshCurrentFund,
+      getAllFunds
     );
     FundDetailWebview.panels.set(fund.code, instance);
   }
@@ -66,12 +70,14 @@ export class FundDetailWebview {
     panel: vscode.WebviewPanel,
     extensionUri: vscode.Uri,
     fund: FundInfo,
-    refreshCurrentFund?: (code: string) => Promise<FundInfo | undefined>
+    refreshCurrentFund?: (code: string) => Promise<FundInfo | undefined>,
+    getAllFunds?: () => FundInfo[]
   ) {
     this._panel = panel;
     this._extensionUri = extensionUri;
     this._currentFund = fund;
     this._refreshCurrentFund = refreshCurrentFund;
+    this._getAllFunds = getAllFunds;
 
     this.update(fund);
 
@@ -84,6 +90,20 @@ export class FundDetailWebview {
           fetchFundInvestmentPosition(fundCode).then(data => {
             this._panel.webview.postMessage({ command: 'investmentPositionData', data });
           });
+        }
+      } else if (message?.command === 'navigateToFund') {
+        const targetCode = message.code;
+        if (targetCode && this._getAllFunds) {
+          const allFunds = this._getAllFunds();
+          const targetFund = allFunds.find(f => f.code === targetCode);
+          if (targetFund) {
+            FundDetailWebview.createOrShow(
+              this._extensionUri,
+              targetFund,
+              this._refreshCurrentFund,
+              this._getAllFunds
+            );
+          }
         }
       }
     }, null, this._disposables);
@@ -137,6 +157,10 @@ export class FundDetailWebview {
   private _getHtmlForWebview(fund: FundInfo, activeTab: string) {
     // Determine VSCode theme for ECharts colors
     const isDark = vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark;
+    
+    // Get grayscale mode setting
+    const config = vscode.workspace.getConfiguration("fund-helper");
+    const grayscaleMode = config.get<boolean>("grayscaleMode", false);
 
     // Calculate holding info
     const holdingAmount = fund.shares * fund.netValue;
@@ -154,6 +178,11 @@ export class FundDetailWebview {
       }
     }
 
+    // Get all funds and current index
+    const allFunds = this._getAllFunds ? this._getAllFunds() : [];
+    const allFundCodes = allFunds.map(f => f.code);
+    const currentIndex = allFundCodes.indexOf(fund.code);
+
     return getHTML(
       fund,
       isDark,
@@ -162,7 +191,10 @@ export class FundDetailWebview {
       holdingGain,
       holdingGainRate,
       dailyGain,
-      activeTab
+      activeTab,
+      grayscaleMode,
+      allFundCodes,
+      currentIndex
     ).join('\n');
   }
 }

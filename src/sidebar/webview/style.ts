@@ -58,6 +58,7 @@ export function getStyles(): string[] {
     '  margin-bottom: 4px;',
     '  display: flex;',
     '  align-items: center;',
+    '  white-space: nowrap;',
     '  gap: 4px;',
     '}',
     '',

@@ -5,6 +5,17 @@
 import { FundInfo, FundConfig, NetValueRecord } from "./fundModel";
 
 /**
+ * 生成 UUID
+ */
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+/**
  * 解析 JSONP 响应
  */
 function parseJsonp(text: string): any {
@@ -563,7 +574,7 @@ export async function fetchFundRelateTheme(fundCodes: string[]): Promise<any> {
   const url = 'https://dgs.tiantianfunds.com/merge/m/api/jjxqy1_2';
 
   const params = new URLSearchParams({
-    deviceid: '1d747ff7-7201-443e-95bd-2d13e30b9ffe',
+    deviceid: generateUUID(),
     version: '9.9.9',
     appVersion: '6.5.5',
     product: 'EFund',
@@ -609,7 +620,7 @@ export async function fetchFundDetailInfo(fundCode: string): Promise<any> {
   const url = 'https://dgs.tiantianfunds.com/merge/m/api/jjxqy1_2';
 
   const params = new URLSearchParams({
-    deviceid: 'fd7dac76-c5e9-4723-8fe6-7b436b2b1443',
+    deviceid: generateUUID(),
     version: '9.9.9',
     appVersion: '6.5.5',
     product: 'EFund',
