@@ -239,8 +239,40 @@ export async function activate(context: vscode.ExtensionContext) {
           } else if (message.command === 'fetchMarketStat') {
             const stat = await fetchMarketStat();
             panel.postMessage({ command: 'marketStatResponse', reqId: message.reqId, data: stat });
+          } else if (message.command === 'getIndexCardsConfig') {
+            // 读取指数卡片配置
+            const config = vscode.workspace.getConfiguration("fund-helper");
+            const indexCards = config.get<Array<{code: string, name: string}>>("indexCardsConfig", [
+              { code: "1.000001", name: "上证指数" },
+              { code: "1.000300", name: "沪深300" },
+              { code: "0.399001", name: "深证成指" },
+              { code: "0.399006", name: "创业板指" }
+            ]);
+            panel.postMessage({ command: 'indexCardsConfigResponse', config: indexCards });
+          } else if (message.command === 'getGrayscaleMode') {
+            // 读取灰色模式配置
+            const config = vscode.workspace.getConfiguration("fund-helper");
+            const grayscaleMode = config.get<boolean>("grayscaleMode", false);
+            panel.postMessage({ command: 'grayscaleModeResponse', enabled: grayscaleMode });
+          } else if (message.command === 'saveIndexCardsConfig') {
+            // 保存指数卡片配置
+            const config = vscode.workspace.getConfiguration("fund-helper");
+            await config.update("indexCardsConfig", message.config, vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage('指数卡片配置已保存');
           }
         });
+        
+        // 监听配置变化
+        const configChangeListener = vscode.workspace.onDidChangeConfiguration((e) => {
+          if (e.affectsConfiguration("fund-helper.grayscaleMode")) {
+            const config = vscode.workspace.getConfiguration("fund-helper");
+            const grayscaleMode = config.get<boolean>("grayscaleMode", false);
+            panel.postMessage({ command: 'grayscaleModeResponse', enabled: grayscaleMode });
+          }
+        });
+        
+        // 注册监听器到 panel，会在 dispose 时自动清理
+        panel.registerConfigListener(configChangeListener);
       }
     }),
 

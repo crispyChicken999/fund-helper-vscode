@@ -774,6 +774,45 @@
           "type": "string",
           "default": "",
           "description": "云同步 Box Name（用于 jsonbox.io 云端配置同步，格式：字母数字下划线，至少20字符）"
+        },
+        "fund-helper.indexCardsConfig": {
+          "type": "array",
+          "default": [
+            {
+              "code": "1.000001",
+              "name": "上证指数"
+            },
+            {
+              "code": "1.000300",
+              "name": "沪深300"
+            },
+            {
+              "code": "0.399001",
+              "name": "深证成指"
+            },
+            {
+              "code": "0.399006",
+              "name": "创业板指"
+            }
+          ],
+          "description": "行情中心大盘指数卡片配置（支持云同步）",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "指数代码（格式：市场.代码，如 1.000001）"
+              },
+              "name": {
+                "type": "string",
+                "description": "指数名称"
+              }
+            },
+            "required": [
+              "code",
+              "name"
+            ]
+          }
         }
       }
     }
