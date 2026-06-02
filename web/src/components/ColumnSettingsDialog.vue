@@ -90,7 +90,7 @@ const ALL_COLUMNS: { key: string; label: string }[] = [
   { key: "estimatedChange", label: "估算涨幅" },
   { key: "holdingGainRate", label: "总收益率" },
   { key: "holdingGain", label: "持有收益" },
-  { key: "amountShares", label: "金额/份额" },
+  { key: "amountShares", label: "金额/仓位" },
   { key: "dailyChange", label: "当日涨幅" },
   { key: "dailyGain", label: "当日收益" },
   { key: "sector", label: "关联板块" },

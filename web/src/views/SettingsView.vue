@@ -3,6 +3,55 @@
     <template #header>
       <el-header class="settings-page-header">
         <h2>设置</h2>
+        <!-- 折叠全部 -->
+        <el-button
+          v-if="activeCollapseItems.length"
+          @click="activeCollapseItems = []"
+          link
+          title="折叠全部"
+          size="small"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill="currentColor"
+              d="M14 4H4v10H2V4a2 2 0 0 1 2-2h10zm4 2H8a2 2 0 0 0-2 2v10h2V8h10zm4 6v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2m-2 3h-8v2h8z"
+            />
+          </svg>
+        </el-button>
+        <!-- 展开全部 -->
+        <el-button
+          v-else
+          title="展开全部"
+          @click="
+            activeCollapseItems = [
+              'usage',
+              'display',
+              'columns',
+              'sync',
+              'data',
+              'about',
+            ]
+          "
+          link
+          size="small"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill="currentColor"
+              d="M18 8H8v10H6V8a2 2 0 0 1 2-2h10zm-4-6H4a2 2 0 0 0-2 2v10h2V4h10zm8 10v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2m-2 3h-3v-3h-2v3h-3v2h3v3h2v-3h3z"
+            />
+          </svg>
+        </el-button>
       </el-header>
     </template>
 
@@ -622,8 +671,7 @@ const maxContentWidthMode = computed({
       formLabelPosition.value = currentWidth <= 375 ? "top" : "right"; // 根据宽度调整标签位置
     } else if (value === "custom") {
       customWidth.value = settingStore.maxContentWidth;
-      formLabelPosition.value =
-        currentWidth <= 375 ? "top" : "right"; // 根据宽度调整标签位置
+      formLabelPosition.value = currentWidth <= 375 ? "top" : "right"; // 根据宽度调整标签位置
     } else {
       formLabelPosition.value = "right"; // 铺满宽度时默认标签在右侧
     }
@@ -646,8 +694,7 @@ async function onPresetWidthChange() {
 async function onCustomWidthChange() {
   await settingStore.setMaxContentWidth(customWidth.value);
   if (settingStore.maxContentWidthMode === "custom") {
-    formLabelPosition.value =
-      customWidth.value <= 375 ? "top" : "right"; // 根据宽度调整标签位置
+    formLabelPosition.value = customWidth.value <= 375 ? "top" : "right"; // 根据宽度调整标签位置
   }
   ElMessage.success(`宽度已设置为 ${customWidth.value}px`);
 }
@@ -1405,6 +1452,7 @@ function handleShowUninstallGuide() {
   font-size: 18px;
   color: var(--text-primary);
   font-weight: 600;
+  margin-right: 4px;
 }
 
 .settings-main {
@@ -1567,8 +1615,11 @@ function handleShowUninstallGuide() {
   font-size: 14px;
   font-weight: 600;
   background: var(--el-fill-color-light);
-  border-bottom: 1px solid var(--el-border-color);
   height: 44px;
+}
+
+:deep(.settings-collapse-item .el-collapse-item__header.is-active) {
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 :deep(.settings-collapse-item .el-collapse-item__wrap) {

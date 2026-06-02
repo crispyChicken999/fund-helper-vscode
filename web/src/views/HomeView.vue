@@ -114,14 +114,6 @@
               >
                 <el-icon><Refresh /></el-icon>
               </el-button>
-              <el-button
-                size="small"
-                round
-                @click="showColumnSettings = true"
-                title="列设置"
-              >
-                <el-icon><Operation /></el-icon>
-              </el-button>
             </div>
           </div>
           <div class="stat-content">
@@ -246,8 +238,34 @@
             v-if="isColumnVisible('name')"
             fixed="left"
             width="136"
-            label="基金名称"
           >
+            <template #header>
+              <div class="name-col-head" @click="showColumnSettings = true">
+                <span>基金名称</span>
+                <el-button link title="列设置">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 14 14"
+                  >
+                    <g
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="2" cy="2" r="1.5" />
+                      <path d="M3.5 2h10" />
+                      <circle cx="7" cy="7" r="1.5" />
+                      <path d="M.5 7h5m3 0h5" />
+                      <circle cx="12" cy="12" r="1.5" />
+                      <path d="M10.5 12H.5" />
+                    </g>
+                  </svg>
+                </el-button>
+              </div>
+            </template>
             <template #default="{ row }">
               <div
                 class="fund-name-cell"
@@ -863,7 +881,6 @@ import {
   Plus,
   Search,
   Refresh,
-  Operation,
   Setting,
   Moon,
   Sunny,
@@ -1791,7 +1808,10 @@ function onGroupMouseEnter(group: Group, e: MouseEvent) {
       holdingDate: dailyDate,
       totalAsset,
       totalCost,
-      totalPosition: (fundStore.getTotalAsset || 0) > 0 ? totalAsset / (fundStore.getTotalAsset || 0) : 0,
+      totalPosition:
+        (fundStore.getTotalAsset || 0) > 0
+          ? totalAsset / (fundStore.getTotalAsset || 0)
+          : 0,
     };
     // 基于分组元素位置，智能显示在左下角或右下角
     const groupTagEl = (e.target as HTMLElement).closest(".group-tag-item");
@@ -1926,7 +1946,10 @@ function onAllGroupMouseEnter(e: MouseEvent) {
       holdingDate: dailyDate,
       totalAsset,
       totalCost,
-      totalPosition: (fundStore.getTotalAsset || 0) > 0 ? totalAsset / (fundStore.getTotalAsset || 0) : 0,
+      totalPosition:
+        (fundStore.getTotalAsset || 0) > 0
+          ? totalAsset / (fundStore.getTotalAsset || 0)
+          : 0,
     };
 
     // "全部"项在左侧，显示在right bottom
@@ -1994,7 +2017,10 @@ function showAllGroupStats() {
     holdingDate: dailyDate,
     totalAsset,
     totalCost,
-    totalPosition: (fundStore.getTotalAsset || 0) > 0 ? totalAsset / (fundStore.getTotalAsset || 0) : 0,
+    totalPosition:
+      (fundStore.getTotalAsset || 0) > 0
+        ? totalAsset / (fundStore.getTotalAsset || 0)
+        : 0,
   };
 
   groupTooltipVisible.value = true;
@@ -2462,7 +2488,10 @@ function showGroupStats(group: Group) {
     holdingDate: dailyDate,
     totalAsset,
     totalCost,
-    totalPosition: (fundStore.getTotalAsset || 0) > 0 ? totalAsset / (fundStore.getTotalAsset || 0) : 0,
+    totalPosition:
+      (fundStore.getTotalAsset || 0) > 0
+        ? totalAsset / (fundStore.getTotalAsset || 0)
+        : 0,
   };
   groupTooltipVisible.value = true;
 }
@@ -2707,9 +2736,8 @@ onUnmounted(() => {
 .group-tags-container {
   flex: 1;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
-  scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   padding: 6px 12px;
 }
@@ -2730,7 +2758,6 @@ onUnmounted(() => {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  touch-action: none;
   background: var(--bg-secondary);
   -webkit-tap-highlight-color: transparent;
 }
@@ -2869,6 +2896,16 @@ html.dark .group-tag-item.active {
   gap: 2px;
   line-height: 1.25;
   font-size: 12px;
+}
+
+.name-col-head {
+  display: flex;
+  align-items: center;
+}
+
+.name-col-head .el-button {
+  padding: 0 4px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .fund-el-table :deep(th.is-right .col-head) {
@@ -3099,30 +3136,6 @@ html.dark .group-label {
   overflow-y: auto;
   border: 1px solid var(--el-border-color);
   border-radius: 6px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 13px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  transition: background 0.15s;
-}
-
-.nav-item:last-child {
-  border-bottom: none;
-}
-
-.nav-item:hover {
-  background: var(--el-fill-color-light);
-}
-
-.nav-item.selected {
-  background: var(--el-color-primary-light-9);
-  border-left: 3px solid var(--el-color-primary);
 }
 
 .nav-date {

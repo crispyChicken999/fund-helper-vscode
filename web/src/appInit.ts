@@ -101,7 +101,7 @@ export async function initApp(): Promise<void> {
                 }
                 return
               }
-              console.log('[AppInitTimer] 定时刷新基金数据')
+              console.log('[AppInitTimer] 定时刷新基金数据 ' + new Date().toLocaleTimeString())
               fundService.refreshAllFunds().catch(console.error)
             }, interval * 1000)
           } else {

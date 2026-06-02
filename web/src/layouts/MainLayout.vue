@@ -17,6 +17,7 @@
       <router-link
         to="/"
         class="nav-item"
+        @contextmenu.prevent
         :class="{ active: route.path === '/' }"
       >
         <el-icon class="nav-icon"><HomeFilled /></el-icon>
@@ -25,6 +26,7 @@
       <router-link
         to="/market"
         class="nav-item"
+        @contextmenu.prevent
         :class="{ active: route.path === '/market' }"
       >
         <el-icon class="nav-icon"><TrendCharts /></el-icon>
@@ -33,6 +35,7 @@
       <router-link
         to="/settings"
         class="nav-item"
+        @contextmenu.prevent
         :class="{ active: route.path === '/settings' }"
       >
         <el-icon class="nav-icon"><Setting /></el-icon>
@@ -128,6 +131,7 @@ const contentStyle = computed(() => {
   transition: color 0.2s;
   position: relative;
   -webkit-tap-highlight-color: transparent;
+
 }
 
 .nav-item .nav-icon {

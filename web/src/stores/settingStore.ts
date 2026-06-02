@@ -160,11 +160,13 @@ export const useSettingStore = defineStore('setting', {
     // 设置列顺序
     async setColumnOrder(order: string[]) {
       this.settings.columnOrder = order
+      storageService.saveSettings(this.getSettings())
     },
 
     // 设置可见列
     async setVisibleColumns(columns: string[]) {
       this.settings.visibleColumns = columns
+      storageService.saveSettings(this.getSettings())
     },
 
     // 设置排序方法
