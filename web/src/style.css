@@ -365,19 +365,19 @@ body {
   border: 1px solid var(--el-border-color-lighter);
 }
 
-.el-table--border:after,
-.el-table--border:before,
-.el-table--border .el-table__inner-wrapper:after,
-.el-table__inner-wrapper:before,
-.el-table__border-left-patch {
+.fund-table-wrap .el-table--border:after,
+.fund-table-wrap .el-table--border:before,
+.fund-table-wrap .el-table--border .el-table__inner-wrapper:after,
+.fund-table-wrap .el-table__inner-wrapper:before,
+.fund-table-wrap .el-table__border-left-patch {
   display: none !important;
 }
 
-.el-table {
+.fund-table-wrap .el-table {
   --el-table-border-color: var(--el-border-color-light);
 }
 
-.el-table.is-scrolling-middle .el-table-fixed-column--left.is-last-column.el-table__cell,
-.el-table.is-scrolling-right .el-table-fixed-column--left.is-last-column.el-table__cell {
+.fund-table-wrap .el-table.is-scrolling-middle .el-table-fixed-column--left.is-last-column.el-table__cell,
+.fund-table-wrap .el-table.is-scrolling-right .el-table-fixed-column--left.is-last-column.el-table__cell {
   border-right: 1px solid transparent;
 }
