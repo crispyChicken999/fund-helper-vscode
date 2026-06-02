@@ -3,11 +3,36 @@
     <template #header>
       <div class="detail-header">
         <div class="header-left">
-          <el-button plain :icon="ArrowLeft" @click="goBack" round>返回</el-button>
+          <el-button plain :icon="ArrowLeft" @click="goBack" round size="small"
+            >返回</el-button
+          >
           <div class="header-info">
             <span class="fund-name">{{ displayName }}</span>
             <div class="fund-code-row">
-              <span class="fund-code">{{ code }}</span>
+              <div class="fund-code-row-wrap">
+                <span class="fund-code">{{ code }}</span>
+                <div class="fund-nav-btns">
+                  <el-button
+                    size="small"
+                    text
+                    :disabled="prevCode === null"
+                    :title="prevCode ? `上一个：${prevCode}` : '已是第一个'"
+                    @click="navigateTo(prevCode)"
+                    >‹</el-button
+                  >
+                  <span class="fund-nav-pos"
+                    >{{ currentIndex + 1 }} / {{ allFundCodes.length }}</span
+                  >
+                  <el-button
+                    size="small"
+                    text
+                    :disabled="nextCode === null"
+                    :title="nextCode ? `下一个：${nextCode}` : '已是最后一个'"
+                    @click="navigateTo(nextCode)"
+                    >›</el-button
+                  >
+                </div>
+              </div>
               <el-popover
                 placement="bottom"
                 title="提示"
@@ -22,31 +47,15 @@
                   </el-icon>
                 </template>
               </el-popover>
-              <div class="fund-nav-btns">
-                <el-button
-                  size="small"
-                  text
-                  :disabled="prevCode === null"
-                  :title="prevCode ? `上一个：${prevCode}` : '已是第一个'"
-                  @click="navigateTo(prevCode)"
-                  >‹</el-button
-                >
-                <span class="fund-nav-pos"
-                  >{{ currentIndex + 1 }} / {{ allFundCodes.length }}</span
-                >
-                <el-button
-                  size="small"
-                  text
-                  :disabled="nextCode === null"
-                  :title="nextCode ? `下一个：${nextCode}` : '已是最后一个'"
-                  @click="navigateTo(nextCode)"
-                  >›</el-button
-                >
-              </div>
             </div>
           </div>
         </div>
-        <el-button size="small" :loading="refreshing" @click="handleRefresh" round>
+        <el-button
+          size="small"
+          :loading="refreshing"
+          @click="handleRefresh"
+          round
+        >
           <el-icon><Refresh /></el-icon>
         </el-button>
       </div>
@@ -561,7 +570,7 @@
             <span>基金封闭运作期</span
             ><span>{{ featureRaw.CYCLE || "无封闭期(即开即赎)" }}</span>
           </div>
-          <div class="info-row">
+          <div class="info-row" style="margin-bottom: 30px">
             <span>申购/赎回状态</span
             ><span
               >{{ featureRaw.SGZT || "--" }} /
@@ -580,10 +589,7 @@
       </div>
 
       <!-- 特色数据 -->
-      <div
-        v-show="activeTab === 'feature'"
-        class="tab-panel"
-      >
+      <div v-show="activeTab === 'feature'" class="tab-panel">
         <div v-if="featureData && !tabLoading" class="feature-container">
           <!-- 期限选择器 -->
           <div class="range-tabs">
@@ -1439,10 +1445,10 @@ let rankChart: any = null;
 
 const isDarkMode = computed(() => settingStore.theme === "dark");
 
-watch(isDarkMode, async ()=> {
+watch(isDarkMode, async () => {
   loadedTabs.clear();
   await loadTabOnce(activeTab.value);
-})
+});
 
 // Tab 滚动
 const tabScrollbarRef = ref<InstanceType<
@@ -3027,34 +3033,40 @@ function updateTabScrollShadows(scrollable: HTMLElement) {
   const scrollLeft = scrollable.scrollLeft;
   const scrollWidth = scrollable.scrollWidth;
   const clientWidth = scrollable.clientWidth;
-  
+
   // 判断滚动位置状态
   const isAtStart = scrollLeft < 1;
   const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 1;
-  
+
   // 更新 CSS 变量
-  scrollable.style.setProperty('--tab-scroll-shadow-left', isAtStart ? '0' : '1');
-  scrollable.style.setProperty('--tab-scroll-shadow-right', isAtEnd ? '0' : '1');
+  scrollable.style.setProperty(
+    "--tab-scroll-shadow-left",
+    isAtStart ? "0" : "1",
+  );
+  scrollable.style.setProperty(
+    "--tab-scroll-shadow-right",
+    isAtEnd ? "0" : "1",
+  );
 }
 
 function setupTabScrollShadows() {
   const scrollbar = tabScrollbarRef.value as any;
   if (!scrollbar) return;
-  
+
   // 获取滚动容器
-  const wrap = scrollbar?.$el?.querySelector('.el-scrollbar__wrap');
+  const wrap = scrollbar?.$el?.querySelector(".el-scrollbar__wrap");
   if (!wrap) return;
-  
+
   // 初始化
   updateTabScrollShadows(wrap);
-  
+
   // 监听滚动事件
   const handleScroll = () => updateTabScrollShadows(wrap);
-  wrap.addEventListener('scroll', handleScroll);
-  
+  wrap.addEventListener("scroll", handleScroll);
+
   // 保存清理函数
   (globalThis as any).__fundDetailViewScrollCleanup = () => {
-    wrap.removeEventListener('scroll', handleScroll);
+    wrap.removeEventListener("scroll", handleScroll);
   };
 }
 
@@ -3089,11 +3101,11 @@ onMounted(async () => {
   observeChartContainers(resizeObs);
 
   window.addEventListener("resize", resizeAllCharts);
-  
+
   // 延迟一帧以确保 DOM 已完全挂载
   await nextTick();
   setupTabScrollShadows();
-  
+
   await loadTabOnce(activeTab.value);
 });
 
@@ -3145,7 +3157,15 @@ onUnmounted(() => {
 .fund-code-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
+}
+
+.fund-code-row-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .swipe-hint-icon {
@@ -3201,15 +3221,19 @@ onUnmounted(() => {
   overflow-y: hidden !important;
   /* 动态阴影效果：左右两侧的 inset 阴影 */
   box-shadow:
-    inset calc(var(--tab-scroll-shadow-left) * 12px) 0 6px -4px rgba(0, 0, 0, 0.08),
-    inset calc(var(--tab-scroll-shadow-right) * -12px) 0 6px -4px rgba(0, 0, 0, 0.08);
+    inset calc(var(--tab-scroll-shadow-left) * 12px) 0 6px -4px
+      rgba(0, 0, 0, 0.08),
+    inset calc(var(--tab-scroll-shadow-right) * -12px) 0 6px -4px
+      rgba(0, 0, 0, 0.08);
   transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html.dark :deep(.detail-tabs .el-scrollbar__wrap) {
   box-shadow:
-    inset calc(var(--tab-scroll-shadow-left) * 12px) 0 6px -4px rgba(255, 255, 255, 0.06),
-    inset calc(var(--tab-scroll-shadow-right) * -12px) 0 6px -4px rgba(255, 255, 255, 0.06);
+    inset calc(var(--tab-scroll-shadow-left) * 12px) 0 6px -4px
+      rgba(255, 255, 255, 0.06),
+    inset calc(var(--tab-scroll-shadow-right) * -12px) 0 6px -4px
+      rgba(255, 255, 255, 0.06);
 }
 
 :deep(.detail-tabs .el-scrollbar__bar) {
@@ -3963,6 +3987,7 @@ html.dark :deep(.detail-tabs .el-scrollbar__wrap) {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  transition: all 0.3s;
 }
 
 .feature-metric-info {
@@ -3977,6 +4002,7 @@ html.dark :deep(.detail-tabs .el-scrollbar__wrap) {
   font-weight: 700;
   color: var(--el-text-color-primary);
   line-height: 1.1;
+  transition: all 0.3s;
   font-family:
     "Inter",
     "Outfit",
@@ -3991,6 +4017,20 @@ html.dark :deep(.detail-tabs .el-scrollbar__wrap) {
   font-size: 13px;
   color: var(--el-text-color-secondary);
   font-weight: 500;
+}
+
+@media screen and (max-width: 768px) {
+  .feature-value {
+    font-size: 18px;
+  }
+
+  .feature-card {
+    padding: 14px;
+  }
+
+  .feature-card-header {
+    gap: 6px;
+  }
 }
 
 .feature-rank-info {
