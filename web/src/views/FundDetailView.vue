@@ -3,7 +3,7 @@
     <template #header>
       <div class="detail-header">
         <div class="header-left">
-          <el-button plain :icon="ArrowLeft" @click="goBack" round size="small"
+          <el-button plain :icon="ArrowLeft" @click="goBack" round
             >返回</el-button
           >
           <div class="header-info">

@@ -484,6 +484,35 @@
               </div>
             </el-form-item>
 
+            <!-- 备用网站：https://crispychicken999.github.io/fund-helper-vscode/ -->
+            <el-form-item label="备用站点" label-width="120px">
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                  align-items: flex-start;
+                  gap: 8px;
+                "
+              >
+                <div
+                  class="form-item-tip"
+                  style="margin: 0px; text-align: justify"
+                >
+                  如果访问本网站速度较慢，可以尝试访问部署在 GitHub Pages
+                  上的备用网站，数据和功能与本网站完全同步。
+                </div>
+                <el-button
+                  type="primary"
+                  plain
+                  size="small"
+                  @click="openBackupSite"
+                >
+                  访问备用网站
+                </el-button>
+              </div>
+            </el-form-item>
+
             <el-form-item label="安装应用" label-width="120px">
               <div
                 style="
@@ -1436,6 +1465,10 @@ function handleShowUninstallGuide() {
     type: "info",
     dangerouslyUseHTMLString: false,
   });
+}
+
+function openBackupSite() {
+  window.open("https://crispychicken999.github.io/fund-helper-vscode/", "_blank");
 }
 </script>
 
