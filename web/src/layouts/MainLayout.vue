@@ -80,7 +80,7 @@ const contentStyle = computed(() => {
 .main-layout {
   position: relative;
   display: flex;
-  height: 100vh;
+  height: 100dvh;
   flex-direction: column;
   overflow: hidden;
   background: var(--el-bg-color);
