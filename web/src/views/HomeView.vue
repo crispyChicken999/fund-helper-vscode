@@ -2896,6 +2896,7 @@ html.dark .group-tag-item.active {
   gap: 2px;
   line-height: 1.25;
   font-size: 12px;
+  user-select: none;
 }
 
 .name-col-head {

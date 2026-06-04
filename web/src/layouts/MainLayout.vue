@@ -4,13 +4,13 @@
       <slot name="header" />
     </div>
 
-    <div class="layout-content">
-        <template v-if="route.path === '/'">
-          <slot />
-        </template>
-        <el-scrollbar v-else>
-          <slot />
-        </el-scrollbar>
+    <div class="layout-content" :style="layoutMaxHeight">
+      <template v-if="route.path === '/'">
+        <slot />
+      </template>
+      <el-scrollbar v-else>
+        <slot />
+      </el-scrollbar>
     </div>
 
     <nav class="layout-footer bottom-nav" aria-label="主导航">
@@ -73,6 +73,19 @@ const contentStyle = computed(() => {
     margin: "0 auto",
   };
 });
+
+const layoutMaxHeight = computed(() => {
+  switch (route.path) {
+    case "/":
+      return "calc(100vh - 270px)";
+    case "/market":
+      return "calc(100vh - 142px)";
+    case "/settings":
+      return "calc(100vh - 120px)";
+    default:
+      return "calc(100vh - 120px)";
+  }
+});
 </script>
 
 <style scoped>
@@ -131,7 +144,6 @@ const contentStyle = computed(() => {
   transition: color 0.2s;
   position: relative;
   -webkit-tap-highlight-color: transparent;
-
 }
 
 .nav-item .nav-icon {

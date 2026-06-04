@@ -442,11 +442,10 @@ function handleCopy() {
   background: var(--el-bg-color);
   border-radius: 8px;
   padding: 14px;
-  border: 1px solid var(--el-border-color-lighter);
-  box-shadow:
-    0 6px 24px rgba(0, 0, 0, 0.2),
-    0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--el-border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   pointer-events: auto;
+  transition: all 0.15s ease;
   user-select: text;
 }
 
@@ -456,7 +455,7 @@ function handleCopy() {
   align-items: flex-start;
   margin-bottom: 10px;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 .head-actions {
@@ -506,7 +505,7 @@ function handleCopy() {
 
 .info-group {
   padding: 7px 0;
-  border-bottom: 1px solid var(--el-border-color-light);
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 .info-group-last,
@@ -550,7 +549,7 @@ function handleCopy() {
   grid-template-columns: 1fr 1fr 1fr;
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid var(--el-border-color-lighter);
+  border-top: 1px solid var(--el-border-color);
 }
 
 .el-button {
@@ -570,10 +569,10 @@ function handleCopy() {
 }
 .hover-tooltip-fade-enter-from {
   opacity: 0;
-  transform: scale(0.96) translateY(4px);
+  transform: scale(0.96) translateY(10px);
 }
 .hover-tooltip-fade-leave-to {
   opacity: 0;
-  transform: scale(0.98) translateY(2px);
+  transform: scale(0.98) translateY(10px);
 }
 </style>
