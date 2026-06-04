@@ -4,7 +4,7 @@
       <slot name="header" />
     </div>
 
-    <div class="layout-content" :style="layoutStyle">
+    <div class="layout-content">
       <template v-if="route.path === '/'">
         <slot />
       </template>
@@ -73,44 +73,51 @@ const contentStyle = computed(() => {
     margin: "0 auto",
   };
 });
-
-const layoutStyle = computed(() => {
-  switch (route.path) {
-    case "/" : return { '--safe-height': '270px' };
-    case "/market" : return { '--safe-height': '142px' };
-    case "/settings" : return { '--safe-height': '120px' };
-    default: return {};
-  }
-});
 </script>
 
 <style scoped>
 .main-layout {
   display: flex;
-  height: 100dvh;
+  height: 100vh;
+  height: 100svh; /* 使用稳定视口高度 */
   flex-direction: column;
   overflow: hidden;
   background: var(--el-bg-color);
   border-left: 1px solid var(--el-border-color);
   border-right: 1px solid var(--el-border-color);
   transition: width 0.3s;
+  /* 防止下拉刷新导致的布局问题 */
+  overscroll-behavior-y: contain;
+  position: relative;
 }
 
 @media (max-width: 768px) {
   .main-layout {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: auto;
+    /* 移动端禁用下拉刷新 */
+    overscroll-behavior: none;
+    touch-action: pan-y;
   }
 }
 
 .layout-header {
   flex-shrink: 0;
+  position: relative;
+  z-index: 11;
+  background: var(--el-bg-color);
 }
 
 .layout-content {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  position: relative;
 }
 
 .layout-footer {
@@ -123,6 +130,8 @@ const layoutStyle = computed(() => {
   border-top: 1px solid var(--el-border-color);
   background: var(--el-bg-color);
   box-sizing: border-box;
+  position: relative;
+  z-index: 11;
 }
 
 .nav-item {
@@ -165,11 +174,5 @@ const layoutStyle = computed(() => {
 
 .nav-item:not(.active):hover {
   color: var(--el-text-color-regular);
-}
-
-@media (display-mode: standalone) {
-  .layout-content {
-    max-height: calc(100dvh - var(--safe-height, 0px));
-  }
 }
 </style>
