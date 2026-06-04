@@ -77,13 +77,13 @@ const contentStyle = computed(() => {
 const layoutMaxHeight = computed(() => {
   switch (route.path) {
     case "/":
-      return "calc(100dvh - 270px)";
+      return { height: "calc(100dvh - 270px)" };
     case "/market":
-      return "calc(100dvh - 142px)";
+      return { height: "calc(100dvh - 142px)" };
     case "/settings":
-      return "calc(100dvh - 120px)";
+      return { height: "calc(100dvh - 120px)" };
     default:
-      return "calc(100dvh - 120px)";
+      return { height: "calc(100dvh - 120px)" };
   }
 });
 </script>
@@ -114,8 +114,6 @@ const layoutMaxHeight = computed(() => {
 }
 
 .layout-content {
-  flex: 1;
-  min-height: 0;
   overflow-y: auto;
   margin-bottom: 60px;
   -webkit-overflow-scrolling: touch;
