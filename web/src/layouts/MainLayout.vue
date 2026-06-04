@@ -78,9 +78,9 @@ const contentStyle = computed(() => {
 
 <style scoped>
 .main-layout {
+  position: relative;
   display: flex;
-  max-height: 100vh;
-  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: 100vh;
   flex-direction: column;
   overflow: hidden;
   background: var(--el-bg-color);
@@ -105,17 +105,22 @@ const contentStyle = computed(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  margin-bottom: 60px;
   -webkit-overflow-scrolling: touch;
 }
 
 .layout-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   flex-shrink: 0;
-  min-height: calc(60px + env(safe-area-inset-bottom, 0px));
-  height: auto;
+  height: 60px;
   display: flex;
+  z-index: 999999;
   align-items: stretch;
   justify-content: space-around;
-  padding: 0 0 env(safe-area-inset-bottom, 0px);
+  padding: 0 0 0;
   border-top: 1px solid var(--el-border-color);
   background: var(--el-bg-color);
   box-sizing: border-box;
