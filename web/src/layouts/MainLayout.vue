@@ -169,7 +169,7 @@ const layoutStyle = computed(() => {
 
 @media (display-mode: standalone) {
   .layout-content {
-    height: calc(100dvh - var(--safe-height, 0px));
+    max-height: calc(100dvh - var(--safe-height, 0px));
   }
 }
 </style>
