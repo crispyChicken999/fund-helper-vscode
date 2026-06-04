@@ -86,7 +86,6 @@ const layoutStyle = computed(() => {
 
 <style scoped>
 .main-layout {
-  position: relative;
   display: flex;
   height: 100dvh;
   flex-direction: column;
@@ -111,19 +110,13 @@ const layoutStyle = computed(() => {
 .layout-content {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 60px;
   -webkit-overflow-scrolling: touch;
 }
 
 .layout-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   flex-shrink: 0;
   height: 60px;
   display: flex;
-  z-index: 999999;
   align-items: stretch;
   justify-content: space-around;
   padding: 0 0 0;
