@@ -77,13 +77,13 @@ const contentStyle = computed(() => {
 const layoutMaxHeight = computed(() => {
   switch (route.path) {
     case "/":
-      return { height: "calc(100dvh - 270px)" };
+      return { maxHieght: "calc(100dvh - 270px - env(safe-area-inset-top))" };
     case "/market":
-      return { height: "calc(100dvh - 142px)" };
+      return { maxHieght: "calc(100dvh - 142px - env(safe-area-inset-top))" };
     case "/settings":
-      return { height: "calc(100dvh - 120px)" };
+      return { maxHieght: "calc(100dvh - 120px - env(safe-area-inset-top))" };
     default:
-      return { height: "calc(100dvh - 120px)" };
+      return { maxHieght: "calc(100dvh - 120px - env(safe-area-inset-top))" };
   }
 });
 </script>
@@ -92,7 +92,7 @@ const layoutMaxHeight = computed(() => {
 .main-layout {
   position: relative;
   display: flex;
-  height: 100dvh;
+  height: calc(100dvh - env(safe-area-inset-top));
   flex-direction: column;
   overflow: hidden;
   background: var(--el-bg-color);
@@ -114,6 +114,7 @@ const layoutMaxHeight = computed(() => {
 }
 
 .layout-content {
+  flex: 1;
   overflow-y: auto;
   margin-bottom: 60px;
   -webkit-overflow-scrolling: touch;
