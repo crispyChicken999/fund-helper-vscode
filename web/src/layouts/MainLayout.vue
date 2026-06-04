@@ -4,7 +4,7 @@
       <slot name="header" />
     </div>
 
-    <div class="layout-content" :style="layoutMaxHeight">
+    <div class="layout-content" :style="layoutStyle">
       <template v-if="route.path === '/'">
         <slot />
       </template>
@@ -74,16 +74,12 @@ const contentStyle = computed(() => {
   };
 });
 
-const layoutMaxHeight = computed(() => {
+const layoutStyle = computed(() => {
   switch (route.path) {
-    case "/":
-      return { maxHieght: "calc(100dvh - 270px - env(safe-area-inset-top))" };
-    case "/market":
-      return { maxHieght: "calc(100dvh - 142px - env(safe-area-inset-top))" };
-    case "/settings":
-      return { maxHieght: "calc(100dvh - 120px - env(safe-area-inset-top))" };
-    default:
-      return { maxHieght: "calc(100dvh - 120px - env(safe-area-inset-top))" };
+    case "/" : return { '--safe-height': '270px' };
+    case "/market" : return { '--safe-height': '142px' };
+    case "/settings" : return { '--safe-height': '120px' };
+    default: return {};
   }
 });
 </script>
@@ -92,14 +88,13 @@ const layoutMaxHeight = computed(() => {
 .main-layout {
   position: relative;
   display: flex;
-  height: calc(100dvh - env(safe-area-inset-top));
+  height: 100dvh;
   flex-direction: column;
   overflow: hidden;
   background: var(--el-bg-color);
   border-left: 1px solid var(--el-border-color);
   border-right: 1px solid var(--el-border-color);
   transition: width 0.3s;
-  position: relative;
 }
 
 @media (max-width: 768px) {
@@ -177,5 +172,11 @@ const layoutMaxHeight = computed(() => {
 
 .nav-item:not(.active):hover {
   color: var(--el-text-color-regular);
+}
+
+@media (display-mode: standalone) {
+  .layout-content {
+    height: calc(100dvh - var(--safe-height, 0px));
+  }
 }
 </style>
