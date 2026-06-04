@@ -4,7 +4,7 @@
       <slot name="header" />
     </div>
 
-    <div class="layout-content">
+    <div class="layout-content" :style="layoutMaxHeight">
       <template v-if="route.path === '/'">
         <slot />
       </template>
@@ -74,6 +74,18 @@ const contentStyle = computed(() => {
   };
 });
 
+const layoutMaxHeight = computed(() => {
+  switch (route.path) {
+    case "/":
+      return "calc(100dvh - 270px)";
+    case "/market":
+      return "calc(100dvh - 142px)";
+    case "/settings":
+      return "calc(100dvh - 120px)";
+    default:
+      return "calc(100dvh - 120px)";
+  }
+});
 </script>
 
 <style scoped>
