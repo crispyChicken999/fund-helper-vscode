@@ -769,6 +769,7 @@
       v-model="showPositionDialog"
       :title="positionIsAdd ? '加仓' : '减仓'"
       width="90%"
+      top="5vh"
       :close-on-click-modal="true"
     >
       <div v-if="positionRow" class="position-dialog-content">
@@ -784,6 +785,13 @@
         <div class="nav-history-section">
           <div class="section-label">
             选择{{ positionIsAdd ? "买入" : "卖出" }}日期净值：
+          </div>
+          <div v-if="selectedNavDate" class="selected-hint">
+            <span class="selected-hint-icon">📅</span>
+            当前选择：<strong>{{ selectedNavDate }}</strong>
+            <span v-if="selectedNavValue > 0" class="selected-hint-nav"
+              >净值 {{ selectedNavValue.toFixed(4) }}</span
+            >
           </div>
           <div v-if="navHistoryLoading" class="nav-loading">
             加载历史净值中...
@@ -807,6 +815,9 @@
                 {{ item.changePercent >= 0 ? "+" : ""
                 }}{{ item.changePercent.toFixed(2) }}%
               </span>
+              <span v-if="selectedNavDate === item.date" class="selected-badge"
+                >✓</span
+              >
             </div>
           </div>
           <div v-else class="nav-empty">未获取到历史净值</div>
@@ -833,24 +844,130 @@
             </el-input>
           </el-form-item>
 
-          <!-- 计算结果预览 -->
+          <!-- 加仓计算结果预览 -->
           <div
             v-if="positionIsAdd && positionAmount > 0 && selectedNavValue > 0"
             class="calc-preview"
           >
-            <div>买入净值：{{ selectedNavValue.toFixed(4) }}</div>
-            <div>
-              新增份额：{{ (positionAmount / selectedNavValue).toFixed(2) }}
+            <div class="preview-header">操作预览</div>
+            <div class="preview-row">
+              <span class="preview-label">买入净值</span>
+              <span>{{ selectedNavValue.toFixed(4) }}</span>
             </div>
-            <div>
-              新总份额：{{
-                (
-                  positionRow.fund.num +
-                  positionAmount / selectedNavValue
-                ).toFixed(2)
-              }}
+            <div class="preview-row">
+              <span class="preview-label">买入金额</span>
+              <span>{{ positionAmount.toFixed(2) }} 元</span>
             </div>
-            <div>新成本价：{{ calcNewCost.toFixed(4) }}</div>
+            <div class="preview-row">
+              <span class="preview-label">新增份额</span>
+              <span class="positive"
+                >+{{ (positionAmount / selectedNavValue).toFixed(2) }}
+                份</span
+              >
+            </div>
+            <div class="preview-divider"></div>
+            <div class="preview-row">
+              <span class="preview-label">持有份额</span>
+              <span>
+                {{ positionRow.fund.num.toFixed(2) }}<span class="arrow"> → </span>
+                <strong
+                  >{{
+                    (
+                      positionRow.fund.num +
+                      positionAmount / selectedNavValue
+                    ).toFixed(2)
+                  }}
+                  份</strong
+                >
+              </span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-label">成本价</span>
+              <span>
+                {{ positionRow.fund.cost.toFixed(4) }}<span class="arrow"> → </span>
+                <strong>{{ calcNewCost.toFixed(4) }}</strong>
+              </span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-label">持有成本</span>
+              <span>
+                {{ (positionRow.fund.num * positionRow.fund.cost).toFixed(2) }}
+                元<span class="arrow"> → </span>
+                <strong
+                  >{{
+                    (
+                      calcNewCost *
+                      (positionRow.fund.num +
+                        positionAmount / selectedNavValue)
+                    ).toFixed(2)
+                  }}
+                  元</strong
+                >
+              </span>
+            </div>
+          </div>
+
+          <!-- 减仓计算结果预览 -->
+          <div
+            v-if="
+              !positionIsAdd &&
+              positionShares > 0 &&
+              positionShares <= positionRow.fund.num &&
+              selectedNavValue > 0
+            "
+            class="calc-preview"
+          >
+            <div class="preview-header">操作预览</div>
+            <div class="preview-row">
+              <span class="preview-label">卖出净值</span>
+              <span>{{ selectedNavValue.toFixed(4) }}</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-label">卖出金额</span>
+              <span class="negative"
+                >-{{ (positionShares * selectedNavValue).toFixed(2) }}
+                元</span
+              >
+            </div>
+            <div class="preview-row">
+              <span class="preview-label">卖出份额</span>
+              <span class="negative"
+                >-{{ positionShares.toFixed(2) }} 份</span
+              >
+            </div>
+            <div class="preview-divider"></div>
+            <div class="preview-row">
+              <span class="preview-label">持有份额</span>
+              <span>
+                {{ positionRow.fund.num.toFixed(2) }}<span class="arrow"> → </span>
+                <strong
+                  >{{
+                    (positionRow.fund.num - positionShares).toFixed(2)
+                  }}
+                  份</strong
+                >
+              </span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-label">成本价</span>
+              <span>{{ positionRow.fund.cost.toFixed(4) }}<span class="note-muted">（不变）</span></span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-label">持仓总额</span>
+              <span>
+                {{ (positionRow.fund.num * positionRow.fund.cost).toFixed(2) }}
+                元<span class="arrow"> → </span>
+                <strong
+                  >{{
+                    (
+                      (positionRow.fund.num - positionShares) *
+                      positionRow.fund.cost
+                    ).toFixed(2)
+                  }}
+                  元</strong
+                >
+              </span>
+            </div>
           </div>
         </el-form>
       </div>
@@ -2152,6 +2269,15 @@ function selectNavItem(item: {
 }) {
   selectedNavDate.value = item.date;
   selectedNavValue.value = item.netValue;
+  // 选中后自动滚动到列表中间
+  nextTick(() => {
+    const navList = document.querySelector(".nav-list");
+    if (!navList) return;
+    const selectedEl = navList.querySelector(".nav-item.selected");
+    if (selectedEl) {
+      selectedEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
 }
 
 const calcNewCost = computed(() => {
@@ -3139,6 +3265,28 @@ html.dark .group-label {
   border-radius: 6px;
 }
 
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  transition: background 0.15s;
+  user-select: none;
+}
+.nav-item:last-child {
+  border-bottom: none;
+}
+.nav-item:hover {
+  background: var(--el-fill-color-light);
+}
+.nav-item.selected {
+  background: var(--el-color-primary-light-9);
+  border-left: 3px solid var(--el-color-primary);
+  padding-left: 9px;
+}
+
 .nav-date {
   flex-shrink: 0;
   font-weight: 500;
@@ -3154,14 +3302,116 @@ html.dark .group-label {
 }
 
 .calc-preview {
-  background: var(--el-fill-color-lighter);
-  border-radius: 6px;
-  padding: 10px 12px;
+  position: relative;
+  background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-bg-color));
+  border: 1px solid var(--el-color-primary-light-7);
+  border-radius: 8px;
+  padding: 12px;
   font-size: 12px;
-  color: var(--el-text-color-secondary);
   display: flex;
   flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.preview-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--el-color-primary);
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--el-color-primary-light-7);
+  display: flex;
+  align-items: center;
   gap: 4px;
-  margin-top: 8px;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+
+.preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+  padding: 2px 0;
+}
+
+.preview-label {
+  color: var(--el-text-color-secondary);
+  flex-shrink: 0;
+  min-width: 58px;
+  text-align: right;
+}
+
+.preview-row .arrow {
+  color: var(--el-color-primary);
+  margin: 0 4px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.preview-row .note-muted {
+  color: var(--el-text-color-placeholder);
+  font-size: 11px;
+  margin-left: 2px;
+}
+
+.preview-divider {
+  height: 1px;
+  background: linear-gradient(to right, var(--el-color-primary-light-7), transparent);
+  margin: 3px 0;
+  opacity: 0.5;
+}
+
+.preview-row strong {
+  color: var(--el-text-color-primary);
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.preview-row .positive {
+  font-weight: 600;
+}
+
+.preview-row .negative {
+  font-weight: 600;
+}
+
+/* Selected nav hint */
+.selected-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+}
+.selected-hint-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+.selected-hint-nav {
+  color: var(--el-text-color-secondary);
+}
+
+/* Selected check badge */
+.selected-badge {
+  margin-left: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--el-color-primary);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: bold;
 }
 </style>
