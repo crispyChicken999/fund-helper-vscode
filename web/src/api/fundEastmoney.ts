@@ -200,7 +200,7 @@ async function fetchWithProxyFallback(url: string, codes: string = '', timeout: 
   // 策略 2: fund-helper.ccwu.cc 转发服务
   if (codes.length > 0) {
     try {
-      const proxy0Url = `http://fund-helper.ccwu.cc/?Fcodes=${codes}`
+      const proxy0Url = `https://fund-helper.ccwu.cc/?Fcodes=${codes}`
       const res = await fetch(proxy0Url, { signal: AbortSignal.timeout(60000) })
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: fund-helper proxy fetch failed`)
