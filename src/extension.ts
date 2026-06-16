@@ -18,6 +18,7 @@ import { analyzeFunds, configureAI } from "./aiService";
 import { FundDetailWebview } from "./detail";
 import { MarketWebview } from "./marketWebview";
 import { DonateWebview } from "./donate";
+import { AboutWebview } from "./about";
 import { FundWebviewViewProvider } from "./sidebar/webview";
 import { FundDataManager } from "./fundDataManager";
 import { FundConfig, FundInfo } from "./fundModel";
@@ -422,6 +423,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand("fund-helper.openDonate", () => {
       DonateWebview.createOrShow();
+    }),
+
+    vscode.commands.registerCommand("fund-helper.openAbout", () => {
+      AboutWebview.createOrShow();
     }),
 
     // 模式切换命令

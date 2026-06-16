@@ -34,10 +34,8 @@ export class DonateWebview {
 
     this._panel.webview.onDidReceiveMessage(
       message => {
-        switch (message.command) {
-          case 'openGitHub':
-            vscode.env.openExternal(vscode.Uri.parse('https://github.com/crispyChicken999/fund-helper-vscode'));
-            return;
+        if (message.command === 'openLink' && message.url) {
+          vscode.env.openExternal(vscode.Uri.parse(message.url));
         }
       },
       null,
@@ -256,7 +254,7 @@ export const donateTemplate = `
 
         <div class="social-section">
           <p class="social-text">给个Star也是大大的支持！</p>
-          <a href="https://github.com/crispyChicken999/fund-helper-vscode" onclick="openGitHub()" class="github-star-btn">
+          <a class="github-star-btn" href="#" data-link="https://github.com/crispyChicken999/fund-helper-vscode">
             <span class="star-icon">⭐</span>
             <span>GitHub上点个Star</span>
             <span class="star-icon">⭐</span>
@@ -267,20 +265,15 @@ export const donateTemplate = `
   </div>
 
   <script>
-    function openGitHub() {
-      // 通知VS Code扩展打开GitHub链接
-      window.postMessage({ command: 'openGitHub' }, '*');
-    }
-    
-    // 监听来自VS Code的消息
-    window.addEventListener('message', event => {
-      const message = event.data;
-      switch (message.command) {
-        case 'openGitHub':
-          // 这里由VS Code扩展处理实际的链接打开
-          break;
-      }
-    });
+    (function() {
+      var vscode = acquireVsCodeApi();
+      document.querySelectorAll('a[data-link]').forEach(function(a) {
+        a.addEventListener('click', function(e) {
+          e.preventDefault();
+          vscode.postMessage({ command: 'openLink', url: this.dataset.link });
+        });
+      });
+    })();
   </script>
 </body>
 </html>

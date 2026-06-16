@@ -91,7 +91,9 @@ export function getReadyPendingBuys(): BuyRecord[] {
 
     // 基金净值日期 >= 买入日期，说明当天净值已经更新了
     if (detail.netValueDate && detail.netValueDate >= record.buyDate) {
-      readyList.push({ ...record, navOnBuyDate: detail.netValue })
+      const nav = Number(detail.netValue)
+      if (!nav || nav <= 0 || !isFinite(nav)) continue  // 防御：跳过无效净值
+      readyList.push({ ...record, navOnBuyDate: nav })
     }
   }
 
@@ -108,21 +110,27 @@ export async function confirmPendingBuys(readyList: BuyRecord[]): Promise<void> 
   const fundStore = useFundStore()
 
   for (const record of readyList) {
-    if (!record.navOnBuyDate) continue
+    // 防御性类型转换：localStorage 的 JSON 序列化/反序列化可能导致字段类型丢失
+    const nav = Number(record.navOnBuyDate)
+    const amount = Number(record.amount)
+    if (!nav || nav <= 0 || !isFinite(nav)) continue   // 跳过无效净值
+    if (!amount || amount <= 0 || !isFinite(amount)) continue
 
     const fund = fundStore.getFund(record.code)
     if (fund) {
       // 已持仓：加权平均成本
-      const addNum = record.amount / record.navOnBuyDate
-      const oldNum = fund.num
-      const oldCost = fund.cost
+      const addNum = amount / nav
+      const oldNum = Number(fund.num) || 0
+      const oldCost = Number(fund.cost) || 0
       const newNum = oldNum + addNum
-      const newCost = newNum > 0 ? (oldCost * oldNum + record.navOnBuyDate * addNum) / newNum : record.navOnBuyDate
+      const newCost = newNum > 0 ? (oldCost * oldNum + nav * addNum) / newNum : nav
+      if (!isFinite(newNum) || !isFinite(newCost)) continue  // 防止 NaN/Infinity 写入持仓
       await fundService.updateFund(record.code, newNum, newCost, fund.groupKey)
     } else {
       // 新持仓：直接用买入净值作成本
-      const newNum = record.amount / record.navOnBuyDate
-      await fundService.addFund(record.code, newNum, record.navOnBuyDate)
+      const newNum = amount / nav
+      if (!isFinite(newNum)) continue
+      await fundService.addFund(record.code, newNum, nav)
     }
   }
 
@@ -146,17 +154,27 @@ export async function executeImmediateBuys(items: ImmediateBuyItem[]): Promise<v
   const fundStore = useFundStore()
 
   for (const item of items) {
-    const fund = fundStore.getFund(item.code)
-    const addNum = item.amount / item.nav
+    // 防御性类型转换
+    const nav = Number(item.nav)
+    const amount = Number(item.amount)
+    if (!nav || nav <= 0 || !isFinite(nav)) continue
+    if (!amount || amount <= 0 || !isFinite(amount)) continue
 
+    const addNum = amount / nav
+
+    const fund = fundStore.getFund(item.code)
     if (fund) {
-      const newNum = fund.num + addNum
+      const oldNum = Number(fund.num) || 0
+      const oldCost = Number(fund.cost) || 0
+      const newNum = oldNum + addNum
       const newCost = newNum > 0
-        ? (fund.cost * fund.num + item.nav * addNum) / newNum
-        : item.nav
+        ? (oldCost * oldNum + nav * addNum) / newNum
+        : nav
+      if (!isFinite(newNum) || !isFinite(newCost)) continue
       await fundService.updateFund(item.code, newNum, newCost, fund.groupKey)
     } else {
-      await fundService.addFund(item.code, addNum, item.nav)
+      if (!isFinite(addNum)) continue
+      await fundService.addFund(item.code, addNum, nav)
     }
   }
 }

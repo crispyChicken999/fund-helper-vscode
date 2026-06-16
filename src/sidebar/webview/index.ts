@@ -722,9 +722,16 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
         }
         break;
 
-      case "openWebVersion":
-        vscode.env.openExternal(vscode.Uri.parse("https://fund-helper.netlify.app"));
+      case "openWebVersion": {
+        const pick = await vscode.window.showQuickPick([
+          { label: '🌐 主站 Netlify', description: 'fund-helper.netlify.app', detail: '官方主站，更新可能稍有延迟', url: 'https://fund-helper.netlify.app' },
+          { label: '🔗 备用 GitHub Pages', description: 'crispychicken999.github.io/fund-helper-vscode/', detail: '实时更新，与仓库同步', url: 'https://crispychicken999.github.io/fund-helper-vscode/' }
+        ], { placeHolder: '选择要打开的网页版站点' });
+        if (pick) {
+          vscode.env.openExternal(vscode.Uri.parse((pick as any).url));
+        }
         break;
+      }
 
       case "batchAdjust_loadPending": {
         const { loadPendingBuys } = require("../../batchAdjust");
@@ -773,13 +780,16 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
         try {
           // 即时加仓
           for (const item of immediateItems) {
-            const nav = item.nav!;
-            const addNum = item.amount / nav;
+            const nav = Number(item.nav);
+            const amount = Number(item.amount);
+            if (!nav || nav <= 0 || !amount || amount <= 0) continue;
+            const addNum = amount / nav;
             const existing = funds.find((f: any) => f.code === item.code);
             const oldNum = existing ? parseFloat(existing.num) || 0 : 0;
             const oldCost = existing ? parseFloat(existing.cost) || 0 : 0;
             const newNum = oldNum + addNum;
             const newCost = newNum > 0 ? (oldCost * oldNum + nav * addNum) / newNum : nav;
+            if (!isFinite(newNum) || !isFinite(newCost)) continue;
             if (existing) {
               existing.num = String(newNum);
               existing.cost = String(newCost);
@@ -830,12 +840,22 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       }
 
       case "batchAdjust_confirmPending": {
-        const { loadPendingBuys, buildPositionUpdates, removePendingBuys } = require("../../batchAdjust");
+        const { loadPendingBuys, getReadyPendingBuys, buildPositionUpdates, removePendingBuys } = require("../../batchAdjust");
         const config = vscode.workspace.getConfiguration("fund-helper");
         const funds = config.get<Array<{ code: string; num: string; cost: string }>>("funds", []);
         const ids: string[] = message.ids || [];
-        const allPending = loadPendingBuys();
-        const readyList = allPending.filter((r: any) => ids.includes(r.id));
+
+        // 重新计算净值：globalState 中存放的 pending 记录 navOnBuyDate 为 null，
+        // 必须用最新的缓存数据重新计算，否则 buildPositionUpdates 中 amount/null = Infinity
+        const cachedData = this._dataManager.getCachedFundData();
+        const netValueDates = new Map<string, string>();
+        const netValues = new Map<string, number>();
+        for (const f of cachedData) {
+          if (f.netValueDate) netValueDates.set(f.code, f.netValueDate);
+          netValues.set(f.code, f.netValue);
+        }
+        const allReady = getReadyPendingBuys(netValueDates, netValues);
+        const readyList = allReady.filter((r: any) => ids.includes(r.id));
 
         try {
           const updates = buildPositionUpdates(readyList, funds);

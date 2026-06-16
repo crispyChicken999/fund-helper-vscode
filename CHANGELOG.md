@@ -2,6 +2,22 @@
 
 本文档记录了"基金助手"(Fund Helper) VS Code 扩展的所有重要更改。
 
+## [0.3.10] - 2026-06-16
+
+### 问题修复 (Bug Fixes)
+
+- 🐛 **修复批量加减仓 Pending 确认后成本变为 0 / Infinity 的问题**：当加仓选择当日（净值待更新），进入 pending 队列，待净值更新后确认加仓时，成本价和份额出现异常值
+  - **根本原因**：确认 pending 加仓时，`batchAdjust_confirmPending` 从 `globalState` 重新加载记录，其 `navOnBuyDate` 仍为 `null`，导致 `amount/null = Infinity`，成本价变为 `NaN`
+  - **修复方案**：确认时改用 `getReadyPendingBuys()` 重新计算净值，并在 `buildPositionUpdates` 中增加 `Number()` 类型转换和 `isFinite()` 防御性检查
+  - **同步修复 web 端**：`pendingBuyService.ts` 中 `confirmPendingBuys()` / `executeImmediateBuys()` / `getReadyPendingBuys()` 均增加了 `Number()` 转换和 `isFinite()` 校验
+- 🐛 **修复复制基金详情缺少"持仓总额"字段**：复制功能输出的文本比 tooltip 展示少了一个字段
+
+### 新增功能 (Features)
+
+- ✨ **批量加减仓支持**：支持批量添加基金加仓/减仓操作，无需逐个操作，大幅提升效率
+- ✨ **侧边栏新增赞赏入口**：点击查看赞赏码，支持开发者
+- ✨ **侧边栏新增关于入口**：查看当前版本信息和项目介绍
+
 ## [0.3.9] - 2026-06-01
 
 ### 新增功能 (Features)

@@ -31,6 +31,21 @@ let _ctx: vscode.ExtensionContext | null = null
 
 export function initBatchAdjust(ctx: vscode.ExtensionContext): void {
   _ctx = ctx
+
+  // 测试用：如果 pending 列表为空，添加一条默认测试记录
+  // 可以在此修改 code/amount/buyDate 来模拟不同测试场景
+  // const existing = loadPendingBuys()
+  // if (existing.length === 0) {
+  //   addPendingBuy({
+  //     code: '002963',
+  //     name: '易方达黄金ETF联接C',
+  //     // 昨天
+  //     buyDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+  //     amount: 10000,
+  //     navOnBuyDate: null,
+  //     status: 'pending'
+  //   })
+  // }
 }
 
 // ===================== CRUD =====================
@@ -114,13 +129,18 @@ export function buildPositionUpdates(
   const updates: PositionUpdate[] = []
 
   for (const record of readyList) {
-    const nav = record.navOnBuyDate
-    const addNum = record.amount / nav
+    // 防御性类型转换：globalState 的 JSON 序列化/反序列化可能导致字段类型丢失
+    const nav = Number(record.navOnBuyDate)
+    const amount = Number(record.amount)
+    if (!nav || nav <= 0) continue  // 跳过无效净值，避免 amount/0 = Infinity
+    if (!amount || amount <= 0) continue
+    const addNum = amount / nav
     const existing = currentFunds.find(f => f.code === record.code)
     const oldNum = existing ? (parseFloat(existing.num) || 0) : 0
     const oldCost = existing ? (parseFloat(existing.cost) || 0) : 0
     const newNum = oldNum + addNum
     const newCost = newNum > 0 ? (oldCost * oldNum + nav * addNum) / newNum : nav
+    if (!isFinite(newNum) || !isFinite(newCost)) continue  // 防止 NaN/Infinity 写入持仓
     updates.push({ code: record.code, newNum, newCost })
   }
 

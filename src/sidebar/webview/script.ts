@@ -1322,6 +1322,7 @@ export function getScripts(): string[] {
     '持有收益：${data.holdingGain}',
     '总收益率：${data.holdingGainRate}',
     '━━━━━━━━━━━━━━━━',
+    '持仓总额：${formatNumberWithComma((parseFloat(data.num||0) * parseFloat(data.cost||0)))}',
     '持有金额：${data.holdingAmount}',
     '持有份额：${data.num}',
     '成本价：${data.cost}',
