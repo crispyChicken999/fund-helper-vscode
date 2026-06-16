@@ -70,6 +70,16 @@ export default defineConfig(({ mode }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,gif,webp,woff,woff2,ttf,eot}'],
           runtimeCaching: [
+            // codetabs 代理接口：纯 NetworkOnly，不走 Service Worker 缓存
+            {
+              urlPattern: /^https:\/\/api\.codetabs\.com\/v1\/proxy\//i,
+              handler: 'NetworkOnly',
+            },
+            // allorigins 代理接口：纯 NetworkOnly，不走 Service Worker 缓存
+            {
+              urlPattern: /^https:\/\/api\.allorigins\.win\/raw\?/i,
+              handler: 'NetworkOnly',
+            },
             // API 缓存策略：网络优先，确保数据最新
             {
               urlPattern: /^https:\/\/api\.|^https:\/\/.*\.(api|proxy).*|^\/api-proxy\//i,
