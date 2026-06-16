@@ -28,7 +28,24 @@ async function fetchFundInvestmentPositionWithFallback(code: string): Promise<an
     console.warn('[InvestPosition] 直接请求失败，尝试第一层代理...', directError)
   }
 
-  // 策略 2: allorigins.win 代理
+  // 策略 2: fund-helper.ccwu.cc 路径转发
+  try {
+    const proxy0Url = url.replace('https://fundmobapi.eastmoney.com', 'https://fund-helper.ccwu.cc')
+    const res = await fetch(proxy0Url, { signal: AbortSignal.timeout(60000) })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: fund-helper proxy fetch failed`)
+    }
+    const data = await res.json().catch(() => null)
+    if (!data?.Datas) {
+      throw new Error('fund-helper proxy invalid data structure')
+    }
+    console.log('[InvestPosition] 第一层代理(fund-helper.ccwu.cc)请求成功')
+    return data
+  } catch (proxy0Error) {
+    console.warn('[InvestPosition] 第一层代理(fund-helper)失败，尝试第二层代理...', proxy0Error)
+  }
+
+  // 策略 3: allorigins.win 代理
   try {
     const proxy1Url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
     const res = await fetch(proxy1Url, { signal: AbortSignal.timeout(60000) })
@@ -39,13 +56,13 @@ async function fetchFundInvestmentPositionWithFallback(code: string): Promise<an
     if (!data?.Datas) {
       throw new Error('Proxy1 invalid data structure')
     }
-    console.log('[InvestPosition] 第一层代理(allorigins.win)请求成功')
+    console.log('[InvestPosition] 第二层代理(allorigins.win)请求成功')
     return data
   } catch (proxy1Error) {
-    console.warn('[InvestPosition] 第一层代理失败，尝试第二层代理...', proxy1Error)
+    console.warn('[InvestPosition] 第二层代理失败，尝试第三层代理...', proxy1Error)
   }
 
-  // 策略 3: codetabs.com 双层代理
+  // 策略 4: codetabs.com 双层代理
   try {
     const encodedTarget = encodeURIComponent(url)
     const firstLayerUrl = `https://api.allorigins.win/raw?url=${encodedTarget}`
@@ -60,10 +77,10 @@ async function fetchFundInvestmentPositionWithFallback(code: string): Promise<an
     if (!data?.Datas) {
       throw new Error('Proxy2 invalid data structure')
     }
-    console.log('[InvestPosition] 第二层代理(codetabs.com)请求成功')
+    console.log('[InvestPosition] 第三层代理(codetabs.com)请求成功')
     return data
   } catch (proxy2Error) {
-    console.warn('[InvestPosition] 第二层代理也失败', proxy2Error)
+    console.warn('[InvestPosition] 第三层代理也失败', proxy2Error)
     throw new Error('All proxy strategies failed for investment position')
   }
 }
@@ -169,9 +186,10 @@ function saveMNFInfoCache(map: Map<string, any>): void {
 
 /**
  * 通用的多层代理请求函数
- * 策略：1. 直接请求 → 2. fund-helper.ccwu.cc 转发 → 3. allorigins.win → 4. codetabs.com 双层代理 → 5. 返回失败
+ * 策略：1. 直接请求 → 2. fund-helper.ccwu.cc 路径转发 → 3. allorigins.win → 4. codetabs.com 双层代理 → 5. 返回失败
  */
-async function fetchWithProxyFallback(url: string, codes: string = '', timeout: number = 12000): Promise<any> {
+async function fetchWithProxyFallback(url: string, timeout: number = 12000): Promise<any> {
+
   // 策略 1: 直接请求
   try {
     const res = await fetch(url, {
@@ -197,23 +215,21 @@ async function fetchWithProxyFallback(url: string, codes: string = '', timeout: 
     console.warn('[Proxy] 直接请求失败，尝试第一层代理...', directError)
   }
 
-  // 策略 2: fund-helper.ccwu.cc 转发服务
-  if (codes.length > 0) {
-    try {
-      const proxy0Url = `https://fund-helper.ccwu.cc/?Fcodes=${codes}`
-      const res = await fetch(proxy0Url, { signal: AbortSignal.timeout(60000) })
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: fund-helper proxy fetch failed`)
-      }
-      const data = await res.json().catch(() => null)
-      if (!data || !data.Success || data.ErrCode !== 0 || !data.Datas) {
-        throw new Error(`fund-helper proxy API error: Success=${data?.Success}, ErrCode=${data?.ErrCode}`)
-      }
-      console.log('[Proxy] 第一层代理(fund-helper.ccwu.cc)请求成功')
-      return data
-    } catch (proxy0Error) {
-      console.warn('[Proxy] 第一层代理(fund-helper)失败，尝试第二层代理...', proxy0Error)
+  // 策略 2: fund-helper.ccwu.cc 路径转发
+  try {
+    const proxy0Url = url.replace('https://fundmobapi.eastmoney.com', 'https://fund-helper.ccwu.cc')
+    const res = await fetch(proxy0Url, { signal: AbortSignal.timeout(60000) })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: fund-helper proxy fetch failed`)
     }
+    const data = await res.json().catch(() => null)
+    if (!data || !data.Success || data.ErrCode !== 0 || !data.Datas) {
+      throw new Error(`fund-helper proxy API error: Success=${data?.Success}, ErrCode=${data?.ErrCode}`)
+    }
+    console.log('[Proxy] 第一层代理(fund-helper.ccwu.cc)请求成功')
+    return data
+  } catch (proxy0Error) {
+    console.warn('[Proxy] 第一层代理(fund-helper)失败，尝试第二层代理...', proxy0Error)
   }
 
   // 策略 3: allorigins.win 代理
@@ -293,7 +309,7 @@ export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, an
 
   try {
     // 使用通用的多层代理请求函数
-    const data = await fetchWithProxyFallback(url, codes.join(','))
+    const data = await fetchWithProxyFallback(url)
     const resultMap = parseMNFInfoData(data)
 
     // 请求成功，保存到缓存
@@ -328,7 +344,7 @@ async function fetchFundFromMNFInfo(code: string): Promise<any | null> {
 
   try {
     // 使用通用的多层代理请求函数
-    const data = await fetchWithProxyFallback(url, code)
+    const data = await fetchWithProxyFallback(url)
 
     if (!data.Datas?.length) {
       return null
