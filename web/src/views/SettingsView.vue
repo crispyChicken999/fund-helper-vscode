@@ -67,32 +67,42 @@
           </template>
           <ul class="usage-guide-list">
             <li>
-              ➕ 点击首页右上角
+              1. ➕ 点击首页右上角
               <strong>+</strong>
               按钮，可添加新基金，支持按代码或名称搜索，支持批量加减仓
             </li>
             <li>
-              ✏️
+              2. ✏️
               <strong>点击基金名称</strong
-              >，可查看基金详情、编辑持仓成本、份额和进行删除等操作
+              >，可查看基金详情、编辑持仓成本、份额和进行删除等操作，点击
+              <strong>基金代码</strong> 可以直接复制到剪贴板，点击
+              <strong>分组tag</strong> 可以查看该分组筛选下的所有基金
             </li>
             <li>
-              📌<strong>长按分组</strong>，可查看该分组的详情信息（持仓汇总、收益统计等）
-            </li>
-            <li>↕️ 默认排序时，<strong>拖动基金行</strong> 可调整排列顺序</li>
-            <li>
-              🗂️
-              <strong>点击分组设置按钮</strong
-              >，以文件夹形式管理分组、分组下的基金，支持拖拽修改分组
+              3. 📌
+              <strong>长按分组</strong
+              >，可查看该分组的详情信息（持仓汇总、收益统计等）
             </li>
             <li>
-              🔒 开启<strong>隐私模式</strong>后所有数值将被隐藏，适合截图分享
+              4. ↕️ 默认排序时，<strong>拖动基金行</strong> 可调整排列顺序
             </li>
             <li>
-              ☁️ 配置
-              <strong>Box Name</strong
-              >后，可在多设备间（VSCode插件、PC、Mobile）云同步数据，支持扫码同步
+              5. 🗂️ 点击首页
+              <strong>分组设置</strong>
+              按钮，以文件夹形式管理分组、分组下的基金，支持拖拽修改分组
             </li>
+            <li>
+              6. 🔒 开启
+              <strong>隐藏数值</strong>
+              后所有数值将被隐藏，百分比等会显示，适合截图分享（鼠标hover/移动端点击
+              <strong>隐藏的数据</strong> 时，自动展示原始值）
+            </li>
+            <li>
+              7. ☁️ 配置
+              <strong>Box Name</strong>
+              后，可在多设备间（VSCode插件、PC、Mobile）云同步数据，支持扫码同步
+            </li>
+            <li>8. 更多功能敬请探索，设置项均有说明提示，欢迎尝试！🎉</li>
           </ul>
         </el-collapse-item>
 
@@ -105,7 +115,7 @@
             <template #title>
               <span class="collapse-section-title">显示设置</span>
             </template>
-            <el-form-item label="隐私模式">
+            <el-form-item label="隐藏数值">
               <el-switch v-model="privacyMode" />
               <div class="form-item-tip">开启后隐藏所有数值</div>
             </el-form-item>
@@ -220,9 +230,15 @@
                 type="warning"
                 size="small"
                 :closable="false"
-                style="--el-alert-padding: 4px 16px; margin-bottom: 10px"
-                >勾选显示，取消隐藏；拖动 ☰ 或点击箭头调整顺序</el-alert
+                style="
+                  --el-alert-padding: 4px 16px;
+                  margin-bottom: 10px;
+                  text-align: left;
+                "
               >
+                <p>勾选显示，取消隐藏；</p>
+                <p>拖动 ☰ 或点击箭头调整顺序</p>
+              </el-alert>
               <ul ref="columnSortRef" class="column-settings-list">
                 <li
                   v-for="(col, index) in columnOrderDraft"
@@ -484,8 +500,11 @@
               </div>
             </el-form-item>
 
-            <!-- 备用网站：https://crispychicken999.github.io/fund-helper-vscode/ -->
-            <el-form-item label="备用站点" label-width="120px">
+            <!-- 站点切换 -->
+            <el-form-item
+              :label="isBackupSite ? '访问主站' : '备用站点'"
+              label-width="120px"
+            >
               <div
                 style="
                   display: flex;
@@ -499,16 +518,21 @@
                   class="form-item-tip"
                   style="margin: 0px; text-align: justify"
                 >
-                  如果访问本网站速度较慢，可以尝试访问部署在 GitHub Pages
-                  上的备用网站，数据和功能与本网站完全同步。
+                  <template v-if="isBackupSite">
+                    当前访问的是 GitHub Pages 备用站点，更新快但国内访问可能较慢（DNS 易被污染）。主站通过 Netlify 部署，DNS 未被污染、加载速度更快，但手动部署更新稍慢。数据和功能完全同步。
+                  </template>
+                  <template v-else>
+                    如果访问本网站速度较慢，可以尝试访问 GitHub Pages
+                    上的备用站点，更新更快但国内访问可能响应较慢。数据与本网站完全同步。
+                  </template>
                 </div>
                 <el-button
                   type="primary"
                   plain
                   size="small"
-                  @click="openBackupSite"
+                  @click="openOtherSite"
                 >
-                  访问备用网站
+                  {{ isBackupSite ? '访问主站（Netlify）' : '访问备用站点' }}
                 </el-button>
               </div>
             </el-form-item>
@@ -561,6 +585,25 @@
                 >
                   卸载应用
                 </el-button>
+              </div>
+            </el-form-item>
+
+            <!-- 扫码赞赏 -->
+            <el-form-item label="赞赏支持" label-width="120px">
+              <div class="donate-section">
+                <div class="qr-wrapper">
+                  <img
+                    src="/donate.jpg"
+                    alt="微信赞赏码"
+                    class="donate-qr-code"
+                  />
+                  <div class="qr-overlay">
+                    <span class="scan-text">扫码/长按赞赏</span>
+                  </div>
+                </div>
+                <p class="donate-tip">
+                  💫 微信扫一扫，您的支持是我开发的最大动力！ 💫
+                </p>
               </div>
             </el-form-item>
           </el-collapse-item>
@@ -625,7 +668,7 @@ const privacyMode = computed({
   get: () => settingStore.privacyMode,
   set: async (value: boolean) => {
     await settingStore.setPrivacyMode(value);
-    ElMessage.success(`已${value ? "开启" : "关闭"}隐私模式`);
+    ElMessage.success(`已${value ? "开启" : "关闭"}隐藏数值`);
   },
 });
 
@@ -646,7 +689,9 @@ const themeMode = computed({
     document.documentElement.dataset.theme = settingStore.theme;
     updateThemeColor(settingStore.theme);
     ElMessage.success(
-      `已切换到${value === "auto" ? "跟随系统" : value === "light" ? "浅色" : "深色"}主题`,
+      `已切换到${
+        value === "auto" ? "跟随系统" : value === "light" ? "浅色" : "深色"
+      }主题`
     );
   },
 });
@@ -681,7 +726,7 @@ const presetWidths = [320, 375, 425, 768, 1024, 1280, 1440, 1920, 2560];
 
 // 预设宽度滑块位置 // 默认 1024
 const presetWidthSlider = ref(
-  presetWidths.indexOf(1024) >= 0 ? presetWidths.indexOf(1024) : 4,
+  presetWidths.indexOf(1024) >= 0 ? presetWidths.indexOf(1024) : 4
 );
 
 // 自定义宽度
@@ -759,11 +804,11 @@ const formLabelPosition = ref(
     ? settingStore.maxContentWidth <= 375
       ? "top"
       : "right"
-    : "right",
+    : "right"
 );
 
 const jsonboxNameChanged = computed(
-  () => jsonboxName.value !== savedJsonboxName.value,
+  () => jsonboxName.value !== savedJsonboxName.value
 );
 
 const allColumns = [
@@ -783,6 +828,11 @@ const allColumns = [
 
 const isSyncing = computed(() => syncStore.isSyncing);
 
+// 判断当前是否为备用站点（GitHub Pages）
+const isBackupSite = computed(() =>
+  window.location.hostname.includes("github.io")
+);
+
 // ==================== 初始化 ====================
 
 onMounted(async () => {
@@ -795,7 +845,7 @@ onMounted(async () => {
 
   // 应用 DOM 属性
   document.documentElement.dataset.grayscale = String(
-    settingStore.grayscaleMode,
+    settingStore.grayscaleMode
   );
   document.documentElement.dataset.theme = settingStore.theme;
 
@@ -1014,7 +1064,7 @@ function onSyncCompleted() {
 
   // 更新 DOM 属性以应用灰色模式和主题
   document.documentElement.dataset.grayscale = String(
-    settingStore.grayscaleMode,
+    settingStore.grayscaleMode
   );
   document.documentElement.dataset.theme = settingStore.theme;
 
@@ -1049,7 +1099,7 @@ async function onFileSelected(e: Event) {
         distinguishCancelAndClose: true,
         confirmButtonText: "覆盖导入",
         cancelButtonText: "合并导入",
-      },
+      }
     )
       .then(() => "overwrite" as const)
       .catch((action) => {
@@ -1089,7 +1139,7 @@ async function onFileSelected(e: Event) {
       groupStore.initGroupsFromObject(payload.groups, payload.groupOrder || []);
       // Map fund groupKey based on imported groups
       for (const [groupName, codes] of Object.entries(
-        payload.groups as Record<string, string[]>,
+        payload.groups as Record<string, string[]>
       )) {
         const group = groupStore.getGroupList.find((g) => g.name === groupName);
         if (group) {
@@ -1119,7 +1169,7 @@ async function onFileSelected(e: Event) {
     if (payload.grayscaleMode !== undefined) {
       await settingStore.setGrayscaleMode(payload.grayscaleMode);
       document.documentElement.dataset.grayscale = String(
-        payload.grayscaleMode,
+        payload.grayscaleMode
       );
       // grayscaleMode computed 会自动读取新值
     }
@@ -1155,7 +1205,7 @@ async function onFileSelected(e: Event) {
     storageService.saveGroups(exported.groups, exported.groupOrder);
 
     ElMessage.success(
-      `导入完成（${action === "overwrite" ? "覆盖" : "合并"}模式）`,
+      `导入完成（${action === "overwrite" ? "覆盖" : "合并"}模式）`
     );
   } catch (e: any) {
     if (e?.message) ElMessage.error("导入失败: " + e.message);
@@ -1208,7 +1258,9 @@ function handleExportJson() {
   const a = document.createElement("a");
   a.href = url;
   const d = new Date();
-  a.download = `fund-helper-config-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}.json`;
+  a.download = `fund-helper-config-${d.getFullYear()}-${String(
+    d.getMonth() + 1
+  ).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}.json`;
   a.click();
   URL.revokeObjectURL(url);
   ElMessage.success("已导出");
@@ -1221,7 +1273,7 @@ async function handleClearAll() {
     await ElMessageBox.confirm(
       "此操作将清空本地数据，包括基金、分组和设置，且不可恢复。请谨慎操作。",
       "确认清空",
-      { type: "warning" },
+      { type: "warning" }
     );
     fundStore.clearFunds();
     groupStore.clearGroups();
@@ -1238,14 +1290,14 @@ async function handleClearAll() {
 function openRepository() {
   window.open(
     "https://github.com/crispyChicken999/fund-helper-vscode",
-    "_blank",
+    "_blank"
   );
 }
 
 function openVscodeExtension() {
   window.open(
     "https://marketplace.visualstudio.com/items?itemName=CrispyChicken.fund-helper",
-    "_blank",
+    "_blank"
   );
 }
 
@@ -1289,7 +1341,7 @@ function handleShowUninstallGuide() {
       h(
         "p",
         { style: "font-weight: bold; margin-bottom: 12px" },
-        "iOS 卸载方法：",
+        "iOS 卸载方法："
       ),
       h("ol", { style: "margin: 0; padding-left: 20px" }, [
         h("li", { style: "margin-bottom: 8px" }, [
@@ -1314,9 +1366,9 @@ function handleShowUninstallGuide() {
         [
           h(
             "span",
-            "💡 提示：也可以前往 Settings > General > iPhone Storage 找到应用并卸载",
+            "💡 提示：也可以前往 Settings > General > iPhone Storage 找到应用并卸载"
           ),
-        ],
+        ]
       ),
     ]);
   } else if (isAndroid) {
@@ -1324,7 +1376,7 @@ function handleShowUninstallGuide() {
       h(
         "p",
         { style: "font-weight: bold; margin-bottom: 12px" },
-        "Android 卸载方法：",
+        "Android 卸载方法："
       ),
       h("ol", { style: "margin: 0; padding-left: 20px" }, [
         h("li", { style: "margin-bottom: 8px" }, [
@@ -1344,12 +1396,7 @@ function handleShowUninstallGuide() {
           style:
             "margin-top: 16px; color: var(--el-text-color-secondary); font-size: 12px",
         },
-        [
-          h(
-            "span",
-            "💡 提示：也可以在 Settings > Apps > Installed Apps 中卸载",
-          ),
-        ],
+        [h("span", "💡 提示：也可以在 Settings > Apps > Installed Apps 中卸载")]
       ),
     ]);
   } else if (isChrome) {
@@ -1357,13 +1404,13 @@ function handleShowUninstallGuide() {
       h(
         "p",
         { style: "font-weight: bold; margin-bottom: 12px" },
-        "Chrome 浏览器卸载方法：",
+        "Chrome 浏览器卸载方法："
       ),
       h("div", { style: "margin-bottom: 16px" }, [
         h(
           "p",
           { style: "font-weight: 500; margin-bottom: 8px" },
-          "方法一（推荐）：",
+          "方法一（推荐）："
         ),
         h("ol", { style: "margin: 0; padding-left: 20px" }, [
           h("li", [
@@ -1374,7 +1421,7 @@ function handleShowUninstallGuide() {
                 style:
                   "background: #f5f7fa; padding: 2px 6px; border-radius: 3px; color: #409EFF; font-family: monospace; user-select: all;",
               },
-              "chrome://apps",
+              "chrome://apps"
             ),
             h("span", " 并回车"),
           ]),
@@ -1396,13 +1443,13 @@ function handleShowUninstallGuide() {
       h(
         "p",
         { style: "font-weight: bold; margin-bottom: 12px" },
-        "Edge 浏览器卸载方法：",
+        "Edge 浏览器卸载方法："
       ),
       h("div", { style: "margin-bottom: 16px" }, [
         h(
           "p",
           { style: "font-weight: 500; margin-bottom: 8px" },
-          "方法一（推荐）：",
+          "方法一（推荐）："
         ),
         h("ol", { style: "margin: 0; padding-left: 20px" }, [
           h("li", [
@@ -1413,7 +1460,7 @@ function handleShowUninstallGuide() {
                 style:
                   "background: #f5f7fa; padding: 2px 6px; border-radius: 3px; color: #409EFF; font-family: monospace; user-select: all;",
               },
-              "edge://apps",
+              "edge://apps"
             ),
             h("span", " 并回车"),
           ]),
@@ -1435,7 +1482,7 @@ function handleShowUninstallGuide() {
       h(
         "p",
         { style: "font-weight: bold; margin-bottom: 12px" },
-        "通用卸载方法：",
+        "通用卸载方法："
       ),
       h("ol", { style: "margin: 0; padding-left: 20px" }, [
         h("li", { style: "margin-bottom: 8px" }, [
@@ -1455,7 +1502,7 @@ function handleShowUninstallGuide() {
           style:
             "margin-top: 16px; color: var(--el-text-color-secondary); font-size: 12px",
         },
-        [h("span", "💡 提示：具体步骤可能因浏览器版本而异")],
+        [h("span", "💡 提示：具体步骤可能因浏览器版本而异")]
       ),
     ]);
   }
@@ -1467,8 +1514,15 @@ function handleShowUninstallGuide() {
   });
 }
 
-function openBackupSite() {
-  window.open("https://crispychicken999.github.io/fund-helper-vscode/", "_blank");
+function openOtherSite() {
+  if (isBackupSite.value) {
+    window.open("https://fund-helper.netlify.app/", "_blank");
+  } else {
+    window.open(
+      "https://crispychicken999.github.io/fund-helper-vscode/",
+      "_blank"
+    );
+  }
 }
 </script>
 
@@ -1667,5 +1721,72 @@ function openBackupSite() {
   font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
+}
+
+/* 赞赏区域 */
+@keyframes donatePulse {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.05);
+  }
+}
+
+.donate-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.qr-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 14px;
+}
+
+.donate-qr-code {
+  display: block;
+  width: 180px;
+  height: 180px;
+  border-radius: 12px;
+  border: 3px solid #ffa500;
+  box-shadow: 0 8px 24px rgba(255, 165, 0, 0.3);
+  transition: transform 0.3s;
+}
+
+.donate-qr-code:hover {
+  transform: scale(1.05);
+}
+
+.qr-overlay {
+  position: absolute;
+  bottom: -16px;
+  left: 80%;
+  transform: translateX(-50%);
+  background: #ff6b6b;
+  color: white;
+  padding: 0px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  animation: donatePulse 2s infinite;
+  white-space: nowrap;
+}
+
+.scan-text {
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.donate-tip {
+  margin: 0;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  text-align: center;
 }
 </style>

@@ -83,7 +83,8 @@ export function formatRelativeTime(timestamp: number): string {
  * @returns 隐私模式下返回 "****"，否则返回原值
  */
 export function formatPrivacy(value: string, privacyMode: boolean): string {
-  return privacyMode ? '****' : value
+  if (!privacyMode) return value
+  return `<span class="privacy-value"><span class="privacy-hidden">****</span><span class="privacy-real">${value}</span></span>`
 }
 
 /**

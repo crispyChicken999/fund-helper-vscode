@@ -12,7 +12,13 @@
         <header class="tooltip-head">
           <div>
             <div class="tooltip-title">{{ row.name }}</div>
-            <div class="tooltip-code">{{ row.code }}</div>
+            <div
+              class="tooltip-code"
+              title="点击复制基金代码"
+              @click="handleCodeCopy(row.code)"
+            >
+              {{ row.code }}
+            </div>
           </div>
           <div class="head-actions">
             <button class="action-btn" @click="handleCopy" title="复制">
@@ -387,6 +393,17 @@ function estClass(v: unknown) {
   return pctClass(v);
 }
 
+function handleCodeCopy(code: string) {
+  navigator.clipboard
+    .writeText(code)
+    .then(() => {
+      ElMessage.success("基金代码已复制到剪贴板");
+    })
+    .catch(() => {
+      ElMessage.error("复制失败，请手动复制基金代码");
+    });
+}
+
 function handleCopy() {
   const r = props.row;
   if (!r) return;
@@ -496,6 +513,12 @@ function handleCopy() {
   font-size: 11px;
   color: var(--el-text-color-secondary);
   margin-top: 2px;
+}
+
+.tooltip-code:hover {
+  color: var(--el-text-color-primary);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .tooltip-body {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <MainLayout>
     <template #header>
       <!-- 顶部资产展示区 -->
@@ -117,25 +117,29 @@
             </div>
           </div>
           <div class="stat-content">
-            <div class="stat-value-large">{{ formatAsset(totalAsset) }}</div>
+            <div
+              class="stat-value-large"
+              v-html="formatAsset(totalAsset)"
+            ></div>
             <div class="stat-item-wrapper">
               <div class="stat-item">
                 <div class="stat-label">持有收益</div>
                 <div
                   class="stat-value"
                   :class="getValueClass(totalHoldingGain)"
-                >
-                  {{ formatAsset(totalHoldingGain) }}
-                </div>
+                  v-html="formatAsset(totalHoldingGain)"
+                ></div>
                 <div class="stat-rate" :class="getValueClass(holdingGainRate)">
                   {{ formatPercent(holdingGainRate) }}
                 </div>
               </div>
               <div class="stat-item">
                 <div class="stat-label">日收益</div>
-                <div class="stat-value" :class="getValueClass(totalDailyGain)">
-                  {{ formatAsset(totalDailyGain) }}
-                </div>
+                <div
+                  class="stat-value"
+                  :class="getValueClass(totalDailyGain)"
+                  v-html="formatAsset(totalDailyGain)"
+                ></div>
                 <div class="stat-rate" :class="getValueClass(dailyGainRate)">
                   {{ formatPercent(dailyGainRate) }}
                 </div>
@@ -300,7 +304,12 @@
                       title="拖拽排序"
                       >⠿</span
                     >
-                    <span class="fund-code">{{ row.code }}</span>
+                    <span
+                      class="fund-code"
+                      @click.stop="handleCodeCopy(row.code)"
+                      title="点击复制基金代码"
+                      >{{ row.code }}</span
+                    >
                   </div>
                   <span
                     v-if="showGroupTag && row.groupName"
@@ -340,9 +349,10 @@
               </template>
               <template v-else-if="col.key === 'estimatedGain'">
                 <div class="cell-stack">
-                  <div :class="estGainClass(row, row.estimatedGain)">
-                    {{ fmtVal(row.estimatedGain, row.shouldShowEstimated) }}
-                  </div>
+                  <div
+                    :class="estGainClass(row, row.estimatedGain)"
+                    v-html="fmtVal(row.estimatedGain, row.shouldShowEstimated)"
+                  ></div>
                   <div class="td-sub" :class="pctClass(row.gszzl)">
                     {{ fmtPctRow(row.gszzl, row.shouldShowEstimated) }}
                   </div>
@@ -358,17 +368,19 @@
               </template>
               <template v-else-if="col.key === 'dailyGain'">
                 <div class="cell-stack">
-                  <div :class="moneyClass(row.dailyGain)">
-                    {{ formatValue(row.dailyGain) }}
-                  </div>
+                  <div
+                    :class="moneyClass(row.dailyGain)"
+                    v-html="formatValue(row.dailyGain)"
+                  ></div>
                   <div class="td-sub muted">{{ row.navDateLabel }}</div>
                 </div>
               </template>
               <template v-else-if="col.key === 'holdingGain'">
                 <div class="cell-stack">
-                  <div :class="moneyClass(row.holdingGain)">
-                    {{ formatValue(row.holdingGain) }}
-                  </div>
+                  <div
+                    :class="moneyClass(row.holdingGain)"
+                    v-html="formatValue(row.holdingGain)"
+                  ></div>
                   <div class="td-sub" :class="pctClass(row.holdingGainRate)">
                     {{ formatPercent(row.holdingGainRate) }}
                   </div>
@@ -379,9 +391,11 @@
                   <div :class="pctClass(row.holdingGainRate)">
                     {{ formatPercent(row.holdingGainRate) }}
                   </div>
-                  <div class="td-sub" :class="moneyClass(row.holdingGain)">
-                    {{ formatValue(row.holdingGain) }}
-                  </div>
+                  <div
+                    class="td-sub"
+                    :class="moneyClass(row.holdingGain)"
+                    v-html="formatValue(row.holdingGain)"
+                  ></div>
                 </div>
               </template>
               <template v-else-if="col.key === 'sector'">
@@ -389,7 +403,7 @@
               </template>
               <template v-else-if="col.key === 'amountShares'">
                 <div class="cell-stack">
-                  <div>{{ formatValue(row.holdingAmount) }}</div>
+                  <div v-html="formatValue(row.holdingAmount)"></div>
                   <div class="td-sub muted">
                     {{
                       formatPercent(getPositionRatio(row.holdingAmount), false)
@@ -401,7 +415,7 @@
                 <div class="cell-stack">
                   <div>{{ formatNumber(row.fund.cost, 4) }}</div>
                   <div class="td-sub muted">
-                    {{ formatShares(row.fund.num) }} 份
+                    <span v-html="formatShares(row.fund.num)"></span> 份
                   </div>
                 </div>
               </template>
@@ -861,15 +875,15 @@
             <div class="preview-row">
               <span class="preview-label">新增份额</span>
               <span class="positive"
-                >+{{ (positionAmount / selectedNavValue).toFixed(2) }}
-                份</span
+                >+{{ (positionAmount / selectedNavValue).toFixed(2) }} 份</span
               >
             </div>
             <div class="preview-divider"></div>
             <div class="preview-row">
               <span class="preview-label">持有份额</span>
               <span>
-                {{ positionRow.fund.num.toFixed(2) }}<span class="arrow"> → </span>
+                {{ positionRow.fund.num.toFixed(2)
+                }}<span class="arrow"> → </span>
                 <strong
                   >{{
                     (
@@ -884,7 +898,8 @@
             <div class="preview-row">
               <span class="preview-label">成本价</span>
               <span>
-                {{ positionRow.fund.cost.toFixed(4) }}<span class="arrow"> → </span>
+                {{ positionRow.fund.cost.toFixed(4)
+                }}<span class="arrow"> → </span>
                 <strong>{{ calcNewCost.toFixed(4) }}</strong>
               </span>
             </div>
@@ -897,8 +912,7 @@
                   >{{
                     (
                       calcNewCost *
-                      (positionRow.fund.num +
-                        positionAmount / selectedNavValue)
+                      (positionRow.fund.num + positionAmount / selectedNavValue)
                     ).toFixed(2)
                   }}
                   元</strong
@@ -925,21 +939,19 @@
             <div class="preview-row">
               <span class="preview-label">卖出金额</span>
               <span class="negative"
-                >-{{ (positionShares * selectedNavValue).toFixed(2) }}
-                元</span
+                >-{{ (positionShares * selectedNavValue).toFixed(2) }} 元</span
               >
             </div>
             <div class="preview-row">
               <span class="preview-label">卖出份额</span>
-              <span class="negative"
-                >-{{ positionShares.toFixed(2) }} 份</span
-              >
+              <span class="negative">-{{ positionShares.toFixed(2) }} 份</span>
             </div>
             <div class="preview-divider"></div>
             <div class="preview-row">
               <span class="preview-label">持有份额</span>
               <span>
-                {{ positionRow.fund.num.toFixed(2) }}<span class="arrow"> → </span>
+                {{ positionRow.fund.num.toFixed(2)
+                }}<span class="arrow"> → </span>
                 <strong
                   >{{
                     (positionRow.fund.num - positionShares).toFixed(2)
@@ -950,7 +962,10 @@
             </div>
             <div class="preview-row">
               <span class="preview-label">成本价</span>
-              <span>{{ positionRow.fund.cost.toFixed(4) }}<span class="note-muted">（不变）</span></span>
+              <span
+                >{{ positionRow.fund.cost.toFixed(4)
+                }}<span class="note-muted">（不变）</span></span
+              >
             </div>
             <div class="preview-row">
               <span class="preview-label">持仓总额</span>
@@ -1447,7 +1462,7 @@ function formatValue(value: number | undefined) {
 function formatPercent(value: number | undefined, prefix: boolean = true) {
   if (value === undefined) return "-";
   const formatted = `${prefix ? (value > 0 ? "+" : "") : ""}${value.toFixed(2)}%`;
-  return formatPrivacy(formatted, settingStore.privacyMode);
+  return formatted;
 }
 
 function formatShares(n: number) {
@@ -1603,6 +1618,17 @@ function scrollGroupTagIntoView(key: string) {
     container.scrollLeft -
     (containerRect.width - tagRect.width) / 2;
   container.scrollTo({ left: offset, behavior: "smooth" });
+}
+
+function handleCodeCopy(code: string) {
+  navigator.clipboard
+    .writeText(code)
+    .then(() => {
+      ElMessage.success("基金代码已复制到剪贴板");
+    })
+    .catch(() => {
+      ElMessage.error("复制失败，请手动复制基金代码");
+    });
 }
 
 // group-label 点击：跳转到对应分组筛选
@@ -2753,6 +2779,29 @@ onUnmounted(() => {
   overflow: hidden !important;
 }
 
+/* 隐私模式：hover 淡入淡出切换真实值 */
+:deep(.privacy-value) {
+  display: inline-grid;
+}
+:deep(.privacy-value .privacy-hidden),
+:deep(.privacy-value .privacy-real) {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+  transition: opacity 0.1s ease;
+}
+:deep(.privacy-value .privacy-hidden) {
+  opacity: 1;
+}
+:deep(.privacy-value .privacy-real) {
+  opacity: 0;
+}
+:deep(.privacy-value:hover .privacy-hidden) {
+  opacity: 0;
+}
+:deep(.privacy-value:hover .privacy-real) {
+  opacity: 1;
+}
+
 .account-summary {
   padding: 12px 16px;
   background: var(--bg-card);
@@ -2983,6 +3032,12 @@ html.dark .group-tag-item.active {
 .fund-code {
   font-size: 11px;
   color: var(--el-text-color-secondary);
+}
+
+.fund-code:hover {
+  color: var(--el-text-color-primary);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .fund-name {
@@ -3303,7 +3358,11 @@ html.dark .group-label {
 
 .calc-preview {
   position: relative;
-  background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-bg-color));
+  background: linear-gradient(
+    135deg,
+    var(--el-color-primary-light-9),
+    var(--el-bg-color)
+  );
   border: 1px solid var(--el-color-primary-light-7);
   border-radius: 8px;
   padding: 12px;
@@ -3359,7 +3418,11 @@ html.dark .group-label {
 
 .preview-divider {
   height: 1px;
-  background: linear-gradient(to right, var(--el-color-primary-light-7), transparent);
+  background: linear-gradient(
+    to right,
+    var(--el-color-primary-light-7),
+    transparent
+  );
   margin: 3px 0;
   opacity: 0.5;
 }
