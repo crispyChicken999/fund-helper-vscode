@@ -4,6 +4,7 @@
 
 import type { Fund, FundInfo } from '@/types'
 import { fetchFundgzRawViaJsonp } from '@/api/fundgz'
+import { loadPush2JSONP } from '@/utils/jsonp'
 
 /**
  * 通用的持仓信息请求函数（带代理降级）
@@ -58,19 +59,8 @@ async function fetchFundInvestmentPosition(code: string): Promise<any> {
 async function fetchStockRealTimeData(secids: string): Promise<any[]> {
   const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fields=f1,f2,f3,f4,f12,f13,f14&fltt=2&secids=${secids}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
   try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
-    try {
-      const res = await fetch(url, { signal: controller.signal })
-      clearTimeout(timeoutId)
-      if (!res.ok) return []
-      const data = await res.json().catch(() => null)
-      return data?.data?.diff ?? []
-    } catch (err) {
-      clearTimeout(timeoutId)
-      // Ignore abort and fetch errors
-      return []
-    }
+    const data = await loadPush2JSONP<any>(url)
+    return data?.data?.diff ?? []
   } catch {
     return []
   }

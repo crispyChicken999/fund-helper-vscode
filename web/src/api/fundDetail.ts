@@ -10,7 +10,7 @@
  * - 累计收益：fetch → dataapi.1234567.com.cn（无 CORS）
  */
 
-import { loadJSONP, fetchJSON } from '@/utils/jsonp'
+import { loadJSONP, fetchJSON, loadPush2JSONP } from '@/utils/jsonp'
 
 // ==================== 类型定义 ====================
 
@@ -453,17 +453,14 @@ export async function fetchInvestmentPosition(code: string): Promise<PositionDat
       const secids = stocks.map(s => `${s.newTexch}.${s.code}`).join(',')
       const quoteUrl = `https://push2.eastmoney.com/api/qt/ulist.np/get?fields=f2,f3&fltt=2&secids=${secids}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
       try {
-        const quoteRes = await fetch(quoteUrl, { signal: AbortSignal.timeout(8000) }).catch(() => null)
-        if (quoteRes?.ok) {
-          const quoteData = await quoteRes.json().catch(() => null)
-          const diff: any[] = quoteData?.data?.diff ?? []
-          diff.forEach((q: any, i: number) => {
-            if (stocks[i]) {
-              stocks[i]!.price = typeof q.f2 === 'number' ? q.f2 : null
-              stocks[i]!.changePercent = typeof q.f3 === 'number' ? q.f3 : null
-            }
-          })
-        }
+        const quoteData = await loadPush2JSONP<any>(quoteUrl)
+        const diff: any[] = quoteData?.data?.diff ?? []
+        diff.forEach((q: any, i: number) => {
+          if (stocks[i]) {
+            stocks[i]!.price = typeof q.f2 === 'number' ? q.f2 : null
+            stocks[i]!.changePercent = typeof q.f3 === 'number' ? q.f3 : null
+          }
+        })
       } catch { /* 行情失败不影响持仓展示 */ }
     }
 

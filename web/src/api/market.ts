@@ -2,7 +2,7 @@
  * 行情中心 API — 全面使用 JSONP / 直接 fetch（无代理）
  */
 
-import { fetchJSON } from '@/utils/jsonp'
+import { fetchJSON, loadPush2JSONP } from '@/utils/jsonp'
 
 // ==================== 类型定义 ====================
 
@@ -43,7 +43,7 @@ export async function fetchIndexCards(secids?: string): Promise<IndexCardData[]>
   const targetSecids = secids || INDEX_SECIDS
   const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f13,f14&secids=${targetSecids}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
   try {
-    const data = await fetchJSON<any>(url)
+    const data = await loadPush2JSONP<any>(url)
     if (!data) return []
     const items: IndexCardData[] = (data?.data?.diff ?? []).map((d: any) => ({
       code: `${d.f13}.${d.f12}`,
@@ -63,7 +63,7 @@ export async function fetchIndexCards(secids?: string): Promise<IndexCardData[]>
 export async function fetchMarketStat(): Promise<MarketStatData | null> {
   const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&secids=1.000001,0.399001&fields=f1,f2,f3,f4,f6,f12,f13,f104,f105,f106&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
   try {
-    const data = await fetchJSON<any>(url)
+    const data = await loadPush2JSONP<any>(url)
     if (!data) return null
     const diff = data?.data?.diff ?? []
     if (diff.length < 2) return null
@@ -85,7 +85,7 @@ export async function fetchMarketStat(): Promise<MarketStatData | null> {
 export async function fetchFlowLine(): Promise<FlowLinePoint[]> {
   const url = `https://push2.eastmoney.com/api/qt/stock/fflow/kline/get?lmt=0&klt=1&secid=1.000001&secid2=0.399001&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63&_=${Date.now()}`
   try {
-    const data = await fetchJSON<any>(url)
+    const data = await loadPush2JSONP<any>(url)
     if (!data) return []
     const klines: string[] = data?.data?.klines ?? []
     return klines.map(line => {

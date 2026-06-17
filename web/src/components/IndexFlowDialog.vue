@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue";
 import { loadEcharts } from "@/utils/echarts";
-import { fetchJSON } from "@/utils/jsonp";
+import { loadPush2JSONP } from "@/utils/jsonp";
 import { useSettingStore } from "@/stores";
 
 const props = defineProps<{
@@ -65,7 +65,7 @@ async function getData() {
   const url = `https://push2.eastmoney.com/api/qt/stock/trends2/get?secid=${props.indexCode}&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f53,f56,f58&iscr=0&iscca=0&ndays=1&forcect=1&_=${Date.now()}`;
 
   try {
-    const res = await fetchJSON<any>(url);
+    const res = await loadPush2JSONP<any>(url);
     if (!res || !res.data) return;
 
     DWJZ = res.data.prePrice;
