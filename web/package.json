@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "build:gh": "vue-tsc -b && vite build --mode github",
-    "preview": "vite preview"
+    "preview": "pnpm run build && wrangler dev",
+    "deploy": "pnpm run build && wrangler deploy"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
@@ -24,6 +25,7 @@
     "workbox-window": "^7.4.1"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.41.0",
     "@netlify/functions": "^5.2.0",
     "@types/node": "^24.12.2",
     "@types/qrcode": "^1.5.6",
@@ -36,6 +38,7 @@
     "vue-tsc": "^3.2.7",
     "workbox-precaching": "^7.4.1",
     "workbox-routing": "^7.4.1",
-    "workbox-strategies": "^7.4.1"
+    "workbox-strategies": "^7.4.1",
+    "wrangler": "^4.101.0"
   }
 }
