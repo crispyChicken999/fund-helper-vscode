@@ -71,16 +71,22 @@ function loadFundgzJsonp(code: string): Promise<FundgzRawData> {
     const script = document.createElement('script')
     const url = `${FUNDGZ_API_BASE}/${code}.js?rt=${Date.now()}`
 
+    let settled = false
+
     const pendingRequest: PendingFundgzRequest = {
       resolve: (data) => {
+        settled = true
         resolve(data)
       },
       script,
       timeoutId: window.setTimeout(() => {
-        removePendingFundgzRequest(code, pendingRequest)
-        script.remove()
-        reject(new Error('Timeout'))
-      }, 5000)
+        if (!settled) {
+          settled = true
+          removePendingFundgzRequest(code, pendingRequest)
+          script.remove()
+          reject(new Error('JSONP_NET_ERROR'))
+        }
+      }, 8000)
     }
 
     const pendingQueue = pendingFundgzRequests.get(code) ?? []
@@ -90,11 +96,27 @@ function loadFundgzJsonp(code: string): Promise<FundgzRawData> {
     script.async = true
     script.src = url
     script.referrerPolicy = 'no-referrer'
+
+    // HTTP 200：脚本加载成功，jsonpgz 回调已同步执行
+    // 如果回调因 fundcode 为空而提前返回，这里兜底 resolve 空对象
+    script.onload = () => {
+      setTimeout(() => {
+        if (!settled) {
+          settled = true
+          window.clearTimeout(pendingRequest.timeoutId)
+          removePendingFundgzRequest(code, pendingRequest)
+          script.remove()
+          resolve({} as FundgzRawData)
+        }
+      }, 200)
+    }
+
+    // HTTP 514 / 网络错误
     script.onerror = () => {
       window.clearTimeout(pendingRequest.timeoutId)
       removePendingFundgzRequest(code, pendingRequest)
       script.remove()
-      reject(new Error('JSONP failed'))
+      reject(new Error('JSONP_NET_ERROR'))
     }
 
     document.head.appendChild(script)
@@ -115,7 +137,9 @@ export interface FundgzRawData {
 }
 
 /**
- * 通过 JSONP 拉取 fundgz 原始对象（空响应/超时返回 null，供与 MNFInfo 合并）
+ * 通过 JSONP 拉取 fundgz 原始对象
+ * - 返回 null：接口 200 但返回空数据 jsonp({})，调用方应降级到 MNFInfo
+ * - throw 异常：接口 514 / 网络错误，调用方应沿用上次缓存结果
  */
 export async function fetchFundgzRawViaJsonp(code: string): Promise<FundgzRawData | null> {
   try {
@@ -123,7 +147,7 @@ export async function fetchFundgzRawViaJsonp(code: string): Promise<FundgzRawDat
     if (!data?.fundcode) return null
     return data
   } catch {
-    return null
+    throw new Error('JSONP_NET_ERROR: 514或网络错误')
   }
 }
 

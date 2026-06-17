@@ -7,7 +7,7 @@ import { fetchFundgzRawViaJsonp } from '@/api/fundgz'
 
 /**
  * 通用的持仓信息请求函数（带代理降级）
- * 策略：1. 直接请求 → 2. fund-helper.ccwu.cc 转发 → 3. allorigins.win → 4. codetabs.com 双层代理
+ * 策略：1. 直接请求 → 2. api.fund-helper.ccwu.cc 转发 → 3. allorigins.win → 4. codetabs.com 双层代理
  */
 async function fetchFundInvestmentPositionWithFallback(code: string): Promise<any> {
   const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE=${code}&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${Date.now()}`
@@ -28,9 +28,9 @@ async function fetchFundInvestmentPositionWithFallback(code: string): Promise<an
     console.warn('[InvestPosition] 直接请求失败，尝试第一层代理...', directError)
   }
 
-  // 策略 2: fund-helper.ccwu.cc 路径转发
+  // 策略 2: api.fund-helper.ccwu.cc 路径转发
   try {
-    const proxy0Url = url.replace('https://fundmobapi.eastmoney.com', 'https://fund-helper.ccwu.cc')
+    const proxy0Url = url.replace('https://fundmobapi.eastmoney.com', 'https://api.fund-helper.ccwu.cc')
     const res = await fetch(proxy0Url, { signal: AbortSignal.timeout(60000) })
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}: fund-helper proxy fetch failed`)
@@ -39,49 +39,10 @@ async function fetchFundInvestmentPositionWithFallback(code: string): Promise<an
     if (!data?.Datas) {
       throw new Error('fund-helper proxy invalid data structure')
     }
-    console.log('[InvestPosition] 第一层代理(fund-helper.ccwu.cc)请求成功')
+    console.log('[InvestPosition] 第一层代理(api.fund-helper.ccwu.cc)请求成功')
     return data
   } catch (proxy0Error) {
     console.warn('[InvestPosition] 第一层代理(fund-helper)失败，尝试第二层代理...', proxy0Error)
-  }
-
-  // 策略 3: allorigins.win 代理
-  try {
-    const proxy1Url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-    const res = await fetch(proxy1Url, { signal: AbortSignal.timeout(60000) })
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: Proxy1 fetch failed`)
-    }
-    const data = await res.json().catch(() => null)
-    if (!data?.Datas) {
-      throw new Error('Proxy1 invalid data structure')
-    }
-    console.log('[InvestPosition] 第二层代理(allorigins.win)请求成功')
-    return data
-  } catch (proxy1Error) {
-    console.warn('[InvestPosition] 第二层代理失败，尝试第三层代理...', proxy1Error)
-  }
-
-  // 策略 4: codetabs.com 双层代理
-  try {
-    const encodedTarget = encodeURIComponent(url)
-    const firstLayerUrl = `https://api.allorigins.win/raw?url=${encodedTarget}`
-    const encodedFirstLayer = encodeURIComponent(firstLayerUrl)
-    const proxy2Url = `https://api.codetabs.com/v1/proxy/?quest=${encodedFirstLayer}`
-
-    const res = await fetch(proxy2Url, { signal: AbortSignal.timeout(60000) })
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: Proxy2 fetch failed`)
-    }
-    const data = await res.json().catch(() => null)
-    if (!data?.Datas) {
-      throw new Error('Proxy2 invalid data structure')
-    }
-    console.log('[InvestPosition] 第三层代理(codetabs.com)请求成功')
-    return data
-  } catch (proxy2Error) {
-    console.warn('[InvestPosition] 第三层代理也失败', proxy2Error)
-    throw new Error('All proxy strategies failed for investment position')
   }
 }
 
@@ -186,7 +147,7 @@ function saveMNFInfoCache(map: Map<string, any>): void {
 
 /**
  * 通用的多层代理请求函数
- * 策略：1. 直接请求 → 2. fund-helper.ccwu.cc 路径转发 → 3. allorigins.win → 4. codetabs.com 双层代理 → 5. 返回失败
+ * 策略：1. 直接请求 → 2. api.fund-helper.ccwu.cc 路径转发 → 3. allorigins.win → 4. codetabs.com 双层代理 → 5. 返回失败
  */
 async function fetchWithProxyFallback(url: string, timeout: number = 12000): Promise<any> {
 
@@ -215,9 +176,9 @@ async function fetchWithProxyFallback(url: string, timeout: number = 12000): Pro
     console.warn('[Proxy] 直接请求失败，尝试第一层代理...', directError)
   }
 
-  // 策略 2: fund-helper.ccwu.cc 路径转发
+  // 策略 2: api.fund-helper.ccwu.cc 路径转发
   try {
-    const proxy0Url = url.replace('https://fundmobapi.eastmoney.com', 'https://fund-helper.ccwu.cc')
+    const proxy0Url = url.replace('https://fundmobapi.eastmoney.com', 'https://api.fund-helper.ccwu.cc')
     const res = await fetch(proxy0Url, { signal: AbortSignal.timeout(60000) })
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}: fund-helper proxy fetch failed`)
@@ -226,54 +187,10 @@ async function fetchWithProxyFallback(url: string, timeout: number = 12000): Pro
     if (!data || !data.Success || data.ErrCode !== 0 || !data.Datas) {
       throw new Error(`fund-helper proxy API error: Success=${data?.Success}, ErrCode=${data?.ErrCode}`)
     }
-    console.log('[Proxy] 第一层代理(fund-helper.ccwu.cc)请求成功')
+    console.log('[Proxy] 第一层代理(api.fund-helper.ccwu.cc)请求成功')
     return data
   } catch (proxy0Error) {
     console.warn('[Proxy] 第一层代理(fund-helper)失败，尝试第二层代理...', proxy0Error)
-  }
-
-  // 策略 3: allorigins.win 代理
-  try {
-    // const proxy1Url = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url.replace('fundmobapi.eastmoney.com', atob('ZnVuZC5yYWJ0LnRvcA==')))}`
-    // const proxy1Url = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
-    const proxy1Url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-    const res = await fetch(proxy1Url, { signal: AbortSignal.timeout(60000) })
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: Proxy1 fetch failed`)
-    }
-    const data = await res.json().catch(() => null)
-    if (!data || !data.Success || data.ErrCode !== 0 || !data.Datas) {
-      throw new Error(`Proxy1 API error: Success=${data?.Success}, ErrCode=${data?.ErrCode}`)
-    }
-    console.log('[Proxy] 第二层代理(allorigins.win)请求成功')
-    return data
-  } catch (proxy1Error) {
-    console.warn('[Proxy] 第二层代理失败，尝试第三层代理...', proxy1Error)
-  }
-
-  // 策略 4: codetabs.com 双层代理
-  try {
-    // 第一步：编码目标API（用于第一层代理）
-    const encodedTarget = encodeURIComponent(url)
-    const firstLayerUrl = `https://api.allorigins.win/raw?url=${encodedTarget}`
-
-    // 第二步：编码第一层URL（用于第二层代理）
-    const encodedFirstLayer = encodeURIComponent(firstLayerUrl)
-    const proxy2Url = `https://api.codetabs.com/v1/proxy/?quest=${encodedFirstLayer}`
-
-    const res = await fetch(proxy2Url, { signal: AbortSignal.timeout(60000) })
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: Proxy2 fetch failed`)
-    }
-    const data = await res.json().catch(() => null)
-    if (!data || !data.Success || data.ErrCode !== 0 || !data.Datas) {
-      throw new Error(`Proxy2 API error: Success=${data?.Success}, ErrCode=${data?.ErrCode}`)
-    }
-    console.log('[Proxy] 第三层代理(codetabs.com)请求成功')
-    return data
-  } catch (proxy2Error) {
-    console.warn('[Proxy] 第三层代理也失败', proxy2Error)
-    throw new Error('All proxy strategies failed')
   }
 }
 
@@ -373,9 +290,15 @@ async function fetchFundFromMNFInfo(code: string): Promise<any | null> {
 
 /** fundgz 必须用 JSONP（浏览器直连常有跨域限制） */
 export async function fetchSingleFundValuation(code: string): Promise<any | null> {
-  const raw = await fetchFundgzRawViaJsonp(code)
-  if (!raw) return await fetchFundFromMNFInfo(code)
-  return raw
+  try {
+    const raw = await fetchFundgzRawViaJsonp(code)
+    // raw === null：接口 200 但返回空数据 jsonp({})，降级到 MNFInfo 进行估值推算
+    if (!raw) return await fetchFundFromMNFInfo(code)
+    return raw
+  } catch {
+    // 接口 514（频率限制）/ 网络错误：直接返回 null，沿用上次缓存结果
+    return null
+  }
 }
 
 function toFundInfoFromMerge(

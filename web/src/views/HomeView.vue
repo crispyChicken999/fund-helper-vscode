@@ -1809,6 +1809,8 @@ async function confirmDeleteFund(fund: FundView) {
       `确定要删除基金 ${fund.name || fund.code} 吗？`,
       "确认删除",
       {
+        confirmButtonText: "确认",
+        cancelButtonText: "取消",
         type: "warning",
       },
     );

@@ -104,7 +104,7 @@ export async function fetchFlowLine(): Promise<FlowLinePoint[]> {
   }
 }
 
-// ==================== 板块资金流向（直接 fetch，如失败则走 Vite proxy） ====================
+// ==================== 板块资金流向 ====================
 
 export type PlateRankField = 'f62' | 'f164' | 'f174'
 
@@ -124,7 +124,7 @@ export async function fetchPlateData(
   rankField: PlateRankField = 'f62'
 ): Promise<PlateItem[]> {
   const code = getPlateCode(plateTab)
-  const targetUrl = 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(`https://data.eastmoney.com/dataapi/bkzj/getbkzj?key=${rankField}&code=${code}`)
+  const targetUrl = `https://api.fund-helper.ccwu.cc/dataapi/bkzj/getbkzj?key=${rankField}&code=${code}`
 
   try {
     const res = await fetchJSON(targetUrl)

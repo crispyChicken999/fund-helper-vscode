@@ -47,7 +47,7 @@ export function loadJSONP<T = any>(url: string, timeout = 15000): Promise<T> {
 /**
  * 普通 JSON fetch（用于不需要 JSONP 且无 CORS 限制的接口）
  */
-export async function fetchJSON<T = any>(url: string, timeout = 12000): Promise<T | null> {
+export async function fetchJSON<T = any>(url: string, timeout = 30000): Promise<T | null> {
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), timeout)
