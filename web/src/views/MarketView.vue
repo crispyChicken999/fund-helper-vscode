@@ -1449,6 +1449,7 @@ html.dark :deep(.main-tabs .el-scrollbar__wrap) {
   text-transform: uppercase;
   letter-spacing: 0.2px;
   text-align: left;
+  white-space: nowrap;
 }
 
 .card-price {
@@ -1456,7 +1457,7 @@ html.dark :deep(.main-tabs .el-scrollbar__wrap) {
   font-weight: 900;
   margin-bottom: 7px;
   line-height: 1;
-  text-align: left;
+  text-align: center;
 }
 
 .card-stats {
@@ -1659,7 +1660,7 @@ html.dark .index-img-wrap img {
   }
 
   .card-price {
-    font-size: 18px;
+    font-size: 16px;
     margin-bottom: 5px;
   }
 
@@ -1733,7 +1734,7 @@ html.dark .index-img-wrap img {
   }
 
   .card-price {
-    font-size: 17px;
+    font-size: 14px;
   }
 
   .card-stats {

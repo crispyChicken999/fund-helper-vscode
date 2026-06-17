@@ -8,76 +8,100 @@
           <div class="stat-item stat-item-main">
             <div class="stat-label">
               <span>账户资产({{ fundStore.fundCount }})</span>
-              <button
-                class="btn-icon"
-                @click="togglePrivacy"
-                :title="settingStore.privacyMode ? '显示金额' : '隐藏金额'"
+              <el-tooltip
+                :content="settingStore.privacyMode ? '显示金额' : '隐藏金额'"
+                placement="bottom"
               >
-                <svg
-                  v-if="settingStore.privacyMode"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
+                <button
+                  class="btn-icon"
+                  @click="togglePrivacy"
                 >
-                  <path
-                    fill="currentColor"
-                    d="M11.83 9L15 12.16V12a3 3 0 0 0-3-3zm-4.3.8l1.55 1.55c-.05.21-.08.42-.08.65a3 3 0 0 0 3 3c.22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53a5 5 0 0 1-5-5c0-.79.2-1.53.53-2.2M2 4.27l2.28 2.28l.45.45C3.08 8.3 1.78 10 1 12c1.73 4.39 6 7.5 11 7.5c1.55 0 3.03-.3 4.38-.84l.43.42L19.73 22L21 20.73L3.27 3M12 7a5 5 0 0 1 5 5c0 .64-.13 1.26-.36 1.82l2.93 2.93c1.5-1.25 2.7-2.89 3.43-4.75c-1.73-4.39-6-7.5-11-7.5c-1.4 0-2.74.25-4 .7l2.17 2.15C10.74 7.13 11.35 7 12 7"
-                  />
-                </svg>
-                <svg
-                  v-else
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
+                  <svg
+                    v-if="settingStore.privacyMode"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M11.83 9L15 12.16V12a3 3 0 0 0-3-3zm-4.3.8l1.55 1.55c-.05.21-.08.42-.08.65a3 3 0 0 0 3 3c.22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53a5 5 0 0 1-5-5c0-.79.2-1.53.53-2.2M2 4.27l2.28 2.28l.45.45C3.08 8.3 1.78 10 1 12c1.73 4.39 6 7.5 11 7.5c1.55 0 3.03-.3 4.38-.84l.43.42L19.73 22L21 20.73L3.27 3M12 7a5 5 0 0 1 5 5c0 .64-.13 1.26-.36 1.82l2.93 2.93c1.5-1.25 2.7-2.89 3.43-4.75c-1.73-4.39-6-7.5-11-7.5c-1.4 0-2.74.25-4 .7l2.17 2.15C10.74 7.13 11.35 7 12 7"
+                    />
+                  </svg>
+                  <svg
+                    v-else
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                  >
+                    <!-- Icon from Material Design Icons by Pictogrammers - https://github.com/Templarian/MaterialDesign/blob/master/LICENSE -->
+                    <path
+                      fill="currentColor"
+                      d="M12 9a3 3 0 0 1 3 3a3 3 0 0 1-3 3a3 3 0 0 1-3-3a3 3 0 0 1 3-3m0-4.5c5 0 9.27 3.11 11 7.5c-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12c1.73-4.39 6-7.5 11-7.5M3.18 12a9.821 9.821 0 0 0 17.64 0a9.821 9.821 0 0 0-17.64 0"
+                    />
+                  </svg>
+                </button>
+              </el-tooltip>
+              <el-tooltip content="灰色模式" placement="bottom">
+                <button
+                  class="btn-icon"
+                  :class="{ active: settingStore.grayscaleMode }"
+                  @click="toggleGrayscale"
                 >
-                  <!-- Icon from Material Design Icons by Pictogrammers - https://github.com/Templarian/MaterialDesign/blob/master/LICENSE -->
-                  <path
-                    fill="currentColor"
-                    d="M12 9a3 3 0 0 1 3 3a3 3 0 0 1-3 3a3 3 0 0 1-3-3a3 3 0 0 1 3-3m0-4.5c5 0 9.27 3.11 11 7.5c-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12c1.73-4.39 6-7.5 11-7.5M3.18 12a9.821 9.821 0 0 0 17.64 0a9.821 9.821 0 0 0-17.64 0"
-                  />
-                </svg>
-              </button>
-              <button
-                class="btn-icon"
-                :class="{ active: settingStore.grayscaleMode }"
-                @click="toggleGrayscale"
-                title="灰色模式"
-              >
-                <svg
-                  v-if="!settingStore.grayscaleMode"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
+                  <svg
+                    v-if="!settingStore.grayscaleMode"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M12 4.81V19c-3.31 0-6-2.63-6-5.87c0-1.56.62-3.03 1.75-4.14zM6.35 7.56C4.9 8.99 4 10.96 4 13.13C4 17.48 7.58 21 12 21s8-3.52 8-7.87c0-2.17-.9-4.14-2.35-5.57L12.7 2.69c-.39-.38-1.01-.38-1.4 0z"
+                    />
+                  </svg>
+                  <svg
+                    v-else
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M20.49 20.49L3.51 3.51A.996.996 0 1 0 2.1 4.92l3.5 3.5a7.73 7.73 0 0 0-1.6 4.7C4 17.48 7.58 21 12 21c1.75 0 3.36-.56 4.67-1.5l2.4 2.4c.39.39 1.02.39 1.41 0c.4-.39.4-1.02.01-1.41M12 19c-3.31 0-6-2.63-6-5.87c0-1.19.36-2.32 1.02-3.28L12 14.83zM8.38 5.56l2.91-2.87c.39-.38 1.01-.38 1.4 0l4.95 4.87C19.1 8.99 20 10.96 20 13.13c0 1.18-.27 2.29-.74 3.3L12 9.17V4.81L9.8 6.97z"
+                    />
+                  </svg>
+                </button>
+              </el-tooltip>
+              <el-tooltip :content="themeModeTitle" placement="bottom">
+                <button
+                  class="btn-icon"
+                  :class="{ active: themeMode !== 'light' }"
+                  @click="toggleThemeMode($event)"
                 >
-                  <path
-                    fill="currentColor"
-                    d="M12 4.81V19c-3.31 0-6-2.63-6-5.87c0-1.56.62-3.03 1.75-4.14zM6.35 7.56C4.9 8.99 4 10.96 4 13.13C4 17.48 7.58 21 12 21s8-3.52 8-7.87c0-2.17-.9-4.14-2.35-5.57L12.7 2.69c-.39-.38-1.01-.38-1.4 0z"
-                  />
-                </svg>
-                <svg
-                  v-else
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
+                  <el-icon><component :is="themeModeIcon" /></el-icon>
+                </button>
+              </el-tooltip>
+              <el-tooltip content="上传配置到云端" placement="bottom">
+                <button
+                  class="btn-icon"
+                  :disabled="!settingStore.jsonboxName || syncStore.isSyncing"
+                  @click="handleQuickUpload"
                 >
-                  <path
-                    fill="currentColor"
-                    d="M20.49 20.49L3.51 3.51A.996.996 0 1 0 2.1 4.92l3.5 3.5a7.73 7.73 0 0 0-1.6 4.7C4 17.48 7.58 21 12 21c1.75 0 3.36-.56 4.67-1.5l2.4 2.4c.39.39 1.02.39 1.41 0c.4-.39.4-1.02.01-1.41M12 19c-3.31 0-6-2.63-6-5.87c0-1.19.36-2.32 1.02-3.28L12 14.83zM8.38 5.56l2.91-2.87c.39-.38 1.01-.38 1.4 0l4.95 4.87C19.1 8.99 20 10.96 20 13.13c0 1.18-.27 2.29-.74 3.3L12 9.17V4.81L9.8 6.97z"
-                  />
-                </svg>
-              </button>
-              <button
-                class="btn-icon"
-                :class="{ active: themeMode !== 'light' }"
-                @click="toggleThemeMode($event)"
-                :title="themeModeTitle"
-              >
-                <el-icon><component :is="themeModeIcon" /></el-icon>
-              </button>
+                  <el-icon><Upload /></el-icon>
+                </button>
+              </el-tooltip>
+              <el-tooltip content="从云端下载配置" placement="bottom">
+                <button
+                  class="btn-icon"
+                  :disabled="!settingStore.jsonboxName || syncStore.isSyncing"
+                  @click="handleQuickDownload"
+                >
+                  <el-icon><Download /></el-icon>
+                </button>
+              </el-tooltip>
               <span class="stat-label-spacer"></span>
               <el-badge
                 :value="batchPendingCount"
@@ -1018,6 +1042,8 @@ import {
   Sunny,
   Edit,
   Monitor,
+  Upload,
+  Download,
 } from "@element-plus/icons-vue";
 import { useDebounceFn, useMediaQuery } from "@vueuse/core";
 import Sortable from "sortablejs";
@@ -1031,8 +1057,8 @@ import GroupHoverTooltip from "@/components/GroupHoverTooltip.vue";
 import BatchAdjustModal from "@/components/BatchAdjustModal.vue";
 import PendingConfirmDialog from "@/components/PendingConfirmDialog.vue";
 import type { GroupStats } from "@/components/GroupTooltip.vue";
-import { useFundStore, useGroupStore, useSettingStore } from "@/stores";
-import { fundService, groupService } from "@/services";
+import { useFundStore, useGroupStore, useSettingStore, useSyncStore } from "@/stores";
+import { fundService, groupService, syncService } from "@/services";
 import { storageService } from "@/services/storageService";
 import { searchFund } from "@/api/fundEastmoney";
 import { fetchNetValueHistory } from "@/api/fundDetail";
@@ -1111,6 +1137,7 @@ const router = useRouter();
 const fundStore = useFundStore();
 const groupStore = useGroupStore();
 const settingStore = useSettingStore();
+const syncStore = useSyncStore();
 // const isDarkMode = computed(() => settingStore.theme === "dark");
 
 const loading = ref(false);
@@ -1687,6 +1714,32 @@ async function handleRefresh() {
     ElMessage.error("刷新失败: " + error.message);
   } finally {
     refreshing.value = false;
+  }
+}
+
+async function handleQuickUpload() {
+  if (!settingStore.jsonboxName) {
+    ElMessage.warning("请先在设置中配置 Box Name");
+    return;
+  }
+  try {
+    await syncService.syncToCloud();
+    ElMessage.success("已上传到云端");
+  } catch (error: any) {
+    ElMessage.error("上传失败: " + error.message);
+  }
+}
+
+async function handleQuickDownload() {
+  if (!settingStore.jsonboxName) {
+    ElMessage.warning("请先在设置中配置 Box Name");
+    return;
+  }
+  try {
+    await syncService.syncFromCloud();
+    ElMessage.success("已同步云端配置");
+  } catch (error: any) {
+    ElMessage.error("下载失败: " + error.message);
   }
 }
 
@@ -2901,6 +2954,11 @@ onUnmounted(() => {
 
 .btn-icon.active {
   color: var(--color-primary);
+}
+
+.btn-icon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .group-tags-wrapper {

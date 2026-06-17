@@ -882,6 +882,7 @@ function formatTime(ts: number): string {
   flex-direction: column;
   box-shadow: 0 -4px 24px var(--el-color-shadow);
   overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
 }
 
 /* PC 端居中显示 */

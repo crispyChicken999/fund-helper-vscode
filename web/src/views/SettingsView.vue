@@ -1887,6 +1887,21 @@ function openSite(url: string) {
   color: #ff4d4f;
 }
 
+html.dark .site-badge--main {
+  background: #0c2d47;
+  color: #69c0ff;
+}
+
+html.dark .site-badge--backup {
+  background: #4d1a00;
+  color: #ff9c6e;
+}
+
+html.dark .site-badge--deprecated {
+  background: #4d0000;
+  color: #ff7875;
+}
+
 .site-host {
   flex: 1;
   font-size: 13px;
