@@ -39,8 +39,9 @@ export class AboutWebview {
             if (message.url) {
               if (message.url === 'openWebVersion') {
                 vscode.window.showQuickPick([
-                  { label: '🌐 主站 Netlify', description: 'fund-helper.netlify.app', detail: '官方主站，更新可能稍有延迟', url: 'https://fund-helper.netlify.app' },
-                  { label: '🔗 备用 GitHub Pages', description: 'crispychicken999.github.io/fund-helper-vscode/', detail: '实时更新，与仓库同步', url: 'https://crispychicken999.github.io/fund-helper-vscode/' }
+                  { label: '🚀 主站 Cloudflare', description: 'fund-helper.ccwu.cc', detail: 'Cloudflare Pages 托管，全球 CDN 加速，速度最快', url: 'https://fund-helper.ccwu.cc/settings' },
+                  { label: '🔗 备用 GitHub Pages', description: 'crispychicken999.github.io/fund-helper-vscode/', detail: '实时更新，与仓库同步', url: 'https://crispychicken999.github.io/fund-helper-vscode/settings' },
+                  { label: '⚠️ 已废弃 Netlify', description: 'fund-helper.netlify.app', detail: '已停止更新，请使用主站', url: 'https://fund-helper.netlify.app' }
                 ], { placeHolder: '选择要打开的网页版站点' }).then(pick => {
                   if (pick) vscode.env.openExternal(vscode.Uri.parse((pick as any).url));
                 });
@@ -150,8 +151,9 @@ export const aboutTemplate = `
 
     <div class="card">
       <h3>🔗 相关链接</h3>
-      <p>🌐 主站：<a href="#" data-link="https://fund-helper.netlify.app">fund-helper.netlify.app</a></p>
-      <p>🔗 备用：<a href="#" data-link="https://crispychicken999.github.io/fund-helper-vscode/">crispychicken999.github.io/fund-helper-vscode/</a></p>
+      <p>🚀 主站：<a href="#" data-link="https://fund-helper.ccwu.cc/settings">fund-helper.ccwu.cc</a></p>
+      <p>🔗 备用：<a href="#" data-link="https://crispychicken999.github.io/fund-helper-vscode/settings">crispychicken999.github.io/fund-helper-vscode/</a></p>
+      <p>⚠️ 已废弃：<a href="#" data-link="https://fund-helper.netlify.app">fund-helper.netlify.app</a></p>
       <p>⭐ GitHub：<a href="#" data-link="https://github.com/crispyChicken999/fund-helper-vscode">github.com/crispyChicken999/fund-helper-vscode</a></p>
     </div>
 

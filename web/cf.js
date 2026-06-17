@@ -4,12 +4,12 @@
  */
 
 const ALLOWED_ORIGINS = [
-  "https://fund-helper.netlify.app",
-  "https://crispychicken999.github.io",
-  "http://localhost",
-  "http://127.0.0.1",
   "https://fund-helper.ccwu.cc",
   "https://api.fund-helper.ccwu.cc",
+  "https://crispychicken999.github.io",
+  "https://fund-helper.netlify.app",
+  "http://localhost",
+  "http://127.0.0.1",
 ];
 
 // ====== 目标 API 基础域名映射（直接拼接路径，不剥离前缀） ======

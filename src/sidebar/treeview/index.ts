@@ -226,7 +226,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     item.command = {
       command: "vscode.open",
       title: "打开网页版",
-      arguments: [vscode.Uri.parse("https://fund-helper.netlify.app")]
+      arguments: [vscode.Uri.parse("https://fund-helper.ccwu.cc")]
     };
 
     const tooltip = new vscode.MarkdownString(
@@ -242,7 +242,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       "  - 📈 基金详情、历史净值、持仓明细\n\n" +
       "  - 🏭 行情中心、板块排行\n\n" +
       "---\n\n" +
-      "🔗 [**立即访问 → fund-helper.netlify.app**](https://fund-helper.netlify.app)\n\n" +
+      "🔗 [**立即访问 → fund-helper.ccwu.cc**](https://fund-helper.ccwu.cc)\n\n" +
       "---\n\n" +
       "💡 *点击此项可直接在浏览器中打开网页版*"
     );

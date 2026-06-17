@@ -8,7 +8,7 @@
 
 ![License](https://badgen.net/badge/License/MIT/red)
 ![VSCode](https://badgen.net/badge/VSCode/1.82.0+/blue?icon=visualstudio)
-![Version](https://badgen.net/badge/Version/0.4.0/orange?icon=git)
+![Version](https://badgen.net/badge/Version/0.4.1/orange?icon=git)
 ![Platform](https://badgen.net/badge/Platform/Windows|MacOS|Linux/purple?icon=windows)
 
 ![Downloads](https://badgen.net/vs-marketplace/d/CrispyChicken.fund-helper?label=Downloads&color=blue)
@@ -20,9 +20,13 @@
 
 在 VSCode 侧边栏实时查看自选基金估值、涨跌幅与收益，支持加减仓操作、多维度排序、拖拽排序、行情中心大盘数据、AI 分析等功能。摸鱼理财两不误！
 
-> 🌐 **网页版已上线！** 无需安装，打开即用 → [**fund-helper.netlify.app**](https://fund-helper.netlify.app)
+> 🌐 **网页版已上线！** 无需安装，打开即用：
 > 
-> ✅ **GitHub Pages 备用入口：[crispychicken999.github.io/fund-helper-vscode/](https://crispychicken999.github.io/fund-helper-vscode/)**
+> 🚀 **主站：[fund-helper.ccwu.cc](https://fund-helper.ccwu.cc)** — Cloudflare Pages，全球 CDN 加速，速度最快
+>
+> 🔗 **备用站：[crispychicken999.github.io/fund-helper-vscode/](https://crispychicken999.github.io/fund-helper-vscode/)** — 实时更新，与仓库同步
+>
+> ⚠️ ~~[fund-helper.netlify.app](https://fund-helper.netlify.app)~~ — 已废弃，请使用主站
 
 ## 📑 目录 (Table of Contents)
 
@@ -155,9 +159,11 @@
 
 **基金助手网页版已正式上线！** 🎉
 
-> 🔗 **访问地址：[fund-helper.netlify.app](https://fund-helper.netlify.app)**
+> 🚀 **主站：[fund-helper.ccwu.cc](https://fund-helper.ccwu.cc)** — Cloudflare Pages 托管，全球 CDN 加速
 >
-> ✅ **GitHub Pages 备用入口：[crispychicken999.github.io/fund-helper-vscode/](https://crispychicken999.github.io/fund-helper-vscode/)**
+> 🔗 **备用站：[crispychicken999.github.io/fund-helper-vscode/](https://crispychicken999.github.io/fund-helper-vscode/)** — GitHub Pages 托管，实时更新
+>
+> ⚠️ ~~[fund-helper.netlify.app](https://fund-helper.netlify.app)~~ — Netlify 已废弃，请迁移至主站
 
 网页版与 VSCode 插件版功能对齐，无需安装任何软件，在浏览器中即可使用：
 

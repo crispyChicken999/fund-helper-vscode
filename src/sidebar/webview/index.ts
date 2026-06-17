@@ -724,8 +724,9 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
 
       case "openWebVersion": {
         const pick = await vscode.window.showQuickPick([
-          { label: '🌐 主站 Netlify', description: 'fund-helper.netlify.app', detail: '官方主站，更新可能稍有延迟', url: 'https://fund-helper.netlify.app' },
-          { label: '🔗 备用 GitHub Pages', description: 'crispychicken999.github.io/fund-helper-vscode/', detail: '实时更新，与仓库同步', url: 'https://crispychicken999.github.io/fund-helper-vscode/' }
+          { label: '🚀 主站 Cloudflare', description: 'fund-helper.ccwu.cc', detail: 'Cloudflare Pages 托管，全球 CDN 加速，速度最快', url: 'https://fund-helper.ccwu.cc' },
+          { label: '🔗 备用 GitHub Pages', description: 'crispychicken999.github.io/fund-helper-vscode/', detail: '实时更新，与仓库同步', url: 'https://crispychicken999.github.io/fund-helper-vscode' },
+          { label: '⚠️ 已废弃 Netlify', description: 'fund-helper.netlify.app', detail: '已停止更新，请使用主站', url: 'https://fund-helper.netlify.app' }
         ], { placeHolder: '选择要打开的网页版站点' });
         if (pick) {
           vscode.env.openExternal(vscode.Uri.parse((pick as any).url));

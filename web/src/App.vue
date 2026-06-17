@@ -6,12 +6,15 @@
       </keep-alive>
       <component v-else :is="Component" />
     </router-view>
+    <!-- Netlify 站点迁移提示 -->
+    <MigrationNotice />
   </div>
 </template>
 
 <script setup lang="ts">
 import { watch } from "vue";
 import { useSettingStore } from "@/stores";
+import MigrationNotice from "@/components/MigrationNotice.vue";
 
 const settingStore = useSettingStore();
 

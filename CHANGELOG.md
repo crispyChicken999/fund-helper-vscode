@@ -2,6 +2,20 @@
 
 本文档记录了"基金助手"(Fund Helper) VS Code 扩展的所有重要更改。
 
+## [0.4.1] - 2026-06-17
+
+### 新增功能 (Features)
+
+- 🌐 **站点迁移**：主站由 Netlify 迁移至 Cloudflare Pages（`fund-helper.ccwu.cc`），全球 CDN 加速，速度更快
+  - Netlify 免费额度有限（每月 300 积分，每次部署消耗约 15 积分），不适合频繁更新
+  - 访问旧 Netlify 站点时会自动弹出迁移提示弹窗，显示新站点地址和 Box Name，方便用户迁移数据
+  - Web 端设置页面新增「访问站点」卡片列表，清晰展示主站、备用站、已废弃站点信息
+  - VSCode 端关于页面、侧边栏站点跳转链接同步更新
+
+### 优化改进 (Improvements)
+
+- 💡 **站点信息梳理**：所有站点入口统一调整为：🚀 主站 Cloudflare → 🔗 备用 GitHub Pages → ⚠️ 已废弃 Netlify
+
 ## [0.4.0] - 2026-06-16
 
 ### 问题修复 (Bug Fixes)

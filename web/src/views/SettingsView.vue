@@ -500,40 +500,78 @@
               </div>
             </el-form-item>
 
-            <!-- 站点切换 -->
-            <el-form-item
-              :label="isBackupSite ? '访问主站' : '备用站点'"
-              label-width="120px"
-            >
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  justify-content: center;
-                  align-items: flex-start;
-                  gap: 8px;
-                "
-              >
-                <div
-                  class="form-item-tip"
-                  style="margin: 0px; text-align: justify"
-                >
-                  <template v-if="isBackupSite">
-                    当前访问的是 GitHub Pages 备用站点，更新快但国内访问可能较慢（DNS 易被污染）。主站通过 Netlify 部署，DNS 未被污染、加载速度更快，但手动部署更新稍慢。数据和功能完全同步。
-                  </template>
-                  <template v-else>
-                    如果访问本网站速度较慢，可以尝试访问 GitHub Pages
-                    上的备用站点，更新更快但国内访问可能响应较慢。数据与本网站完全同步。
-                  </template>
+            <!-- 访问站点 -->
+            <el-form-item label="访问站点" label-width="120px">
+              <div class="site-list">
+                <!-- 🚀 主站 Cloudflare Pages -->
+                <div class="site-card" :class="{ active: isMainSite }">
+                  <div class="site-card-header">
+                    <span class="site-badge site-badge--main">🚀 主站</span>
+                    <span class="site-host">fund-helper.ccwu.cc</span>
+                    <el-tag v-if="isMainSite" size="small" type="success" effect="dark">当前</el-tag>
+                  </div>
+                  <div class="site-card-desc">
+                    Cloudflare Pages 托管，全球 CDN 加速，速度最快，推荐首选。
+                  </div>
+                  <div class="site-card-actions">
+                    <el-button
+                      size="small"
+                      type="primary"
+                      v-if="!isMainSite"
+                      @click="openSite('https://fund-helper.ccwu.cc/')"
+                    >访问</el-button>
+                    <el-button
+                      size="small"
+                      v-if="!isMainSite"
+                      @click="openSite('https://fund-helper.ccwu.cc/settings')"
+                    >前往设置页</el-button>
+                  </div>
                 </div>
-                <el-button
-                  type="primary"
-                  plain
-                  size="small"
-                  @click="openOtherSite"
-                >
-                  {{ isBackupSite ? '访问主站（Netlify）' : '访问备用站点' }}
-                </el-button>
+
+                <!-- 🔗 备用站 GitHub Pages -->
+                <div class="site-card" :class="{ active: isBackupSite }">
+                  <div class="site-card-header">
+                    <span class="site-badge site-badge--backup">🔗 备用站</span>
+                    <span class="site-host">github.io/fund-helper-vscode</span>
+                    <el-tag v-if="isBackupSite" size="small" type="warning" effect="dark">当前</el-tag>
+                  </div>
+                  <div class="site-card-desc">
+                    GitHub Pages 托管，实时更新，但国内访问可能较慢（DNS 易被污染）。
+                  </div>
+                  <div class="site-card-actions">
+                    <el-button
+                      size="small"
+                      v-if="!isBackupSite"
+                      @click="openSite('https://crispychicken999.github.io/fund-helper-vscode/')"
+                    >访问</el-button>
+                    <el-button
+                      size="small"
+                      v-if="!isBackupSite"
+                      @click="openSite('https://crispychicken999.github.io/fund-helper-vscode/settings')"
+                    >前往设置页</el-button>
+                  </div>
+                </div>
+
+                <!-- ⚠️ 已废弃 Netlify -->
+                <div class="site-card site-card--deprecated" :class="{ active: isDeprecatedSite }">
+                  <div class="site-card-header">
+                    <span class="site-badge site-badge--deprecated">⚠️ 已废弃</span>
+                    <span class="site-host">fund-helper.netlify.app</span>
+                    <el-tag v-if="isDeprecatedSite" size="small" type="danger" effect="dark">当前</el-tag>
+                  </div>
+                  <div class="site-card-desc">
+                    Netlify 免费额度有限（每月 300 积分，每次部署消耗约 15 积分），已停止更新，请迁移至主站。
+                  </div>
+                  <div class="site-card-actions">
+                    <el-button
+                      size="small"
+                      v-if="!isDeprecatedSite"
+                      type="danger"
+                      plain
+                      @click="openSite('https://fund-helper.netlify.app/')"
+                    >访问</el-button>
+                  </div>
+                </div>
               </div>
             </el-form-item>
 
@@ -828,9 +866,15 @@ const allColumns = [
 
 const isSyncing = computed(() => syncStore.isSyncing);
 
-// 判断当前是否为备用站点（GitHub Pages）
+// 判断当前访问的站点
+const isMainSite = computed(() =>
+  window.location.hostname === "fund-helper.ccwu.cc"
+);
 const isBackupSite = computed(() =>
   window.location.hostname.includes("github.io")
+);
+const isDeprecatedSite = computed(() =>
+  window.location.hostname === "fund-helper.netlify.app"
 );
 
 // ==================== 初始化 ====================
@@ -1514,15 +1558,8 @@ function handleShowUninstallGuide() {
   });
 }
 
-function openOtherSite() {
-  if (isBackupSite.value) {
-    window.open("https://fund-helper.netlify.app/", "_blank");
-  } else {
-    window.open(
-      "https://crispychicken999.github.io/fund-helper-vscode/",
-      "_blank"
-    );
-  }
+function openSite(url: string) {
+  window.open(url, "_blank");
 }
 </script>
 
@@ -1788,5 +1825,88 @@ function openOtherSite() {
   font-size: 12px;
   color: var(--el-text-color-secondary);
   text-align: center;
+}
+
+/* 站点列表 */
+.site-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.site-card {
+  border: 1px solid var(--el-border-color);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--el-bg-color);
+  transition: all 0.2s;
+}
+
+.site-card.active {
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+.site-card--deprecated {
+  opacity: 0.7;
+}
+
+.site-card--deprecated.active {
+  border-color: var(--el-color-danger);
+  background: var(--el-color-danger-light-9);
+}
+
+.site-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.site-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.site-badge--main {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.site-badge--backup {
+  background: #fff7e6;
+  color: #fa8c16;
+}
+
+.site-badge--deprecated {
+  background: #fff1f0;
+  color: #ff4d4f;
+}
+
+.site-host {
+  flex: 1;
+  font-size: 13px;
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  color: var(--el-text-color-primary);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-card-desc {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.site-card-actions {
+  display: flex;
+  gap: 8px;
 }
 </style>
