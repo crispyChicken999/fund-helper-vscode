@@ -510,7 +510,7 @@
     <el-dialog
       v-model="showAddFundDialog"
       title="添加基金"
-      width="90%"
+      width="min(90%, 560px)"
       :close-on-click-modal="true"
       destroy-on-close
       @close="isEditingAddFundTotalAmount = false"
@@ -520,6 +520,7 @@
         :rules="fundFormRules"
         ref="fundFormRef"
         label-width="100px"
+        @submit.prevent
       >
         <el-form-item label="搜索基金" prop="code">
           <div class="fund-search-field">
@@ -630,7 +631,7 @@
     <el-dialog
       v-model="showEditFundDialog"
       title="编辑基金"
-      width="90%"
+      width="min(90%, 560px)"
       :close-on-click-modal="true"
       destroy-on-close
       @close="isEditingFundTotalAmount = false"
@@ -721,7 +722,7 @@
     <el-dialog
       v-model="showAddGroupDialog"
       title="添加分组"
-      width="90%"
+      width="min(90%, 420px)"
       :close-on-click-modal="true"
     >
       <el-form
@@ -729,6 +730,7 @@
         :rules="groupFormRules"
         ref="groupFormRef"
         label-width="100px"
+        @submit.prevent
       >
         <el-form-item label="分组名称" prop="name">
           <el-input
@@ -750,7 +752,7 @@
     <el-dialog
       v-model="showEditGroupDialog"
       title="编辑分组"
-      width="90%"
+      width="min(90%, 420px)"
       :close-on-click-modal="true"
     >
       <el-form
@@ -758,6 +760,7 @@
         :rules="groupFormRules"
         ref="editGroupFormRef"
         label-width="100px"
+        @submit.prevent
       >
         <el-form-item label="分组名称" prop="name">
           <el-input
@@ -806,7 +809,7 @@
     <el-dialog
       v-model="showPositionDialog"
       :title="positionIsAdd ? '加仓' : '减仓'"
-      width="90%"
+      width="min(90%, 560px)"
       top="5vh"
       :close-on-click-modal="true"
     >
@@ -862,7 +865,7 @@
         </div>
 
         <!-- 输入金额/份额 -->
-        <el-form label-width="100px" style="margin-top: 12px">
+        <el-form label-width="100px" style="margin-top: 12px" @submit.prevent>
           <el-form-item v-if="positionIsAdd" label="买入金额">
             <el-input
               v-model.number="positionAmount"

@@ -1226,7 +1226,7 @@
     <el-dialog
       v-model="showEditDialog"
       title="编辑基金"
-      width="90%"
+      width="min(90%, 560px)"
       :close-on-click-modal="true"
       destroy-on-close
       @close="isEditingTotalAmount = false"

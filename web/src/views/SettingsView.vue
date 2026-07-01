@@ -102,7 +102,7 @@
               <strong>Box Name</strong>
               后，可在多设备间（VSCode插件、PC、Mobile）云同步数据，支持扫码同步
             </li>
-            <li>8. 更多功能敬请探索，设置项均有说明提示，欢迎尝试！🎉</li>
+            <li>8. 🎉 更多功能敬请探索，设置中均有提示说明，欢迎尝试！🎉</li>
           </ul>
         </el-collapse-item>
 
@@ -501,7 +501,7 @@
             </el-form-item>
 
             <!-- 访问站点 -->
-            <el-form-item label="访问站点" label-width="120px">
+            <el-form-item label="访问站点" label-width="120px" label-position="top">
               <div class="site-list">
                 <!-- 🚀 主站 Cloudflare Pages -->
                 <div class="site-card" :class="{ active: isMainSite }">
@@ -780,10 +780,10 @@ const maxContentWidthMode = computed({
     if (value === "preset") {
       const index = presetWidths.indexOf(currentWidth);
       presetWidthSlider.value = index >= 0 ? index : 1;
-      formLabelPosition.value = currentWidth <= 375 ? "top" : "right"; // 根据宽度调整标签位置
+      formLabelPosition.value = currentWidth <= 425 ? "top" : "right"; // 根据宽度调整标签位置
     } else if (value === "custom") {
       customWidth.value = settingStore.maxContentWidth;
-      formLabelPosition.value = currentWidth <= 375 ? "top" : "right"; // 根据宽度调整标签位置
+      formLabelPosition.value = currentWidth <= 425 ? "top" : "right"; // 根据宽度调整标签位置
     } else {
       formLabelPosition.value = "right"; // 铺满宽度时默认标签在右侧
     }
@@ -794,7 +794,7 @@ const maxContentWidthMode = computed({
 async function onPresetWidthChange() {
   const width = presetWidths[presetWidthSlider.value];
   if (settingStore.maxContentWidthMode === "preset") {
-    formLabelPosition.value = width <= 375 ? "top" : "right"; // 根据宽度调整标签位置
+    formLabelPosition.value = width <= 425 ? "top" : "right"; // 根据宽度调整标签位置
   }
   if (width) {
     await settingStore.setMaxContentWidth(width);
@@ -839,7 +839,7 @@ const formLabelWidth = computed(() => "90px");
 // 当宽度较小时将标签位置调整到顶部，避免空间不足导致的布局问题
 const formLabelPosition = ref(
   settingStore.maxContentWidthMode !== "full"
-    ? settingStore.maxContentWidth <= 375
+    ? settingStore.maxContentWidth <= 425
       ? "top"
       : "right"
     : "right"
