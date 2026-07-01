@@ -5,6 +5,25 @@
 import type { Fund, FundInfo } from '@/types'
 import { fetchFundgzRawViaJsonp } from '@/api/fundgz'
 import { loadPush2JSONP } from '@/utils/jsonp'
+import { isMarketClosed } from '@/utils/holiday'
+
+/**
+ * 判断 fundgz 返回的数据是否已过期（gztime 日期不是今天）
+ * 仅在交易日使用此判断 — 非交易日过期数据是正常的
+ */
+function isFundgzDataStale(gztime: string | undefined): boolean {
+  if (!gztime || typeof gztime !== 'string' || gztime.length < 10) {
+    return true
+  }
+  const now = new Date()
+  const todayStr =
+    now.getFullYear() +
+    '-' +
+    String(now.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(now.getDate()).padStart(2, '0')
+  return gztime.substring(0, 10) !== todayStr
+}
 
 /**
  * 通用的持仓信息请求函数（带代理降级）
@@ -137,7 +156,7 @@ function saveMNFInfoCache(map: Map<string, any>): void {
 
 /**
  * 通用的多层代理请求函数
- * 策略：1. 直接请求 → 2. api.fund-helper.ccwu.cc 路径转发 → 3. allorigins.win → 4. codetabs.com 双层代理 → 5. 返回失败
+ * 策略：1. 直接请求 → 2. api.fund-helper.ccwu.cc 路径转发 → 3. 返回失败
  */
 async function fetchWithProxyFallback(url: string, timeout: number = 12000): Promise<any> {
 
@@ -260,6 +279,15 @@ async function fetchFundFromMNFInfo(code: string): Promise<any | null> {
     const fund = data.Datas[0]
     const estimateChange = await fetchFundEstimateChange(code)
 
+    // 如果无法获取实时估算涨幅（无持仓数据），且 MNFInfo 的净值日期也不是今天，
+    // 说明所有可用数据都是过期的，返回 null 避免用过期数据误导用户
+    if (estimateChange === null && isFundgzDataStale(fund.PDATE)) {
+      console.log(
+        `[fundEastmoney] ${code} 无持仓数据且 MNFInfo 净值日期(jzrq=${fund.PDATE})已过期，无法计算今日估值，返回 null`
+      )
+      return null
+    }
+
     return {
       fundcode: fund.FCODE,
       name: fund.SHORTNAME,
@@ -284,6 +312,20 @@ export async function fetchSingleFundValuation(code: string): Promise<any | null
     const raw = await fetchFundgzRawViaJsonp(code)
     // raw === null：接口 200 但返回空数据 jsonp({})，降级到 MNFInfo 进行估值推算
     if (!raw) return await fetchFundFromMNFInfo(code)
+
+    // 交易日检测：如果 fundgz 返回了数据但 gztime 日期不是今天，
+    // 说明接口返回的是过期数据，应降级到 MNFInfo + 持仓加权计算
+    if (!isMarketClosed() && isFundgzDataStale(raw.gztime)) {
+      console.log(
+        `[fundEastmoney] ${code} fundgz 数据过期（gztime=${raw.gztime}），降级到 MNFInfo + 持仓加权计算`
+      )
+      const mnfResult = await fetchFundFromMNFInfo(code)
+      if (mnfResult) return mnfResult
+      // MNFInfo 也无法提供有效数据，返回 null 避免用过期数据误导用户
+      console.log(`[fundEastmoney] ${code} MNFInfo 降级也失败，返回 null，不使用过期数据兜底`)
+      return null
+    }
+
     return raw
   } catch {
     // 接口 514（频率限制）/ 网络错误：直接返回 null，沿用上次缓存结果
