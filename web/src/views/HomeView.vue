@@ -107,6 +107,7 @@
                 :value="batchPendingCount"
                 :hidden="batchPendingCount === 0"
                 type="danger"
+                class="batch-adjust-badge"
               >
                 <el-button
                   type="primary"
@@ -2887,6 +2888,13 @@ onUnmounted(() => {
 
 .stat-label-spacer {
   flex: 1;
+}
+
+.batch-adjust-btn {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .stat-value-large {
