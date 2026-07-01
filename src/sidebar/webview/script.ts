@@ -2675,7 +2675,7 @@ export function getScripts(): string[] {
     '      </td>`,',
     '      estimatedChange: `<td class="td-value" data-column="estimatedChange">',
     '        <div class="${estimatedChangeColor}">${shouldShowEstimated ? formatPercent(gszzl) : "--"}</div>',
-    '        <div class="td-sub">${isMarketClosedNow ? "休市" : (shouldShowEstimated ? updateTime : estimatedDate)}</div>',
+    '        <div class="td-sub">${isMarketClosedNow ? "休市" : (shouldShowEstimated ? updateTime : "--")}</div>',
     '      </td>`,',
     '      estimatedGain: `<td class="td-value" data-column="estimatedGain">',
     '        <div class="${estimatedGainColor} privacy-hide-amount">${shouldShowEstimated ? formatMoney(estimatedGain) : "--"}</div>',

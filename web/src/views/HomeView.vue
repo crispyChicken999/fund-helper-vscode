@@ -367,7 +367,7 @@
                     {{ fmtPctRow(row.gszzl, row.shouldShowEstimated) }}
                   </div>
                   <div class="td-sub">
-                    {{ row.fullUpdateTime || row.updateTime || "—" }}
+                    {{ row.shouldShowEstimated ? (row.fullUpdateTime || row.updateTime || "—") : "—" }}
                   </div>
                 </div>
               </template>

@@ -368,9 +368,23 @@ export async function getFundData(
         navChgRt = parseFloat(val.navchgrt);
       }
 
-      // 判断是否已更新为实时净值
-      // 如果 jzrq（净值日期）等于 gztime 的日期部分，说明已更新为实时净值
-      if (jzrq && gztime && typeof gztime === "string" && jzrq === gztime.substring(0, 10)) {
+      // 判断 fundgz 数据是否过期：gztime 的日期不是今天
+      const now = new Date();
+      const todayStr =
+        now.getFullYear() +
+        '-' +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        '-' +
+        String(now.getDate()).padStart(2, '0');
+      const isGztimeStale =
+        !gztime || typeof gztime !== "string" || gztime.substring(0, 10) !== todayStr;
+
+      if (isGztimeStale) {
+        // fundgz 返回的是过期数据，清空估算值，避免把昨天的估值当成今天展示
+        estimatedValue = null;
+        changePercent = 0;
+      } else if (jzrq && jzrq === gztime.substring(0, 10)) {
+        // gztime 是今天且 jzrq 匹配 → 已更新为实时净值
         isRealValue = true;
         estimatedValue = netValue;
       }
