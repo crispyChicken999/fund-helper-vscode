@@ -27,8 +27,10 @@
   ],
   "keywords": [
     "fund",
+    "helper",
     "finance",
     "investment",
+    "fund helper",
     "基金",
     "基金助手",
     "韭菜",
@@ -37,11 +39,10 @@
     "股票",
     "估值",
     "收益",
+    "行情",
     "涨跌",
     "估算",
-    "持仓",
-    "helper",
-    "fund helper"
+    "持仓"
   ],
   "activationEvents": [
     "onStartupFinished"
