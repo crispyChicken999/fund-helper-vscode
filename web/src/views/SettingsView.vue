@@ -2009,6 +2009,9 @@ function openSite(url: string) {
     rgba(var(--site-color-rgb), 0.1) 70%,
     rgba(var(--site-color-rgb), 0.6) 100%
   );
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);

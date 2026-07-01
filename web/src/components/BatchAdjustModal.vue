@@ -92,7 +92,7 @@
                 </svg>
               </div>
               <div v-if="buySearchResults.length" class="search-dropdown">
-                <el-scrollbar max-height="200px">
+                <el-scrollbar max-height="260px">
                   <div
                     v-for="item in buySearchResults"
                     :key="item.code"
@@ -101,6 +101,16 @@
                   >
                     <span class="item-code">{{ item.code }}</span>
                     <span class="item-name">{{ item.name }}</span>
+                    <span
+                      v-if="item.source === 'holding'"
+                      class="source-tag holding-tag"
+                      >持仓</span
+                    >
+                    <span
+                      v-else-if="item.source === 'group'"
+                      class="source-tag group-tag"
+                      >{{ item.groupName }}</span
+                    >
                   </div>
                 </el-scrollbar>
               </div>
@@ -283,7 +293,7 @@
                 />
               </div>
               <div v-if="sellSearchResults.length" class="search-dropdown">
-                <el-scrollbar max-height="200px">
+                <el-scrollbar max-height="260px">
                   <div
                     v-for="item in sellSearchResults"
                     :key="item.code"
@@ -292,6 +302,16 @@
                   >
                     <span class="item-code">{{ item.code }}</span>
                     <span class="item-name">{{ item.name }}</span>
+                    <span
+                      v-if="item.source === 'holding' && item.groupName"
+                      class="source-tag group-tag"
+                      >{{ item.groupName }}</span
+                    >
+                    <span
+                      v-else-if="item.source === 'group'"
+                      class="source-tag group-tag highlight"
+                      >{{ item.groupName }}</span
+                    >
                     <span class="item-shares"
                       >{{ item.shares.toFixed(2) }} 份</span
                     >
@@ -474,7 +494,7 @@ import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { searchFund } from "@/api/fundEastmoney";
 import { fetchNetValueHistory } from "@/api/fundDetail";
-import { useFundStore } from "@/stores";
+import { useFundStore, useGroupStore } from "@/stores";
 import {
   loadPendingBuys,
   addPendingBuy,
@@ -517,15 +537,26 @@ const confirming = ref(false);
 
 // buy
 const buySearchQuery = ref("");
-const buySearchResults = ref<{ code: string; name: string }[]>([]);
+interface BuySearchResultItem {
+  code: string;
+  name: string;
+  source: "holding" | "group" | "api";
+  groupName?: string;
+}
+const buySearchResults = ref<BuySearchResultItem[]>([]);
 const buySearchLoading = ref(false);
 const buyItems = ref<BuyItem[]>([]);
 
 // sell
 const sellSearchQuery = ref("");
-const sellSearchResults = ref<{ code: string; name: string; shares: number }[]>(
-  [],
-);
+interface SellSearchResultItem {
+  code: string;
+  name: string;
+  shares: number;
+  source: "holding" | "group";
+  groupName?: string;
+}
+const sellSearchResults = ref<SellSearchResultItem[]>([]);
 const sellItems = ref<SellItem[]>([]);
 
 // pending
@@ -534,6 +565,7 @@ const pendingCount = computed(() => pendingList.value.length);
 
 // ---- computed ----
 const fundStore = useFundStore();
+const groupStore = useGroupStore();
 
 const todayStr = computed(() => {
   const d = new Date();
@@ -585,7 +617,45 @@ async function cancelPending(id: string) {
   }
 }
 
-// ---- buy ----
+// ---- buy: 本地搜索（持仓 + 分组）----
+function buildBuyLocalResults(q: string): BuySearchResultItem[] {
+  const lowerQ = q.toLowerCase();
+  const resultMap = new Map<string, BuySearchResultItem>();
+
+  // 1. 优先检索持仓基金（名称/代码）
+  for (const fund of fundStore.funds) {
+    const detail = fundStore.fundDetails.get(fund.code);
+    const name = detail?.name ?? fund.code;
+    if (fund.code.includes(lowerQ) || name.toLowerCase().includes(lowerQ)) {
+      resultMap.set(fund.code, { code: fund.code, name, source: "holding" });
+    }
+  }
+
+  // 2. 检索分组名称，匹配时显示该分组下全部基金
+  for (const [_key, group] of groupStore.groups.entries()) {
+    if (group.name.toLowerCase().includes(lowerQ)) {
+      for (const code of group.fundCodes) {
+        if (!resultMap.has(code)) {
+          const fund = fundStore.funds.find((f) => f.code === code);
+          if (fund) {
+            const detail = fundStore.fundDetails.get(code);
+            const name = detail?.name ?? code;
+            resultMap.set(code, {
+              code,
+              name,
+              source: "group",
+              groupName: group.name,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return Array.from(resultMap.values());
+}
+
+// ---- buy: 防抖 API 搜索（合并到本地结果之后）----
 const debouncedBuySearch = useDebounceFn(async (q: string) => {
   if (!q.trim()) {
     buySearchResults.value = [];
@@ -593,14 +663,36 @@ const debouncedBuySearch = useDebounceFn(async (q: string) => {
   }
   buySearchLoading.value = true;
   try {
-    buySearchResults.value = await searchFund(q.trim());
+    const apiResults = await searchFund(q.trim());
+    // 以本地结果为主，API 结果去重后追加
+    const localMap = new Map<string, BuySearchResultItem>();
+    for (const item of buySearchResults.value) {
+      localMap.set(item.code, item);
+    }
+    for (const apiItem of apiResults) {
+      if (!localMap.has(apiItem.code)) {
+        localMap.set(apiItem.code, {
+          ...apiItem,
+          source: "api",
+          groupName: undefined,
+        });
+      }
+    }
+    buySearchResults.value = Array.from(localMap.values());
   } finally {
     buySearchLoading.value = false;
   }
 }, 300);
 
 function onBuySearch() {
-  debouncedBuySearch(buySearchQuery.value);
+  const trimmed = buySearchQuery.value.trim();
+  if (!trimmed) {
+    buySearchResults.value = [];
+    return;
+  }
+  // 立即显示本地结果（持仓/分组），API 结果延迟合并
+  buySearchResults.value = buildBuyLocalResults(trimmed);
+  debouncedBuySearch(trimmed);
 }
 
 function addBuyItem(fund: { code: string; name: string }) {
@@ -730,15 +822,54 @@ function onSellSearch() {
     return;
   }
   const allFunds = fundStore.funds;
-  const results: { code: string; name: string; shares: number }[] = [];
+  const resultMap = new Map<string, SellSearchResultItem>();
+
+  // 1. 检索持仓基金（名称/代码）
   for (const fund of allFunds) {
     const detail = fundStore.fundDetails.get(fund.code);
     const name = detail?.name ?? fund.code;
     if (fund.code.includes(q) || name.toLowerCase().includes(q)) {
-      results.push({ code: fund.code, name, shares: fund.num });
+      // 查找该基金所在的分组名
+      let groupName: string | undefined;
+      for (const group of groupStore.groups.values()) {
+        if (group.fundCodes.includes(fund.code)) {
+          groupName = group.name;
+          break;
+        }
+      }
+      resultMap.set(fund.code, {
+        code: fund.code,
+        name,
+        shares: fund.num,
+        source: "holding",
+        groupName,
+      });
     }
   }
-  sellSearchResults.value = results.slice(0, 10);
+
+  // 2. 检索分组名称，匹配时显示该分组下全部基金
+  for (const group of groupStore.groups.values()) {
+    if (group.name.toLowerCase().includes(q)) {
+      for (const code of group.fundCodes) {
+        if (!resultMap.has(code)) {
+          const fund = fundStore.funds.find((f) => f.code === code);
+          if (fund) {
+            const detail = fundStore.fundDetails.get(code);
+            const name = detail?.name ?? code;
+            resultMap.set(code, {
+              code,
+              name,
+              shares: fund.num,
+              source: "group",
+              groupName: group.name,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  sellSearchResults.value = Array.from(resultMap.values());
 }
 
 function addSellItem(fund: { code: string; name: string; shares: number }) {
@@ -1088,6 +1219,31 @@ function formatTime(ts: number): string {
 .item-shares {
   color: var(--el-text-color-secondary);
   font-size: 12px;
+}
+
+.source-tag {
+  font-size: 10px;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 500;
+  flex-shrink: 0;
+  line-height: 18px;
+}
+
+.holding-tag {
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+}
+
+.group-tag {
+  background: var(--el-color-success-light-9);
+  color: var(--el-color-success);
+}
+
+.group-tag.highlight {
+  background: var(--el-color-warning-light-9);
+  color: var(--el-color-warning);
+  border: 1px solid var(--el-color-warning-light-5);
 }
 
 /* ---- fund item card ---- */
