@@ -6,24 +6,6 @@ import { FundInfo, FundConfig, NetValueRecord } from "./fundModel";
 import { isMarketClosed } from "./holidayService";
 
 /**
- * 判断 fundgz 返回的数据是否已过期（gztime 日期不是今天）
- * 仅在交易日使用此判断 — 非交易日过期数据是正常的
- */
-function isFundgzDataStale(gztime: string | undefined): boolean {
-  if (!gztime || typeof gztime !== 'string' || gztime.length < 10) {
-    return true
-  }
-  const now = new Date()
-  const todayStr =
-    now.getFullYear() +
-    '-' +
-    String(now.getMonth() + 1).padStart(2, '0') +
-    '-' +
-    String(now.getDate()).padStart(2, '0')
-  return gztime.substring(0, 10) !== todayStr
-}
-
-/**
  * 生成 UUID
  */
 function generateUUID(): string {
@@ -238,15 +220,6 @@ async function fetchFundFromMNFInfo(code: string): Promise<any> {
       // 尝试获取实时估算涨幅（今天的）
       const estimateChange = await fetchFundEstimateChange(code);
 
-      // 如果无法获取实时估算涨幅（无持仓数据），且 MNFInfo 的净值日期也不是今天，
-      // 说明所有可用数据都是过期的，返回 null 避免用过期数据误导用户
-      if (estimateChange === null && isFundgzDataStale(fund.PDATE)) {
-        console.log(
-          `[fundService] ${code} 无持仓数据且 MNFInfo 净值日期(jzrq=${fund.PDATE})已过期，无法计算今日估值，返回 null`
-        )
-        return null
-      }
-
       // 转换数据格式，使其与 fundgz 接口返回的格式兼容
       const result = {
         fundcode: fund.FCODE,
@@ -286,19 +259,6 @@ async function fetchSingleFund(code: string): Promise<any> {
     // 如果返回为空（jsonpgz()），尝试备选方案
     if (!parsed) {
       return await fetchFundFromMNFInfo(code);
-    }
-
-    // 交易日检测：如果 fundgz 返回了数据但 gztime 日期不是今天，
-    // 说明接口返回的是过期数据，应降级到 MNFInfo + 持仓加权计算
-    if (!isMarketClosed() && isFundgzDataStale(parsed.gztime)) {
-      console.log(
-        `[fundService] ${code} fundgz 数据过期（gztime=${parsed.gztime}），降级到 MNFInfo + 持仓加权计算`
-      )
-      const mnfResult = await fetchFundFromMNFInfo(code)
-      if (mnfResult) return mnfResult
-      // MNFInfo 也无法提供有效数据，返回 null 避免用过期数据误导用户
-      console.log(`[fundService] ${code} MNFInfo 降级也失败，返回 null，不使用过期数据兜底`)
-      return null
     }
 
     return parsed;
