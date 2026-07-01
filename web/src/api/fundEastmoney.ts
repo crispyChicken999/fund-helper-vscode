@@ -5,7 +5,6 @@
 import type { Fund, FundInfo } from '@/types'
 import { fetchFundgzRawViaJsonp } from '@/api/fundgz'
 import { loadPush2JSONP } from '@/utils/jsonp'
-import { isMarketClosed } from '@/utils/holiday'
 
 /**
  * 通用的持仓信息请求函数（带代理降级）
