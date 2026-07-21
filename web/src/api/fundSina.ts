@@ -142,15 +142,21 @@ export async function fetchSinaFundValuation(code: string): Promise<SinaFundgzCo
       return null
     }
 
-    // 去掉尾部重复值（收盘后接口持续返回相同估值的平直数据点）
+    // 去掉收盘后的填充数据点（接口在15:00后持续返回相同估值的平直数据）
     let latestIdx = networthArr.length - 1
-    while (latestIdx > 0 && networthArr[latestIdx].pre_nav === networthArr[latestIdx - 1].pre_nav) {
+    const afternoonClose = data.time_range?.[1]?.[1] || '15:00'
+    const closeTime = afternoonClose + ':00'
+    const trimmed = latestIdx
+    while (latestIdx > 0 && networthArr[latestIdx].min_time > closeTime) {
       latestIdx--
     }
+    const didTrim = latestIdx < trimmed
 
     const latest = networthArr[latestIdx]!
     const jzrq = formatDate(data.worth_date)
-    const gztime = `${latest.pre_date || jzrq} ${latest.min_time || ''}`
+    // 收盘后已裁剪 → gztime 固定为收盘时间，避免 14:59 这种非整点时间
+    const timeStr = didTrim ? afternoonClose : (latest.min_time?.substring(0, 5) || '')
+    const gztime = `${latest.pre_date || jzrq} ${timeStr || ''}`
 
     return {
       fundcode: code,
