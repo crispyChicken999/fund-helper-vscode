@@ -2,6 +2,36 @@
 
 本文档记录了"基金助手"(Fund Helper) VS Code 扩展的所有重要更改。
 
+## [0.4.3] - 2026-07-21
+
+### 新增功能 (Features)
+
+- ✨ **分时估值走势图**（Web 端 + VSCode 端）：基金详情页「持仓概况」顶部新增分时估值走势图
+  - Y 轴显示**涨跌幅 %**，直观反映实时涨跌
+  - 支持**昨收参考线**（0% 基准线），标注昨日净值
+  - 曲线**涨红跌绿**：涨时红色（#ee6666），跌时绿色（#91cc75），渐变区域联动
+  - **对比指数叠加**：上证指数、沪深300、科创50 等指数走势对比
+  - Tooltip 显示三个清晰字段：**今日涨跌幅**、**今日估值**、**昨日净值**
+  - 进入详情页时自动渲染（onMounted 检测）
+  - 使用 Sina Finance `getEstimateNetworthPic` 接口的 `networth` 分时数据
+
+- ✨ **估值接口升级**：从 fundgz.1234567.com.cn JSONP 切换至 Sina Finance REST API
+  - VSCode 端使用 Node.js `fetch()`，Web 端使用 `loadJSONP()` 绕过 CORS
+  - 接口提供更丰富的分时数据（`networth[]` 数组）和对比指数数据（`index[]`）
+  - 无分时数据时自动降级至 MNFInfo（东方财富）
+
+### 问题修复 (Bug Fixes)
+
+- 🐛 **修复 VSCode 端基金名称缺失**：Sina 估值接口不返回基金名称，现从 MNFInfo 批量接口补充
+- 🐛 **修复走势图初始不渲染**：移除冗余 `sinaChartRendered` 标志导致的死锁，改为 Vue 响应式驱动 + `onMounted` 安全网
+- 🐛 **修复走势图实例未清理**：组件卸载时 `sinaChartInstance.dispose()` 防止内存泄漏
+- 🐛 **修复昨收线标签被裁剪**：`position: "end"` → `position: "insideStartTop"`，标签移至图表内左侧
+
+### 优化改进 (Improvements)
+
+- 💡 **导出 JSON 格式化**：份额 `num` 保留两位小数，成本价 `cost` 保留四位小数（两端统一）
+- 💡 **Web 端设置页简化**：移除「访问站点」卡片的复杂科技感动画（~535行 CSS → ~60行），改为简洁列表样式
+
 ## [0.4.2] - 2026-07-01
 
 ### 新增功能 (Features)
