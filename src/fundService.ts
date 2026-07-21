@@ -1,6 +1,6 @@
 /**
  * 基金 API 服务层
- * 使用 fundgz.1234567.com.cn JSONP 接口获取基金实时估值
+ * 使用新浪财经接口获取基金实时估值
  */
 import { FundInfo, FundConfig, NetValueRecord } from "./fundModel";
 import { isMarketClosed } from "./holidayService";
@@ -17,18 +17,11 @@ function generateUUID(): string {
 }
 
 /**
- * 解析 JSONP 响应
+ * 将 YYYYMMDD 转为 YYYY-MM-DD
  */
-function parseJsonp(text: string): any {
-  const match = text.match(/jsonpgz\((.*)\)/s);
-  if (match && match[1]) {
-    try {
-      return JSON.parse(match[1]);
-    } catch {
-      return null;
-    }
-  }
-  return null;
+function formatSinaDate(yyyymmdd: string): string {
+  if (!yyyymmdd || yyyymmdd.length !== 8) return yyyymmdd;
+  return `${yyyymmdd.substring(0, 4)}-${yyyymmdd.substring(4, 6)}-${yyyymmdd.substring(6, 8)}`;
 }
 
 /**
@@ -243,27 +236,51 @@ async function fetchFundFromMNFInfo(code: string): Promise<any> {
 }
 
 /**
- * 获取单个基金实时估值
+ * 获取单个基金实时估值（新浪财经 API）
+ * 替代原 fundgz.1234567.com.cn JSONP 接口
  */
 async function fetchSingleFund(code: string): Promise<any> {
-  const url = `https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
+  const url = `https://stock.finance.sina.com.cn/fundInfo/api/openapi.php/FdFundService.getEstimateNetworthPic?symbol=${code}`;
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'Referer': 'https://finance.sina.com.cn/',
+      },
+    });
     clearTimeout(timeoutId);
-    if (!res.ok) return null;
-    const text = await res.text();
-    const parsed = parseJsonp(text);
-
-    // 如果返回为空（jsonpgz()），尝试备选方案
-    if (!parsed) {
+    if (!res.ok) {
       return await fetchFundFromMNFInfo(code);
     }
 
-    return parsed;
+    const json: any = await res.json().catch(() => null);
+    if (!json?.result?.data || json.result.status?.code !== 0) {
+      return await fetchFundFromMNFInfo(code);
+    }
+
+    const data = json.result.data;
+    const networthArr = data.networth;
+
+    // 无分时数据（未开盘/非交易日/不支持）→ 降级
+    if (!networthArr || !Array.isArray(networthArr) || networthArr.length === 0) {
+      return await fetchFundFromMNFInfo(code);
+    }
+
+    const latest = networthArr[networthArr.length - 1];
+    const jzrq = formatSinaDate(data.worth_date);
+    const gztime = `${latest.pre_date || jzrq} ${latest.min_time || ''}`;
+
+    return {
+      fundcode: code,
+      jzrq,
+      gsz: latest.pre_nav || data.worth || '',
+      gszzl: latest.nav_pct || '0',
+      gztime,
+    };
   } catch (error) {
-    // 如果主接口出错，也尝试备选方案
     return await fetchFundFromMNFInfo(code);
   }
 }

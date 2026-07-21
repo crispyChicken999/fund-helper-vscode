@@ -3,7 +3,7 @@
  */
 
 import type { Fund, FundInfo } from '@/types'
-import { fetchFundgzRawViaJsonp } from '@/api/fundgz'
+import { fetchSinaFundValuation } from '@/api/fundSina'
 import { loadPush2JSONP } from '@/utils/jsonp'
 
 /**
@@ -278,15 +278,17 @@ async function fetchFundFromMNFInfo(code: string): Promise<any | null> {
   }
 }
 
-/** fundgz 必须用 JSONP（浏览器直连常有跨域限制） */
+/** 使用新浪财经 API 获取基金估值（替代 fundgz JSONP） */
 export async function fetchSingleFundValuation(code: string): Promise<any | null> {
   try {
-    const raw = await fetchFundgzRawViaJsonp(code)
-    // raw === null：接口 200 但返回空数据 jsonp({})，降级到 MNFInfo 进行估值推算
-    if (!raw) return await fetchFundFromMNFInfo(code)
-    return raw
+    // 优先使用新浪 API 获取实时估值
+    const sinaData = await fetchSinaFundValuation(code)
+    if (sinaData) return sinaData
+
+    // 新浪API无数据（未开盘/非交易日/不支持）→ 降级到 MNFInfo 进行估值推算
+    return await fetchFundFromMNFInfo(code)
   } catch {
-    // 接口 514（频率限制）/ 网络错误：直接返回 null，沿用上次缓存结果
+    // 网络错误 → 返回 null，沿用上次缓存结果
     return null
   }
 }
