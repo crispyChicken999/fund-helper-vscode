@@ -5,6 +5,7 @@
 import type { Fund, FundInfo } from '@/types'
 import { fetchSinaFundValuation } from '@/api/fundSina'
 import { loadPush2JSONP } from '@/utils/jsonp'
+import { setSinaData } from '@/utils/sinaDataCache'
 
 /**
  * 通用的持仓信息请求函数（带代理降级）
@@ -354,6 +355,11 @@ function toFundInfoFromMerge(
     }
   }
 
+  // 将新浪原始数据存入非响应式缓存（避免大量 intraday 数据拖慢 reactive store）
+  if (val._sinaData) {
+    setSinaData(val.fundcode || cfg.code, val._sinaData)
+  }
+
   return {
     code: val.fundcode || cfg.code,
     name: val.name || cfg.code,
@@ -366,8 +372,6 @@ function toFundInfoFromMerge(
     navChgRt,
     shares: num,
     cost,
-    // 携带新浪API原始数据（供走势图使用）
-    _sinaData: val._sinaData,
   }
 }
 

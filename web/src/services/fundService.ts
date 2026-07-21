@@ -15,6 +15,7 @@ import {
   type FundRowDisplay
 } from '@/utils/fundDisplay'
 import { getChinaMarketStatus } from '@/utils/marketChina'
+import { removeSinaData } from '@/utils/sinaDataCache'
 
 async function attachRelateThemes(funds: FundInfo[]): Promise<void> {
   const codes = funds.map(f => f.code)
@@ -79,6 +80,7 @@ class FundService {
     if (prevKey) {
       await groupService.syncFundGroupMembership(code, prevKey, undefined)
     }
+    removeSinaData(code)
     this.saveFunds()
   }
 

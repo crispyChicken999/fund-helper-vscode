@@ -1341,6 +1341,7 @@ import { useFundStore, useSettingStore } from "@/stores";
 import { fundService } from "@/services";
 import { formatCurrency, formatNumber } from "@/utils/format";
 import { loadEcharts } from "@/utils/echarts";
+import { getSinaData, sinaVersion } from "@/utils/sinaDataCache";
 import { buildFundRowDisplay, type FundRowDisplay } from "@/utils/fundDisplay";
 import { normalizeFundInfo } from "@/utils/fundInfoNormalize";
 import { getChinaMarketStatus } from "@/utils/marketChina";
@@ -1517,10 +1518,11 @@ async function navigateTo(targetCode: string | null) {
 
 const fundView = computed(() => fundStore.getFundView(props.code));
 const displayName = computed(() => fundView.value?.name || props.code);
-// 新浪分时估值数据（供走势图使用）
+// 新浪分时估值数据（供走势图使用，从非响应式缓存读取）
 const sinaChartData = computed(() => {
-  const raw = fundStore.fundDetails.get(props.code);
-  const d = raw?._sinaData;
+  // 建立响应式依赖：当有新的新浪数据到达时重新求值
+  void sinaVersion.value
+  const d = getSinaData(props.code);
   if (!d?.networth?.length) return null;
   return {
     date: d.networth[0]?.pre_date || "",
