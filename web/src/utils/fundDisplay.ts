@@ -19,7 +19,7 @@ export function extractDate(gztime: string | undefined, market: ChinaMarketStatu
 export function extractTime(gztime: string | undefined): string {
   if (!gztime || typeof gztime !== 'string') return ''
   const parts = gztime.split(' ')
-  return parts.length >= 2 ? parts[1]! : ''
+  return parts.length >= 2 ? parts[1]!.substring(0, 5) : ''
 }
 
 export function formatNetValueDate(netValueDate: string): string {

@@ -38,10 +38,10 @@ export function formatNumber(value: number | string | undefined | null, decimals
 /**
  * 格式化日期时间
  * @param timestamp 时间戳
- * @param format 格式，默认 'YYYY-MM-DD HH:mm:ss'
+ * @param format 格式，默认 'YYYY-MM-DD HH:mm'
  * @returns 格式化后的日期字符串
  */
-export function formatDateTime(timestamp: number, format: string = 'YYYY-MM-DD HH:mm:ss'): string {
+export function formatDateTime(timestamp: number, format: string = 'YYYY-MM-DD HH:mm'): string {
   const date = new Date(timestamp)
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
