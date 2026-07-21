@@ -96,6 +96,21 @@
             <span class="sina-chart-title">分时估值走势</span>
             <span class="sina-chart-date">{{ sinaChartData.date }}</span>
           </div>
+          <div
+            v-if="sinaChartData.indices.length"
+            class="sina-index-selector"
+          >
+            <span class="sina-index-label">对比指数：</span>
+            <span
+              v-for="idx in sinaChartData.indices"
+              :key="idx.name"
+              class="sina-index-chip"
+              :class="{ active: activeSinaIndices[idx.name] }"
+              @click="toggleSinaIndex(idx.name)"
+            >
+              {{ idx.name }}
+            </span>
+          </div>
           <div ref="sinaChartRef" class="sina-chart"></div>
         </div>
         <div v-if="detailRow" class="holding-sections">
@@ -1326,7 +1341,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import {
   ElMessage,
@@ -1444,6 +1459,13 @@ const netWorthTrendChartRef = ref<HTMLElement | null>(null);
 const acWorthTrendChartRef = ref<HTMLElement | null>(null);
 const rankChartRef = ref<HTMLElement | null>(null);
 const sinaChartRef = ref<HTMLElement | null>(null);
+
+// 对比指数选择状态（默认不选任何指数，只显示涨跌幅）
+const activeSinaIndices = reactive<Record<string, boolean>>({});
+
+function toggleSinaIndex(name: string) {
+  activeSinaIndices[name] = !activeSinaIndices[name];
+}
 let netValueChart: any = null;
 let profitChart: any = null;
 let grandTotalChart: any = null;
@@ -1524,19 +1546,34 @@ const sinaChartData = computed(() => {
   void sinaVersion.value
   const d = getSinaData(props.code);
   if (!d?.networth?.length) return null;
+
+  // 提取原始数据
+  const rawTimes = d.networth.map((item: any) =>
+    item.min_time ? item.min_time.substring(0, 5) : "",
+  );
+  const rawVals = d.networth.map((item: any) => {
+    const v = parseFloat(item.pre_nav);
+    return isNaN(v) ? null : v;
+  });
+
+  // 去掉尾部重复的平直线段（收盘后接口返回的最后一个值保持不变）
+  // 从末尾向前扫描，找到最后一个值变化的点
+  let lastIdx = rawVals.length - 1;
+  while (lastIdx > 0 && rawVals[lastIdx] === rawVals[lastIdx - 1]) {
+    lastIdx--;
+  }
+  // 至少保留最后一个有效点，让曲线完整展示到收盘
+  const endIdx = Math.min(lastIdx + 1, rawVals.length - 1);
+  const validLen = endIdx + 1;
+
   return {
     date: d.networth[0]?.pre_date || "",
-    times: d.networth.map((item: any) =>
-      item.min_time ? item.min_time.substring(0, 5) : "",
-    ),
-    vals: d.networth.map((item: any) => {
-      const v = parseFloat(item.pre_nav);
-      return isNaN(v) ? null : v;
-    }),
+    times: rawTimes.slice(0, validLen),
+    vals: rawVals.slice(0, validLen),
     worth: parseFloat(d.worth) || 0,
     indices: (d.index || []).map((idx: any) => ({
       name: idx.name,
-      rates: idx.rate || [],
+      rates: (idx.rate || []).slice(0, validLen),
     })),
   };
 }); // ========== 分时估值走势图 ==========
@@ -1563,7 +1600,7 @@ async function renderSinaChart() {
         v != null ? +(((v - data.worth) / data.worth) * 100).toFixed(2) : null,
       ),
       showSymbol: false,
-      smooth: true,
+      smooth: false,
       lineStyle: {
         color:
           data.vals.length > 0 &&
@@ -1619,8 +1656,12 @@ async function renderSinaChart() {
   ];
 
   const idxColors = ["#ee6666", "#91cc75", "#fac858", "#73c0de"];
-  data.indices.forEach((idx: any, i: number) => {
-    if (idx.rates.length === data.times.length) {
+  let colorIdx = 0;
+  data.indices.forEach((idx: any) => {
+    if (
+      activeSinaIndices[idx.name] &&
+      idx.rates.length === data.times.length
+    ) {
       const base = idx.rates[0]?.growthrate || 0;
       series.push({
         name: idx.name,
@@ -1629,9 +1670,10 @@ async function renderSinaChart() {
           (r: any) => +(((r.growthrate || 0) - base) * 100).toFixed(2),
         ),
         showSymbol: false,
-        smooth: true,
-        lineStyle: { color: idxColors[i % 4], width: 1, type: "dashed" },
+        smooth: false,
+        lineStyle: { color: idxColors[colorIdx % 4], width: 1, type: "dashed" },
       });
+      colorIdx++;
     }
   });
 
@@ -1647,10 +1689,28 @@ async function renderSinaChart() {
         if (fundP && fundP.value != null) {
           const estVal =
             data.worth + (data.worth * (fundP.value as number)) / 100;
-          h += "今日涨跌幅: " + Number(fundP.value).toFixed(2) + "%<br/>";
-          h += "今日估值: " + estVal.toFixed(4) + "<br/>";
+          h +=
+            '<span style="display:inline-block;margin-right:4px;border-radius:50%;width:8px;height:8px;background:' +
+            (Number(fundP.value) >= 0 ? "#ee6666" : "#91cc75") +
+            ';"></span>';
+          h += "涨跌幅: " + Number(fundP.value).toFixed(2) + "%<br/>";
+          h += "估值: " + estVal.toFixed(4) + "<br/>";
         }
-        h += "昨日净值: " + data.worth.toFixed(4);
+        h += "昨收: " + data.worth.toFixed(4);
+        // 显示选中的指数对比数据
+        ps.forEach((p: any) => {
+          if (p.seriesName !== "涨跌幅" && p.value != null) {
+            h +=
+              "<br/>" +
+              '<span style="display:inline-block;margin-right:4px;border-radius:50%;width:8px;height:8px;background:' +
+              (p.color || "#999") +
+              ';"></span>' +
+              p.seriesName +
+              ": " +
+              Number(p.value).toFixed(2) +
+              "%";
+          }
+        });
         return h;
       },
     },
@@ -1662,7 +1722,7 @@ async function renderSinaChart() {
       itemWidth: 16,
       itemHeight: 10,
     },
-    grid: { left: 55, right: 25, top: 32, bottom: 24 },
+    grid: { left: 55, right: 15, top: 32, bottom: 24 },
     xAxis: {
       type: "category",
       data: data.times,
@@ -1683,7 +1743,7 @@ async function renderSinaChart() {
       },
     },
     series,
-  });
+  }, { notMerge: true });
 }
 
 // 监听持仓tab切换和数据变化，自动渲染走势图
@@ -1692,6 +1752,17 @@ watch([activeTab, sinaChartData], async ([tab, data]) => {
     await renderSinaChart();
   }
 });
+
+// 监听对比指数选择变化，重新渲染图表
+watch(
+  activeSinaIndices,
+  async () => {
+    if (activeTab.value === "holding" && sinaChartData.value) {
+      await renderSinaChart();
+    }
+  },
+  { deep: true },
+);
 
 const detailRow = computed<FundRowDisplay | null>(() => {
   const fund = fundStore.getFund(props.code);
@@ -3150,6 +3221,7 @@ function resizeAllCharts() {
   buySellChart?.resize();
   sharePositionChart?.resize();
   netWorthTrendChart?.resize();
+  sinaChartInstance?.resize();
   acWorthTrendChart?.resize();
   rankChart?.resize();
 }
@@ -3315,8 +3387,78 @@ onUnmounted(() => {
   disposeDeepCharts();
 });
 </script>
-
 <style scoped>
+
+.sina-chart-wrap {
+  background: var(--el-bg-color);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--el-border-color-light);
+}
+
+.sina-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.sina-chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.sina-chart-date {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+}
+
+.sina-index-selector {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+}
+
+.sina-index-label {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+  margin-right: 2px;
+}
+
+.sina-index-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 11px;
+  border-radius: 12px;
+  border: 1px solid var(--el-border-color);
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sina-index-chip:hover {
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+}
+
+.sina-index-chip.active {
+  background: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+  color: #fff;
+}
+
+.sina-chart {
+  width: 100%;
+  height: 240px;
+}
 .detail-header {
   display: flex;
   align-items: center;

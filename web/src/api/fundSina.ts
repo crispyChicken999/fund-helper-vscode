@@ -142,7 +142,13 @@ export async function fetchSinaFundValuation(code: string): Promise<SinaFundgzCo
       return null
     }
 
-    const latest = networthArr[networthArr.length - 1]!
+    // 去掉尾部重复值（收盘后接口持续返回相同估值的平直数据点）
+    let latestIdx = networthArr.length - 1
+    while (latestIdx > 0 && networthArr[latestIdx].pre_nav === networthArr[latestIdx - 1].pre_nav) {
+      latestIdx--
+    }
+
+    const latest = networthArr[latestIdx]!
     const jzrq = formatDate(data.worth_date)
     const gztime = `${latest.pre_date || jzrq} ${latest.min_time || ''}`
 
