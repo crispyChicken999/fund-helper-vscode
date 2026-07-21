@@ -279,6 +279,8 @@ async function fetchSingleFund(code: string): Promise<any> {
       gsz: latest.pre_nav || data.worth || '',
       gszzl: latest.nav_pct || '0',
       gztime,
+      _fromSina: true,
+      _sinaData: data,
     };
   } catch (error) {
     return await fetchFundFromMNFInfo(code);
@@ -350,6 +352,10 @@ export async function getFundData(
       if (mnfInfo.dwjz !== undefined) {
         val.dwjz = mnfInfo.dwjz;
       }
+      // Sina 估值接口不返回基金名称，从 MNFInfo 补充
+      if (mnfInfo.name && !val.name) {
+        val.name = mnfInfo.name;
+      }
     }
 
     const jzrq = val.jzrq;
@@ -419,6 +425,8 @@ export async function getFundData(
       shares,
       cost,
       navChgRt,
+      // 携带新浪API原始数据（供走势图使用）
+      _sinaData: val._sinaData,
     });
   }
 

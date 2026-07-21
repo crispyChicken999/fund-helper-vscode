@@ -365,7 +365,9 @@ function toFundInfoFromMerge(
     isRealValue,
     navChgRt,
     shares: num,
-    cost
+    cost,
+    // 携带新浪API原始数据（供走势图使用）
+    _sinaData: val._sinaData,
   }
 }
 

@@ -31,6 +31,9 @@ export interface FundInfo {
   /** 关联板块（天天基金） */
   relateTheme?: string
 
+  /** 新浪API原始数据（供走势图使用） */
+  _sinaData?: import('@/api/fundSina').SinaFundData
+
   /** @deprecated 兼容旧缓存，等同 netValue */
   currentPrice?: number
   /** @deprecated */

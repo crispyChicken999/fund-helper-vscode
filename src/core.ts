@@ -633,7 +633,7 @@ export async function exportFund() {
     // - groups 的每个数组在一行显示
     // - groupOrder、columnOrder、visibleColumns 数组在一行显示
 
-    const fundsJson = funds.map(f => JSON.stringify(f)).join(',\n    ');
+    const fundsJson = funds.map(f => JSON.stringify({ code: f.code, num: parseFloat(f.num).toFixed(2), cost: parseFloat(f.cost).toFixed(4) })).join(',\n    ');
 
     // groups: 每个分组的数组在一行显示
     const groupsLines: string[] = [];

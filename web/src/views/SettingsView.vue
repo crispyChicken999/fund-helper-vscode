@@ -501,7 +501,7 @@
             </el-form-item>
 
             <!-- 访问站点 -->
-            <el-form-item label="访问站点" label-width="120px" label-position="top">
+            <el-form-item label="访问站点" label-width="120px">
               <div class="site-list">
                 <!-- 🚀 主站 Cloudflare Pages -->
                 <div class="site-card site-card--main" :class="{ active: isMainSite }">
@@ -1363,8 +1363,8 @@ function handleExportJson() {
   const payload = {
     funds: fundStore.funds.map((f) => ({
       code: f.code,
-      num: String(f.num),
-      cost: String(f.cost),
+      num: f.num.toFixed(2),
+      cost: f.cost.toFixed(4),
     })),
     groups: groupStore.exportGroupsToObject().groups,
     groupOrder: groupStore.getGroupList.map((g) => g.name),

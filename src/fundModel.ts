@@ -32,6 +32,8 @@ export interface FundInfo {
   shares: number;
   /** 持仓成本价 */
   cost: number;
+  /** 新浪API原始分时数据（供走势图使用） */
+  _sinaData?: any;
 }
 
 /** 历史净值记录 */

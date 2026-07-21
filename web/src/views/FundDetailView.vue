@@ -86,6 +86,18 @@
     >
       <!-- 持仓信息 -->
       <div v-show="activeTab === 'holding'" class="tab-panel">
+        <!-- 分时估值走势图 -->
+        <div
+          v-if="sinaChartData"
+          class="sina-chart-wrap"
+          ref="sinaChartWrapRef"
+        >
+          <div class="sina-chart-header">
+            <span class="sina-chart-title">分时估值走势</span>
+            <span class="sina-chart-date">{{ sinaChartData.date }}</span>
+          </div>
+          <div ref="sinaChartRef" class="sina-chart"></div>
+        </div>
         <div v-if="detailRow" class="holding-sections">
           <div class="holding-section">
             <div class="section-title">估算数据</div>
@@ -1430,6 +1442,7 @@ const sharePositionChartRef = ref<HTMLElement | null>(null);
 const netWorthTrendChartRef = ref<HTMLElement | null>(null);
 const acWorthTrendChartRef = ref<HTMLElement | null>(null);
 const rankChartRef = ref<HTMLElement | null>(null);
+const sinaChartRef = ref<HTMLElement | null>(null);
 let netValueChart: any = null;
 let profitChart: any = null;
 let grandTotalChart: any = null;
@@ -1442,6 +1455,7 @@ let sharePositionChart: any = null;
 let netWorthTrendChart: any = null;
 let acWorthTrendChart: any = null;
 let rankChart: any = null;
+let sinaChartInstance: any = null;
 
 const isDarkMode = computed(() => settingStore.theme === "dark");
 
@@ -1503,6 +1517,180 @@ async function navigateTo(targetCode: string | null) {
 
 const fundView = computed(() => fundStore.getFundView(props.code));
 const displayName = computed(() => fundView.value?.name || props.code);
+// 新浪分时估值数据（供走势图使用）
+const sinaChartData = computed(() => {
+  const raw = fundStore.fundDetails.get(props.code);
+  const d = raw?._sinaData;
+  if (!d?.networth?.length) return null;
+  return {
+    date: d.networth[0]?.pre_date || "",
+    times: d.networth.map((item: any) =>
+      item.min_time ? item.min_time.substring(0, 5) : "",
+    ),
+    vals: d.networth.map((item: any) => {
+      const v = parseFloat(item.pre_nav);
+      return isNaN(v) ? null : v;
+    }),
+    worth: parseFloat(d.worth) || 0,
+    indices: (d.index || []).map((idx: any) => ({
+      name: idx.name,
+      rates: idx.rate || [],
+    })),
+  };
+}); // ========== 分时估值走势图 ==========
+async function renderSinaChart() {
+  const data = sinaChartData.value;
+  if (!data) return;
+  await nextTick();
+  const el = sinaChartRef.value;
+  if (!el) return;
+  const echarts = await loadEcharts();
+  const dark = isDarkMode.value;
+  const tc = dark ? "#ccc" : "#333";
+  const gc = dark ? "#444" : "#ddd";
+  const bg = dark ? "rgba(30,30,30,0.95)" : "rgba(255,255,255,0.95)";
+  const bc = dark ? "#555" : "#ddd";
+
+  if (!sinaChartInstance) sinaChartInstance = echarts.init(el);
+
+  const series: any[] = [
+    {
+      name: "涨跌幅",
+      type: "line",
+      data: data.vals.map((v: number | null) =>
+        v != null ? +(((v - data.worth) / data.worth) * 100).toFixed(2) : null,
+      ),
+      showSymbol: false,
+      smooth: true,
+      lineStyle: {
+        color:
+          data.vals.length > 0 &&
+          (data.vals[data.vals.length - 1] ?? 0) >= data.worth
+            ? "#ee6666"
+            : "#91cc75",
+        width: 1.5,
+      },
+      areaStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          {
+            offset: 0,
+            color: dark
+              ? data.vals.length > 0 &&
+                (data.vals[data.vals.length - 1] ?? 0) >= data.worth
+                ? "rgba(238,102,102,0.25)"
+                : "rgba(145,204,117,0.25)"
+              : data.vals.length > 0 &&
+                  (data.vals[data.vals.length - 1] ?? 0) >= data.worth
+                ? "rgba(238,102,102,0.15)"
+                : "rgba(145,204,117,0.15)",
+          },
+          {
+            offset: 1,
+            color: dark ? "rgba(238,102,102,0.02)" : "rgba(238,102,102,0.02)",
+          },
+        ]),
+      },
+      markLine:
+        data.worth > 0
+          ? {
+              silent: true,
+              symbol: "none",
+              data: [
+                {
+                  yAxis: 0,
+                  lineStyle: {
+                    color: dark ? "#888" : "#bbb",
+                    type: "dashed",
+                    width: 1,
+                  },
+                  label: {
+                    formatter: "昨收 " + data.worth.toFixed(4),
+                    position: "insideEndBottom",
+                    color: tc,
+                    fontSize: 11,
+                  },
+                },
+              ],
+            }
+          : void 0,
+    },
+  ];
+
+  const idxColors = ["#ee6666", "#91cc75", "#fac858", "#73c0de"];
+  data.indices.forEach((idx: any, i: number) => {
+    if (idx.rates.length === data.times.length) {
+      const base = idx.rates[0]?.growthrate || 0;
+      series.push({
+        name: idx.name,
+        type: "line",
+        data: idx.rates.map(
+          (r: any) => +(((r.growthrate || 0) - base) * 100).toFixed(2),
+        ),
+        showSymbol: false,
+        smooth: true,
+        lineStyle: { color: idxColors[i % 4], width: 1, type: "dashed" },
+      });
+    }
+  });
+
+  sinaChartInstance.setOption({
+    tooltip: {
+      trigger: "axis",
+      backgroundColor: bg,
+      borderColor: bc,
+      textStyle: { color: tc, fontSize: 12 },
+      formatter: (ps: any[]) => {
+        let h = ps[0].name + "<br/>";
+        const fundP = ps.find((p: any) => p.seriesName === "涨跌幅");
+        if (fundP && fundP.value != null) {
+          const estVal =
+            data.worth + (data.worth * (fundP.value as number)) / 100;
+          h += "今日涨跌幅: " + Number(fundP.value).toFixed(2) + "%<br/>";
+          h += "今日估值: " + estVal.toFixed(4) + "<br/>";
+        }
+        h += "昨日净值: " + data.worth.toFixed(4);
+        return h;
+      },
+    },
+    legend: {
+      data: series.map((s: any) => s.name),
+      textStyle: { color: tc, fontSize: 11 },
+      type: "scroll",
+      top: 0,
+      itemWidth: 16,
+      itemHeight: 10,
+    },
+    grid: { left: 55, right: 25, top: 32, bottom: 24 },
+    xAxis: {
+      type: "category",
+      data: data.times,
+      boundaryGap: false,
+      axisLine: { lineStyle: { color: gc } },
+      axisLabel: { color: tc, fontSize: 10 },
+      axisTick: { show: false },
+    },
+    yAxis: {
+      type: "value",
+      scale: true,
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: gc, type: "dashed" } },
+      axisLabel: {
+        color: tc,
+        fontSize: 10,
+        formatter: (v: number) => v.toFixed(2) + "%",
+      },
+    },
+    series,
+  });
+}
+
+// 监听持仓tab切换和数据变化，自动渲染走势图
+watch([activeTab, sinaChartData], async ([tab, data]) => {
+  if (tab === "holding" && data) {
+    await renderSinaChart();
+  }
+});
+
 const detailRow = computed<FundRowDisplay | null>(() => {
   const fund = fundStore.getFund(props.code);
   if (!fund) return null;
@@ -3107,6 +3295,11 @@ onMounted(async () => {
   setupTabScrollShadows();
 
   await loadTabOnce(activeTab.value);
+
+  // 进入详情页时如果已是持仓概况tab且有sinaData则自动渲染走势图
+  if (activeTab.value === "holding" && sinaChartData.value) {
+    await renderSinaChart();
+  }
 });
 
 onUnmounted(() => {
@@ -3115,6 +3308,8 @@ onUnmounted(() => {
   window.removeEventListener("resize", resizeAllCharts);
   netValueChart?.dispose();
   profitChart?.dispose();
+  sinaChartInstance?.dispose();
+  sinaChartInstance = null;
   disposeDeepCharts();
 });
 </script>
