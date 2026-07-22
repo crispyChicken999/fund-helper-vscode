@@ -74,7 +74,7 @@
             <li>
               2. ✏️
               <strong>点击基金名称</strong
-              >，可查看基金详情、编辑持仓成本、份额和进行删除等操作，点击
+              >，可查看基金详情、编辑持仓成本、份额和进行删除等操作；<strong>长按基金名称</strong> 可直接打开详情页。点击
               <strong>基金代码</strong> 可以直接复制到剪贴板，点击
               <strong>分组tag</strong> 可以查看该分组筛选下的所有基金
             </li>
@@ -102,7 +102,10 @@
               <strong>Box Name</strong>
               后，可在多设备间（VSCode插件、PC、Mobile）云同步数据，支持扫码同步
             </li>
-            <li>8. 🎉 更多功能敬请探索，设置中均有提示说明，欢迎尝试！🎉</li>
+            <li>
+              8. ⌨️ <strong>键盘快捷键</strong>（仅在基金详情页生效）：<strong>W/↑</strong> 上一个基金，<strong>S/↓</strong> 下一个基金；<strong>A/←</strong> 上一个 Tab，<strong>D/→</strong> 下一个 Tab（支持触底循环）；<strong>ESC</strong> 返回首页
+            </li>
+            <li>9. 🎉 更多功能敬请探索，设置中均有提示说明，欢迎尝试！🎉</li>
           </ul>
         </el-collapse-item>
 

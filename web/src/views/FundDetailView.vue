@@ -15,9 +15,8 @@
                   <el-button
                     size="small"
                     text
-                    :disabled="prevCode === null"
-                    :title="prevCode ? `上一个：${prevCode}` : '已是第一个'"
-                    @click="navigateTo(prevCode)"
+                    :title="prevCode ? `上一个：${prevCode}` : '第一个，触底回到最后一个'"
+                    @click="navigateTo(prevCode ?? (allFundCodes[allFundCodes.length - 1] ?? null))"
                     >‹</el-button
                   >
                   <span class="fund-nav-pos"
@@ -26,9 +25,8 @@
                   <el-button
                     size="small"
                     text
-                    :disabled="nextCode === null"
-                    :title="nextCode ? `下一个：${nextCode}` : '已是最后一个'"
-                    @click="navigateTo(nextCode)"
+                    :title="nextCode ? `下一个：${nextCode}` : '最后一个，触底回到第一个'"
+                    @click="navigateTo(nextCode ?? (allFundCodes[0] ?? null))"
                     >›</el-button
                   >
                 </div>
@@ -3301,6 +3299,55 @@ function goBack() {
   router.push("/");
 }
 
+// ==================== 键盘导航 ====================
+
+function handleKeydown(e: KeyboardEvent) {
+  // 如果焦点在 input/textarea/select 上，不处理快捷键
+  const tag = (e.target as HTMLElement)?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+  const key = e.key.toLowerCase();
+
+  // ESC：回到首页
+  if (key === "escape") {
+    goBack();
+    return;
+  }
+
+  // W/S 或 上/下箭头：切换基金（触底回首）
+  if (key === "w" || key === "arrowup" || key === "s" || key === "arrowdown") {
+    const codes = allFundCodes.value;
+    if (codes.length === 0) return;
+    if (key === "w" || key === "arrowup") {
+      // 上一个基金，首个则跳到最后一个
+      const target = prevCode.value ?? codes[codes.length - 1]!;
+      navigateTo(target);
+    } else {
+      // 下一个基金，末个则跳到第一个
+      const target = nextCode.value ?? codes[0]!;
+      navigateTo(target);
+    }
+    return;
+  }
+
+  // A/D 或 左/右箭头：切换 Tab（触底回首）
+  if (key === "a" || key === "arrowleft" || key === "d" || key === "arrowright") {
+    const currentIdx = tabs.findIndex((t) => t.key === activeTab.value);
+    if (currentIdx === -1) return;
+    let nextIdx: number;
+    if (key === "a" || key === "arrowleft") {
+      nextIdx = currentIdx - 1;
+    } else {
+      nextIdx = currentIdx + 1;
+    }
+    // 触底回首
+    if (nextIdx < 0) nextIdx = tabs.length - 1;
+    if (nextIdx >= tabs.length) nextIdx = 0;
+    switchTab(tabs[nextIdx]!.key);
+    return;
+  }
+}
+
 // ==================== ResizeObserver ====================
 
 let resizeObs: ResizeObserver | null = null;
@@ -3462,6 +3509,7 @@ onMounted(async () => {
   observeChartContainers(resizeObs);
 
   window.addEventListener("resize", resizeAllCharts);
+  window.addEventListener("keydown", handleKeydown);
 
   // 延迟一帧以确保 DOM 已完全挂载
   await nextTick();
@@ -3482,6 +3530,7 @@ onUnmounted(() => {
   cleanupTabScrollShadows();
   resizeObs?.disconnect();
   window.removeEventListener("resize", resizeAllCharts);
+  window.removeEventListener("keydown", handleKeydown);
   netValueChart?.dispose();
   profitChart?.dispose();
   sinaChartInstance?.dispose();

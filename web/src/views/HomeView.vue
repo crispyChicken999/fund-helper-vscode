@@ -319,7 +319,13 @@
                       />
                     </svg>
                   </span>
-                  <span class="fund-name">{{ row.name }}</span>
+                  <span
+                    class="fund-name"
+                    @pointerdown="onFundNamePointerDown(row, $event)"
+                    @pointerup="onFundNamePointerUp"
+                    @pointerleave="onFundNamePointerUp"
+                    @contextmenu.prevent
+                  >{{ row.name }}</span>
                 </div>
                 <div class="fund-code-row">
                   <div>
@@ -1261,6 +1267,7 @@ const selectedNavDate = ref("");
 const selectedNavValue = ref(0);
 
 let groupPressTimer: ReturnType<typeof setTimeout> | null = null;
+let fundNamePressTimer: ReturnType<typeof setTimeout> | null = null;
 const LONG_PRESS_MS = 520;
 
 const fundFormRules: FormRules = {
@@ -1953,7 +1960,14 @@ function onGroupMouseEnter(group: Group, e: MouseEvent) {
     clearTimeout(groupHoverHideTimer);
     groupHoverHideTimer = null;
   }
+  // 使用 getBoundingClientRect 获取分组 tag 位置
+  const tagEl = e.currentTarget as HTMLElement;
+  const tagRect = tagEl.getBoundingClientRect();
   groupHoverTimer = setTimeout(() => {
+    // 设置 tooltip 位置：左对齐分组 tag，显示在 tag 下方
+    groupHoverX.value = tagRect.left;
+    groupHoverY.value = tagRect.bottom + 8;
+
     // 计算分组统计数据（复用 showGroupStats 的逻辑）
     const codesInGroup = new Set(group.fundCodes);
     const rows = enrichedRows.value.filter((r) => codesInGroup.has(r.code));
@@ -2015,28 +2029,7 @@ function onGroupMouseEnter(group: Group, e: MouseEvent) {
           ? totalAsset / (fundStore.getTotalAsset || 0)
           : 0,
     };
-    // 基于分组元素位置，智能显示在左下角或右下角
-    const groupTagEl = (e.target as HTMLElement).closest(".group-tag-item");
-    if (groupTagEl) {
-      const rect = groupTagEl.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      // 判断分组item是否在右侧（中心点在视口右半部分）
-      const isRightSide = rect.left + rect.width / 2 > viewportWidth / 2;
-
-      if (isRightSide) {
-        // 右侧item：显示在right bottom
-        groupHoverX.value = rect.right;
-        groupHoverY.value = rect.bottom + 8;
-      } else {
-        // 左侧item：显示在left bottom
-        groupHoverX.value = rect.left;
-        groupHoverY.value = rect.bottom + 8;
-      }
-    } else {
-      // 备用方案：使用鼠标位置
-      groupHoverX.value = e.clientX;
-      groupHoverY.value = e.clientY;
-    }
+    // 位置已在函数入口通过 getBoundingClientRect 设置
     groupHoverVisible.value = true;
   }, HOVER_SHOW_DELAY);
 }
@@ -2093,7 +2086,13 @@ function onAllGroupMouseEnter(e: MouseEvent) {
     clearTimeout(groupHoverHideTimer);
     groupHoverHideTimer = null;
   }
+  // 使用 getBoundingClientRect 获取"全部"分组 tag 位置
+  const tagEl = e.currentTarget as HTMLElement;
+  const tagRect = tagEl.getBoundingClientRect();
   groupHoverTimer = setTimeout(() => {
+    // 设置 tooltip 位置
+    groupHoverX.value = tagRect.left;
+    groupHoverY.value = tagRect.bottom + 8;
     // 计算所有基金的统计
     let estimatedGain = 0,
       dailyGain = 0,
@@ -2636,6 +2635,25 @@ function onGroupPointerUp() {
   if (groupPressTimer) {
     clearTimeout(groupPressTimer);
     groupPressTimer = null;
+  }
+}
+
+function onFundNamePointerDown(row: FundRowDisplay, e: PointerEvent) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  if (e.pointerType !== "mouse") {
+    e.preventDefault();
+  }
+  onFundNamePointerUp();
+  fundNamePressTimer = setTimeout(() => {
+    fundNamePressTimer = null;
+    router.push(`/detail/${row.code}`);
+  }, LONG_PRESS_MS);
+}
+
+function onFundNamePointerUp() {
+  if (fundNamePressTimer) {
+    clearTimeout(fundNamePressTimer);
+    fundNamePressTimer = null;
   }
 }
 
