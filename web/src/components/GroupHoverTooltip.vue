@@ -170,6 +170,7 @@ const props = defineProps<{
   stats: GroupStats;
   x: number;
   y: number;
+  tagTop: number;
 }>();
 
 defineEmits<{
@@ -208,83 +209,28 @@ function recalcPosition() {
   if (!el) return;
 
   const rect = el.getBoundingClientRect();
-  const margin = 12;
+  const margin = 8;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  // GroupHoverTooltip：显示在分组下方，根据分组位置智能选择左下或右下
-  // props.x = groupTagRect.left（左侧item）或 groupTagRect.right（右侧item）
-  // props.y = groupTagRect.bottom + 8
+  // 参照 VSCode 端逻辑：
+  // 默认显示在分组 tag 下方（左对齐），空间不足时自动适配
+  let left = props.x;
+  let top = props.y;
 
-  // 判断分组是否在视口右侧
-  const isRightSide = props.x > vw / 2;
-  let left: number;
-  let top = props.y; // 显示在分组下方
-
-  if (isRightSide) {
-    // 右侧item：优先级 右 → 左 → 居中
-    left = props.x - rect.width - margin; // 优先显示在左侧（相对于item右边）
-
-    if (left < margin) {
-      // 左侧空间不够，显示在右侧（相对于item右边）
-      left = props.x + margin;
-
-      if (left + rect.width > vw - margin) {
-        // 右侧也不够，进行特殊处理
-        left = Math.max(margin, (vw - rect.width) / 2);
-
-        if (rect.width > vw - margin * 2) {
-          el.style.maxWidth = vw - margin * 2 + "px";
-          el.style.width = vw - margin * 2 + "px";
-          left = margin;
-
-          const newRect = el.getBoundingClientRect();
-
-          if (top + newRect.height > vh - margin) {
-            top = props.y - newRect.height - margin;
-            if (top < margin) {
-              top = margin;
-            }
-          }
-        }
-      }
-    }
-  } else {
-    // 左侧item：优先级 左 → 右 → 居中
-    left = props.x - rect.width - margin; // 优先显示在左侧（相对于item左边）
-
-    if (left < margin) {
-      // 左侧空间不够，尝试显示在右侧
-      left = props.x + margin;
-
-      if (left + rect.width > vw - margin) {
-        // 右侧也不够，进行特殊处理
-        left = Math.max(margin, (vw - rect.width) / 2);
-
-        if (rect.width > vw - margin * 2) {
-          el.style.maxWidth = vw - margin * 2 + "px";
-          el.style.width = vw - margin * 2 + "px";
-          left = margin;
-
-          const newRect = el.getBoundingClientRect();
-
-          if (top + newRect.height > vh - margin) {
-            top = props.y - newRect.height - margin;
-            if (top < margin) {
-              top = margin;
-            }
-          }
-        }
-      }
-    }
+  // 垂直空间不足，翻转到 tag 上方
+  if (top + rect.height + margin > vh) {
+    top = props.tagTop - rect.height - margin;
   }
 
-  // 垂直边界保险约束
-  if (top < margin) {
-    top = margin;
-  } else if (top + rect.height > vh - margin) {
-    top = Math.max(margin, vh - rect.height - margin);
+  // 水平空间不足，向左平移适配
+  if (left + rect.width + margin > vw) {
+    left = vw - rect.width - margin;
   }
+
+  // 边界安全约束
+  if (left < margin) left = margin;
+  if (top < margin) top = margin;
 
   adjustedPos.value = { left, top };
 }

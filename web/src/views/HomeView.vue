@@ -499,6 +499,7 @@
         :stats="groupHoverStats"
         :x="groupHoverX"
         :y="groupHoverY"
+        :tag-top="groupHoverTagTop"
         @mouseenter="onGroupTooltipMouseEnter"
         @mouseleave="onGroupTooltipMouseLeave"
         @close="closeGroupHover"
@@ -1247,6 +1248,7 @@ const groupHoverStats = ref<GroupStats>({
 });
 const groupHoverX = ref(0);
 const groupHoverY = ref(0);
+const groupHoverTagTop = ref(0);
 let groupHoverTimer: ReturnType<typeof setTimeout> | null = null;
 let groupHoverHideTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -1963,6 +1965,7 @@ function onGroupMouseEnter(group: Group, e: MouseEvent) {
   // 使用 getBoundingClientRect 获取分组 tag 位置
   const tagEl = e.currentTarget as HTMLElement;
   const tagRect = tagEl.getBoundingClientRect();
+  groupHoverTagTop.value = tagRect.top;
   groupHoverTimer = setTimeout(() => {
     // 设置 tooltip 位置：左对齐分组 tag，显示在 tag 下方
     groupHoverX.value = tagRect.left;
@@ -2089,6 +2092,7 @@ function onAllGroupMouseEnter(e: MouseEvent) {
   // 使用 getBoundingClientRect 获取"全部"分组 tag 位置
   const tagEl = e.currentTarget as HTMLElement;
   const tagRect = tagEl.getBoundingClientRect();
+  groupHoverTagTop.value = tagRect.top;
   groupHoverTimer = setTimeout(() => {
     // 设置 tooltip 位置
     groupHoverX.value = tagRect.left;
@@ -2152,12 +2156,6 @@ function onAllGroupMouseEnter(e: MouseEvent) {
           ? totalAsset / (fundStore.getTotalAsset || 0)
           : 0,
     };
-
-    // "全部"项在左侧，显示在right bottom
-    const allGroupEl = e.target as HTMLElement;
-    const rect = allGroupEl.getBoundingClientRect();
-    groupHoverX.value = rect.right;
-    groupHoverY.value = rect.bottom + 8;
 
     groupHoverVisible.value = true;
   }, HOVER_SHOW_DELAY);
