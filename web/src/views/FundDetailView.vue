@@ -1356,7 +1356,8 @@ import { useFundStore, useSettingStore } from "@/stores";
 import { fundService } from "@/services";
 import { formatCurrency, formatNumber } from "@/utils/format";
 import { loadEcharts } from "@/utils/echarts";
-import { getSinaData, sinaVersion } from "@/utils/sinaDataCache";
+import { getSinaData, setSinaData, sinaVersion } from "@/utils/sinaDataCache";
+import { fetchSinaFundValuation } from "@/api/fundSina";
 import { buildFundRowDisplay, type FundRowDisplay } from "@/utils/fundDisplay";
 import { normalizeFundInfo } from "@/utils/fundInfoNormalize";
 import { getChinaMarketStatus } from "@/utils/marketChina";
@@ -1541,6 +1542,26 @@ async function navigateTo(targetCode: string | null) {
 const fundView = computed(() => fundStore.getFundView(props.code));
 const displayName = computed(() => fundView.value?.name || props.code);
 // 新浪分时估值数据（供走势图使用，从非响应式缓存读取）
+/** 根据 time_range 生成完整分钟级时间轴 */
+function generateFullTimeline(timeRange: string[][]): string[] {
+  const times: string[] = []
+  timeRange.forEach((range: string[]) => {
+    if (range.length === 2) {
+      const [sH, sM] = range[0]!.split(':').map(Number)
+      const [eH, eM] = range[1]!.split(':').map(Number)
+      const start = sH! * 60 + sM!
+      const end = eH! * 60 + eM!
+      for (let current = start; current <= end; current++) {
+        const hh = Math.floor(current / 60).toString().padStart(2, '0')
+        const mm = (current % 60).toString().padStart(2, '0')
+        const tm = `${hh}:${mm}`
+        if (!times.includes(tm)) times.push(tm)
+      }
+    }
+  })
+  return times
+}
+
 const sinaChartData = computed(() => {
   // 建立响应式依赖：当有新的新浪数据到达时重新求值
   void sinaVersion.value
@@ -1557,24 +1578,72 @@ const sinaChartData = computed(() => {
   });
 
   // 去掉尾部重复的平直线段（收盘后接口返回的最后一个值保持不变）
-  // 从末尾向前扫描，找到最后一个值变化的点
   let lastIdx = rawVals.length - 1;
   while (lastIdx > 0 && rawVals[lastIdx] === rawVals[lastIdx - 1]) {
     lastIdx--;
   }
-  // 至少保留最后一个有效点，让曲线完整展示到收盘
   const endIdx = Math.min(lastIdx + 1, rawVals.length - 1);
   const validLen = endIdx + 1;
 
+  // 根据 time_range 生成全天完整分钟级时间轴（预渲染到交易结束）
+  let fullTimes: string[] = []
+  if (Array.isArray(d.time_range) && d.time_range.length) {
+    fullTimes = generateFullTimeline(d.time_range)
+  }
+  if (!fullTimes.length) {
+    fullTimes = rawTimes.slice(0, validLen)
+  }
+
+  // 建立 时间 → 估值 的映射
+  const timeValMap = new Map<string, number | null>()
+  for (let i = 0; i < validLen; i++) {
+    timeValMap.set(rawTimes[i]!, rawVals[i])
+  }
+
+  // 将估值数据映射到完整时间轴，尚未发生的时间点为 null
+  const finalVals = fullTimes.map(t => timeValMap.has(t) ? timeValMap.get(t)! : null)
+
+  // 前向填充：仅填充已有数据范围内的空隙（如 9:31→9:33 补上 9:32），未来时间点保持 null
+  let lastVal: number | null = null
+  // 找到最后一个有数据的点位，之后的不做填充
+  let lastDataIdx = -1
+  for (let i = finalVals.length - 1; i >= 0; i--) {
+    if (finalVals[i] !== null) { lastDataIdx = i; break }
+  }
+  for (let i = 0; i <= lastDataIdx; i++) {
+    if (finalVals[i] !== null) {
+      lastVal = finalVals[i]
+    } else if (lastVal !== null) {
+      finalVals[i] = lastVal
+    }
+  }
+
+  // 对比指数：为每个指数独立建立时间→rate 映射，再投射到完整时间轴
+  const indices = (d.index || []).map((idx: any) => {
+    const rawRates: any[] = idx.rate || []
+    const rateTimeMap = new Map<string, any>()
+    rawRates.forEach((r: any) => {
+      if (r.min_time) {
+        rateTimeMap.set(r.min_time.substring(0, 5), r)
+      }
+    })
+    const mappedRates = fullTimes.map(t => rateTimeMap.get(t) ?? null)
+    return { name: idx.name, rates: mappedRates }
+  })
+
+  // 找到最后一个有效估值，供颜色判断使用（不能取数组末尾，未来时间点都是 null）
+  let lastNonNullVal = 0
+  for (let i = finalVals.length - 1; i >= 0; i--) {
+    if (finalVals[i] !== null) { lastNonNullVal = finalVals[i]!; break }
+  }
+
   return {
     date: d.networth[0]?.pre_date || "",
-    times: rawTimes.slice(0, validLen),
-    vals: rawVals.slice(0, validLen),
+    times: fullTimes,
+    vals: finalVals,
     worth: parseFloat(d.worth) || 0,
-    indices: (d.index || []).map((idx: any) => ({
-      name: idx.name,
-      rates: (idx.rate || []).slice(0, validLen),
-    })),
+    lastVal: lastNonNullVal,
+    indices,
   };
 }); // ========== 分时估值走势图 ==========
 async function renderSinaChart() {
@@ -1604,7 +1673,7 @@ async function renderSinaChart() {
       lineStyle: {
         color:
           data.vals.length > 0 &&
-          (data.vals[data.vals.length - 1] ?? 0) >= data.worth
+          data.lastVal >= data.worth
             ? "#ee6666"
             : "#91cc75",
         width: 1.5,
@@ -1615,11 +1684,11 @@ async function renderSinaChart() {
             offset: 0,
             color: dark
               ? data.vals.length > 0 &&
-                (data.vals[data.vals.length - 1] ?? 0) >= data.worth
+                data.lastVal >= data.worth
                 ? "rgba(238,102,102,0.25)"
                 : "rgba(145,204,117,0.25)"
               : data.vals.length > 0 &&
-                  (data.vals[data.vals.length - 1] ?? 0) >= data.worth
+                  data.lastVal >= data.worth
                 ? "rgba(238,102,102,0.15)"
                 : "rgba(145,204,117,0.15)",
           },
@@ -1667,7 +1736,7 @@ async function renderSinaChart() {
         name: idx.name,
         type: "line",
         data: idx.rates.map(
-          (r: any) => +(((r.growthrate || 0) - base) * 100).toFixed(2),
+          (r: any) => r != null ? +(((r.growthrate || 0) - base) * 100).toFixed(2) : null,
         ),
         showSymbol: false,
         smooth: false,
@@ -1676,6 +1745,13 @@ async function renderSinaChart() {
       colorIdx++;
     }
   });
+
+  // 计算纵轴对称边界：使 y=0（昨收）始终位于纵轴中央，仅基于基金涨跌幅数据
+  const fundData = (series[0]?.data || []) as (number | null)[]
+  const fundPcts = fundData.filter((v): v is number => v != null)
+  const absMax = fundPcts.length
+    ? Math.max(...fundPcts.map(Math.abs))
+    : 0.1
 
   sinaChartInstance.setOption({
     tooltip: {
@@ -1733,7 +1809,8 @@ async function renderSinaChart() {
     },
     yAxis: {
       type: "value",
-      scale: true,
+      min: -absMax,
+      max: absMax,
       axisLine: { show: false },
       splitLine: { lineStyle: { color: gc, type: "dashed" } },
       axisLabel: {
@@ -1744,6 +1821,23 @@ async function renderSinaChart() {
     },
     series,
   }, { notMerge: true });
+}
+
+// ========== 分时估值图表数据获取 ==========
+/**
+ * 进入详情页时主动拉取新浪分时估值数据（供走势图使用）
+ * 与主页估值接口独立，单独调用确保走势图始终有数据
+ * 不阻塞页面渲染
+ */
+async function fetchSinaChartData(code: string) {
+  try {
+    const result = await fetchSinaFundValuation(code)
+    if (result?._sinaData) {
+      setSinaData(code, result._sinaData)
+    }
+  } catch {
+    // 静默失败 — 走势图区域无数据时不显示即可
+  }
 }
 
 // 监听持仓tab切换和数据变化，自动渲染走势图
@@ -2824,6 +2918,7 @@ async function handleRefresh() {
     pingzhongDetail.value = null;
     disposeDeepCharts();
     await fundService.fetchFundDetail(props.code);
+    fetchSinaChartData(props.code); // 后台拉取分时估值数据，不阻塞
     await loadTabOnce(activeTab.value);
   } finally {
     refreshing.value = false;
@@ -3271,6 +3366,8 @@ watch(
     netValueChart = null;
     profitChart?.dispose();
     profitChart = null;
+    sinaChartInstance?.dispose();
+    sinaChartInstance = null;
     disposeDeepCharts();
 
     // 加载新基金数据
@@ -3283,6 +3380,8 @@ watch(
       isEditingTotalAmount.value = false;
       editTotalAmount.value = fundView.value.num * fundView.value.cost;
     }
+    // 后台拉取分时估值数据，不阻塞页面渲染
+    fetchSinaChartData(newCode);
     // 加载当前 tab 的数据（loadedTabs 已清空）并滚动居中
     await loadTabOnce(activeTab.value);
     scrollTabIntoCenter(activeTab.value);
@@ -3369,6 +3468,9 @@ onMounted(async () => {
   setupTabScrollShadows();
 
   await loadTabOnce(activeTab.value);
+
+  // 后台拉取分时估值数据，不阻塞页面渲染
+  fetchSinaChartData(props.code);
 
   // 进入详情页时如果已是持仓概况tab且有sinaData则自动渲染走势图
   if (activeTab.value === "holding" && sinaChartData.value) {

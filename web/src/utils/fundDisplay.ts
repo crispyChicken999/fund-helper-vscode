@@ -181,7 +181,7 @@ export function buildFundRowDisplay(
     // 极端情况：仅有 gsz 无涨幅数据，才用 dwjz 作参照（通常不会走到这里）
     estimatedGain = (gsz - dwjz) * num
   } else {
-    console.log(`[fundDisplay] ${fund.code} 无估算数据，estimatedGain = 0`)
+    // console.log(`[fundDisplay] ${fund.code} 无估算数据，estimatedGain = 0`)
   }
 
   const dailyGain = (holdingAmount * navChgRt) / 100

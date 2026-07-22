@@ -238,8 +238,9 @@ async function fetchFundFromMNFInfo(code: string): Promise<any> {
 /**
  * 获取单个基金实时估值（新浪财经 API）
  * 替代原 fundgz.1234567.com.cn JSONP 接口
+ * 导出供 detail webview 独立获取分时图表数据
  */
-async function fetchSingleFund(code: string): Promise<any> {
+export async function fetchSinaFundData(code: string): Promise<any> {
   const url = `https://stock.finance.sina.com.cn/fundInfo/api/openapi.php/FdFundService.getEstimateNetworthPic?symbol=${code}`;
   try {
     const controller = new AbortController();
@@ -300,6 +301,117 @@ async function fetchSingleFund(code: string): Promise<any> {
 }
 
 /**
+ * 获取单个基金实时估值（新浪财经 API）—— 内部使用，供 getFundData 降级调用
+ */
+async function fetchSingleFund(code: string): Promise<any> {
+  return fetchSinaFundData(code);
+}
+
+/** FundValuationLast 接口返回的原始条目 */
+interface FundValuationLastRaw {
+  FCODE: string;
+  SHORTNAME: string;
+  /** 实时估值（number 或 null） */
+  GSZ: number | null;
+  /** 估值涨跌幅（number 或 null） */
+  GSZZL: number | null;
+  /** 估值时间 "YYYY-MM-DD HH:mm" */
+  GZTIME: string | null;
+  /** 单位净值 */
+  NAV: number;
+  /** 净值日期 YYYY-MM-DD */
+  PDATE: string;
+}
+
+/** 规范化 FundValuationLast 返回的 GZTIME */
+function normalizeGztime(gztime: string | null, pdate: string): string {
+  if (!gztime) return '';
+  // 仅时间 "HH:mm:ss" 或 "HH:mm" → 拼接 PDATE 日期
+  if (gztime.length <= 8) {
+    return `${pdate} ${gztime.substring(0, 5)}`;
+  }
+  // 全日期时间 "YYYYMMDD HH:mm:ss" → 转为 YYYY-MM-DD HH:mm
+  if (gztime.indexOf('-') === -1 && gztime.length >= 8) {
+    const d = gztime.substring(0, 8);
+    const t = gztime.length > 9 ? gztime.substring(9, 14) : gztime.substring(8, 13);
+    return `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)} ${t}`;
+  }
+  // "YYYY-MM-DD HH:mm:ss" → 截断秒
+  return gztime.substring(0, 16);
+}
+
+/**
+ * 批量获取基金实时估值（天天基金 FundValuationLast 接口）
+ * 替代原 fundgz JSONP，单次请求批量获取所有基金的实时估值
+ * 主域: fundcomapi.tiantianfunds.com
+ * 备用: fundcomapi.eastmoney.com
+ */
+async function fetchBatchFundValuationLast(codes: string[]): Promise<Map<string, FundValuationLastRaw>> {
+  const map = new Map<string, FundValuationLastRaw>();
+  if (!codes.length) return map;
+
+  const params = new URLSearchParams({
+    FCODES: codes.join(','),
+    FIELDS: 'FCODE,SHORTNAME,GSZZL,GZTIME,GSZ,NAV,PDATE',
+  });
+
+  const urls = [
+    `https://fundcomapi.tiantianfunds.com/mm/newCore/FundValuationLast?${params}`,
+    `https://fundcomapi.eastmoney.com/mm/newCore/FundValuationLast?${params}`,
+  ];
+
+  for (const url of urls) {
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(tid);
+
+      if (!res.ok) continue;
+
+      const json: any = await res.json().catch(() => null);
+      if (!json) continue;
+
+      // 兼容多种响应格式
+      let datas: any[] = [];
+      if (Array.isArray(json)) {
+        datas = json;
+      } else if (json.data && Array.isArray(json.data)) {
+        datas = json.data;
+      } else if (json.Datas && Array.isArray(json.Datas)) {
+        datas = json.Datas;
+      } else if (json.Data && Array.isArray(json.Data)) {
+        datas = json.Data;
+      }
+
+      for (const item of datas) {
+        if (item.FCODE) {
+          // 规范化 PDATE：YYYYMMDD → YYYY-MM-DD
+          let pdate = item.PDATE || '';
+          if (pdate.length === 8) {
+            pdate = `${pdate.substring(0, 4)}-${pdate.substring(4, 6)}-${pdate.substring(6, 8)}`;
+          }
+          map.set(item.FCODE, {
+            FCODE: item.FCODE,
+            SHORTNAME: item.SHORTNAME,
+            GSZ: item.GSZ,
+            GSZZL: item.GSZZL,
+            GZTIME: normalizeGztime(item.GZTIME, pdate),
+            NAV: item.NAV,
+            PDATE: pdate,
+          });
+        }
+      }
+      break; // 成功则跳出域名循环
+    } catch {
+      continue; // 尝试备用域名
+    }
+  }
+
+  return map;
+}
+
+/**
  * 批量获取基金实时估值数据
  */
 export async function getFundData(
@@ -310,27 +422,70 @@ export async function getFundData(
     return [];
   }
 
-  // 并行获取：fundgz 估值数据 + MNFInfo 真实净值数据
   const codes = configs.map(cfg => cfg.code);
-  const [gzResults, mnfInfoMap] = await Promise.all([
-    Promise.allSettled(configs.map((cfg) => fetchSingleFund(cfg.code))),
-    fetchBatchFundFromMNFInfo(codes)
+
+  // Step 1: 并行获取 - FundValuationLast（主力批量估值） + MNFInfo（净值元数据）
+  const [valuationLastMap, mnfInfoMap] = await Promise.all([
+    fetchBatchFundValuationLast(codes),
+    fetchBatchFundFromMNFInfo(codes),
   ]);
+
+  // Step 2: 确定需要降级到新浪 API 的基金
+  // - FundValuationLast 未返回或 GSZ 为 null → 该基金无盘中估值，尝试新浪
+  const needSinaCodes: string[] = [];
+  const sinaCodeIndex = new Map<string, number>();
+  for (const cfg of configs) {
+    const vl = valuationLastMap.get(cfg.code);
+    if (!vl || vl.GSZ === null || vl.GSZ === undefined) {
+      sinaCodeIndex.set(cfg.code, needSinaCodes.length);
+      needSinaCodes.push(cfg.code);
+    }
+  }
+
+  // Step 3: 对需要降级的基金逐只请求新浪 API
+  let sinaResults: PromiseSettledResult<any>[] = [];
+  if (needSinaCodes.length > 0) {
+    sinaResults = await Promise.allSettled(
+      needSinaCodes.map(code => fetchSingleFund(code))
+    );
+  }
 
   const fundList: FundInfo[] = [];
 
   for (let i = 0; i < configs.length; i++) {
     const cfg = configs[i];
-    const result = gzResults[i];
-    const val = result.status === "fulfilled" ? result.value : null;
+    const code = cfg.code;
+
+    // 决定使用哪个数据源
+    let val: any = null;
+    const vl = valuationLastMap.get(code);
+
+    if (vl && vl.GSZ !== null && vl.GSZ !== undefined) {
+      // 主力：FundValuationLast 返回有效估值
+      val = {
+        fundcode: vl.FCODE,
+        name: vl.SHORTNAME,
+        gsz: vl.GSZ,
+        gszzl: vl.GSZZL,
+        gztime: vl.GZTIME,
+        dwjz: vl.NAV,
+        jzrq: vl.PDATE,
+        _fromValuationLast: true,
+      };
+    } else if (sinaCodeIndex.has(code)) {
+      // 降级：新浪 API
+      const idx = sinaCodeIndex.get(code)!;
+      const result = sinaResults[idx];
+      val = result.status === "fulfilled" ? result.value : null;
+    }
 
     const shares = parseFloat(cfg.num) || 0;
     const cost = parseFloat(cfg.cost) || 0;
 
     if (!val) {
-      const oldData = previousData.find((f) => f.code === cfg.code);
+      const oldData = previousData.find((f) => f.code === code);
       if (oldData) {
-        fundList.push(oldData);
+        fundList.push({ ...oldData, shares, cost });
       } else {
         fundList.push({
           code: cfg.code,

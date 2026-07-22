@@ -2,6 +2,7 @@
 
 export * from './proxy'
 export * from './fundSina'
+export * from './fundValuationLast'
 export * from './fundgz'
 export * from './fundEastmoney'
 export * from './jsonbox'

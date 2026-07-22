@@ -4,6 +4,7 @@
 
 import type { Fund, FundInfo } from '@/types'
 import { fetchSinaFundValuation } from '@/api/fundSina'
+import { fetchBatchFundValuationLast } from '@/api/fundValuationLast'
 import { loadPush2JSONP } from '@/utils/jsonp'
 import { setSinaData } from '@/utils/sinaDataCache'
 
@@ -465,30 +466,69 @@ export async function getFundData(
 
   const codes = configs.map(c => c.code)
 
-  // 先从缓存加载 MNFInfo，不等待网络请求
-  let mnfInfoMap = loadMNFInfoCache()
-
-  // 过滤出当前需要的基金代码
+  // 先从缓存加载 MNFInfo
+  const cachedMNFInfo = loadMNFInfoCache()
   const filteredMNFInfo = new Map<string, any>()
   codes.forEach(code => {
-    if (mnfInfoMap.has(code)) {
-      filteredMNFInfo.set(code, mnfInfoMap.get(code))
+    if (cachedMNFInfo.has(code)) {
+      filteredMNFInfo.set(code, cachedMNFInfo.get(code))
     }
   })
   // 启动后台刷新任务（不等待）
   refreshMNFInfoInBackground(codes)
 
-  // 只等待 fundgz 接口
-  const gzResults = await Promise.allSettled(
-    configs.map(c => fetchSingleFundValuation(c.code))
-  )
+  // Step 1: 获取 FundValuationLast（主力批量估值）
+  const valuationLastMap = await fetchBatchFundValuationLast(codes)
+
+  // Step 2: 确定需要降级到新浪 API 的基金
+  // - 不在 valuationLastMap 中 → API 未返回该基金
+  // - GSZ 为 null → 天天基金不再为该基金提供实时估值，尝试新浪
+  const needSinaCodes: string[] = []
+  const sinaCodeIndex = new Map<string, number>()
+  for (const cfg of configs) {
+    const vl = valuationLastMap.get(cfg.code)
+    if (!vl || vl.GSZ === null || vl.GSZ === undefined) {
+      sinaCodeIndex.set(cfg.code, needSinaCodes.length)
+      needSinaCodes.push(cfg.code)
+    }
+  }
+
+  // Step 3: 对需要降级的基金逐只请求新浪 API
+  let sinaResults: PromiseSettledResult<any>[] = []
+  if (needSinaCodes.length > 0) {
+    sinaResults = await Promise.allSettled(
+      needSinaCodes.map(code => fetchSinaFundValuation(code))
+    )
+  }
 
   const fundList: FundInfo[] = []
 
   for (let i = 0; i < configs.length; i++) {
     const cfg = configs[i]!
-    const result = gzResults[i]!
-    const val = result.status === 'fulfilled' ? result.value : null
+    const code = cfg.code
+
+    // 决定使用哪个数据源
+    let val: any = null
+    const vl = valuationLastMap.get(code)
+
+    if (vl && vl.GSZ !== null && vl.GSZ !== undefined) {
+      // 主力：FundValuationLast 返回有效估值
+      val = {
+        fundcode: vl.FCODE,
+        name: vl.SHORTNAME,
+        gsz: vl.GSZ,
+        gszzl: vl.GSZZL,
+        gztime: vl.GZTIME,
+        dwjz: vl.NAV,
+        jzrq: vl.PDATE,
+        _fromValuationLast: true,
+      }
+    } else if (sinaCodeIndex.has(code)) {
+      // 降级：新浪 API
+      const idx = sinaCodeIndex.get(code)!
+      const result = sinaResults[idx]
+      val = result.status === 'fulfilled' ? result.value : null
+    }
 
     const shares = cfg.num || 0
     const cost = cfg.cost || 0

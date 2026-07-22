@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { FundInfo } from '../fundModel';
-import { fetchFundInvestmentPosition } from '../fundService';
+import { fetchFundInvestmentPosition, fetchSinaFundData } from '../fundService';
 import { getHTML } from './html';
 
 export class FundDetailWebview {
@@ -32,7 +32,7 @@ export class FundDetailWebview {
     if (existing) {
       existing._refreshCurrentFund = refreshCurrentFund;
       existing._getAllFunds = getAllFunds;
-      existing.update(fund);
+      void existing.update(fund);
       existing._panel.reveal(column);
       return;
     }
@@ -79,7 +79,7 @@ export class FundDetailWebview {
     this._refreshCurrentFund = refreshCurrentFund;
     this._getAllFunds = getAllFunds;
 
-    this.update(fund);
+    void this.update(fund);
 
     this._panel.webview.onDidReceiveMessage((message) => {
       if (message?.command === 'refresh') {
@@ -97,7 +97,7 @@ export class FundDetailWebview {
           const allFunds = this._getAllFunds();
           const targetFund = allFunds.find(f => f.code === targetCode);
           if (targetFund) {
-            FundDetailWebview.createOrShow(
+            void FundDetailWebview.createOrShow(
               this._extensionUri,
               targetFund,
               this._refreshCurrentFund,
@@ -122,13 +122,13 @@ export class FundDetailWebview {
     }
   }
 
-  public update(fund: FundInfo, activeTab?: string) {
+  public async update(fund: FundInfo, activeTab?: string) {
     this._currentFund = fund;
     if (activeTab) {
       this._activeTab = activeTab;
     }
     this._panel.title = `详情 - ${fund.name}`;
-    this._panel.webview.html = this._getHtmlForWebview(fund, this._activeTab);
+    this._panel.webview.html = await this._getHtmlForWebview(fund, this._activeTab);
   }
 
   private async refresh(activeTab?: string) {
@@ -148,19 +148,32 @@ export class FundDetailWebview {
         console.error("刷新基金详情失败:", error);
       }
 
-      this.update(latestFund || this._currentFund, activeTab || this._activeTab);
+      await this.update(latestFund || this._currentFund, activeTab || this._activeTab);
     } finally {
       this._refreshing = false;
     }
   }
 
-  private _getHtmlForWebview(fund: FundInfo, activeTab: string) {
+  private async _getHtmlForWebview(fund: FundInfo, activeTab: string) {
     // Determine VSCode theme for ECharts colors
     const isDark = vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark;
     
     // Get grayscale mode setting
     const config = vscode.workspace.getConfiguration("fund-helper");
     const grayscaleMode = config.get<boolean>("grayscaleMode", false);
+
+    // 独立拉取新浪分时估值数据（供走势图使用），不阻塞 HTML 生成
+    // 直接写入 fund 对象以便后续刷新时复用，避免重复请求
+    if (!fund._sinaData) {
+      try {
+        const sinaResult = await fetchSinaFundData(fund.code);
+        if (sinaResult?._sinaData) {
+          fund._sinaData = sinaResult._sinaData;
+        }
+      } catch {
+        // 静默失败，走势图无数据时不显示即可
+      }
+    }
 
     // Calculate holding info
     const holdingAmount = fund.shares * fund.netValue;
