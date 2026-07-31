@@ -97,7 +97,7 @@ export function updateStatusBar(fundList: FundInfo[]): void {
 
   let rateStr = "";
   if (totalAmount > 0) {
-    const rate = (totalEstimatedGain / totalAmount) * 100;
+    const rate = (totalAmount - totalEstimatedGain) > 0 ? (totalEstimatedGain / (totalAmount - totalEstimatedGain)) * 100 : 0;
     rateStr = ` (${rate >= 0 ? "+" : ""}${rate.toFixed(2)}%)`;
   }
 
@@ -139,8 +139,8 @@ export function updateStatusBar(fundList: FundInfo[]): void {
     md.appendMarkdown(`$(pulse) 估算收益：${hl(`${totalEstimatedGain >= 0 ? "+" : ""}${formatNumberWithComma(totalEstimatedGain)}`, dayColor)}\n\n`);
 
     const totalEstimatedRate =
-      totalAmount > 0
-        ? (totalEstimatedGain / totalAmount) * 100
+      (totalAmount - totalEstimatedGain) > 0
+        ? (totalEstimatedGain / (totalAmount - totalEstimatedGain)) * 100
         : 0;
     md.appendMarkdown(`$(symbol-numeric) 估算收益率：${hl(`${totalEstimatedRate >= 0 ? "+" : ""}${totalEstimatedRate.toFixed(2)}%`, dayColor)}\n\n`);
     md.appendMarkdown(`\n ___ \n\n`);
@@ -170,7 +170,7 @@ export function updateStatusBar(fundList: FundInfo[]): void {
 
   const copyText = isClosed
     ? `【基金统计（休市）】\n持有金额：${formatNumberWithComma(totalAmount)}\n累计盈利：${holdingUpCount} 只 (+${formatNumberWithComma(totalHoldingUp)})\n累计亏损：${holdingDownCount} 只 (${formatNumberWithComma(totalHoldingDown)})\n持有收益：${totalHoldingGain >= 0 ? "+" : ""}${formatNumberWithComma(totalHoldingGain)}\n持有收益率：${totalHoldingRate >= 0 ? "+" : ""}${totalHoldingRate.toFixed(2)}%\n自选数量：${fundList.length} 只\n更新时间：${timeStr}`
-    : `【今日基金统计】\n上涨基金：${upCount} 只 (+${formatNumberWithComma(totalEstimatedUp)})\n下跌基金：${downCount} 只 (${formatNumberWithComma(totalEstimatedDown)})\n估算收益：${totalEstimatedGain >= 0 ? "+" : ""}${formatNumberWithComma(totalEstimatedGain)}\n估算收益率：${(totalAmount > 0 ? (totalEstimatedGain / totalAmount) * 100 : 0).toFixed(2)}%\n持有金额：${formatNumberWithComma(totalAmount)}\n累计盈利：${holdingUpCount} 只 (+${formatNumberWithComma(totalHoldingUp)})\n累计亏损：${holdingDownCount} 只 (${formatNumberWithComma(totalHoldingDown)})\n持有收益：${totalHoldingGain >= 0 ? "+" : ""}${formatNumberWithComma(totalHoldingGain)}\n持有收益率：${totalHoldingRate >= 0 ? "+" : ""}${totalHoldingRate.toFixed(2)}%\n自选数量：${fundList.length} 只\n更新时间：${timeStr}`;
+    : `【今日基金统计】\n上涨基金：${upCount} 只 (+${formatNumberWithComma(totalEstimatedUp)})\n下跌基金：${downCount} 只 (${formatNumberWithComma(totalEstimatedDown)})\n估算收益：${totalEstimatedGain >= 0 ? "+" : ""}${formatNumberWithComma(totalEstimatedGain)}\n估算收益率：${((totalAmount - totalEstimatedGain) > 0 ? (totalEstimatedGain / (totalAmount - totalEstimatedGain)) * 100 : 0).toFixed(2)}%\n持有金额：${formatNumberWithComma(totalAmount)}\n累计盈利：${holdingUpCount} 只 (+${formatNumberWithComma(totalHoldingUp)})\n累计亏损：${holdingDownCount} 只 (${formatNumberWithComma(totalHoldingDown)})\n持有收益：${totalHoldingGain >= 0 ? "+" : ""}${formatNumberWithComma(totalHoldingGain)}\n持有收益率：${totalHoldingRate >= 0 ? "+" : ""}${totalHoldingRate.toFixed(2)}%\n自选数量：${fundList.length} 只\n更新时间：${timeStr}`;
   const uriEncoded = encodeURIComponent(JSON.stringify(copyText));
   md.appendMarkdown(`[$(copy) 复制统计信息](command:fund-helper.copyFundDetail?${uriEncoded})\n\n`);
 

@@ -2,7 +2,29 @@
 
 本文档记录了"基金助手"(Fund Helper) VS Code 扩展的所有重要更改。
 
-## [0.4.7] - 2026-07-31
+## [0.4.8] - 2026-07-31
+
+### 问题修复 (Bug Fixes)
+
+- 🐛 **修复收益率/涨幅百分比计算分母错误（VSCode 端 + Web 端）**：估算收益率、日收益率、分组估算涨幅等百分比计算使用了错误的分母
+  - **根因**：所有百分比计算统一使用 `收益 ÷ 今日总资产`，正确公式应为 `收益 ÷ 昨日总资产 = 收益 ÷ (今日总资产 - 收益)`
+  - 当有正收益时，分母偏大导致百分比数值偏低；有负收益时，分母偏小导致百分比绝对值偏高
+  - **影响范围**（VSCode 端）：
+    - `fundDataManager.ts`：`dailyGainRate` 日收益率
+    - `sidebar/webview/script.ts`：分组统计 `avgEstimatedChange`、`estimatedRate`、`dailyRate`
+    - `statusBar.ts`：状态栏估算收益率及复制文本
+  - **影响范围**（Web 端）：
+    - `HomeView.vue`：分组 hover Tooltip、触摸/点击分组统计的 `estimatedChangePercent`、`dailyChangePercent`（共 6 处）
+  - **修复文件**：
+    - `src/fundDataManager.ts`：`dailyGainRate = totalDailyGain / (totalAssets - totalDailyGain) * 100`
+    - `src/sidebar/webview/script.ts`：3 处分母修正
+    - `src/statusBar.ts`：2 处分母修正
+    - `web/src/views/HomeView.vue`：6 处分母修正
+
+- 🐛 **修复资金流向图时间轴断开（VSCode 端）**：沪深两市资金流向（分钟级）折线图在交易进行中时，后续时段被填充 null 导致折线断线掉落
+  - **根因**：`renderFlowChart` 使用 dataMap + null 填充方案，将 API 数据按时间映射到完整时间轴后，未发生的分钟全部填充 null，配合 `connectNulls: false` 导致折线在多处断开
+  - **修复方案**：参照 Web 端写法，去除 null 填充逻辑，直接按 API 返回数据映射到 series，ECharts 按索引对齐 xAxis 类别
+  - **修复文件**：`src/marketWebview.ts` — 重写 `renderFlowChart` 函数，简化数据处理流程
 
 ### 问题修复 (Bug Fixes)
 

@@ -187,7 +187,7 @@ export class FundDataManager {
 
     const holdingGain = totalAssets - totalCost;
     const holdingGainRate = totalCost > 0 ? (holdingGain / totalCost) * 100 : 0;
-    const dailyGainRate = totalAssets > 0 ? (totalDailyGain / totalAssets) * 100 : 0;
+    const dailyGainRate = (totalAssets - totalDailyGain) > 0 ? (totalDailyGain / (totalAssets - totalDailyGain)) * 100 : 0;
 
     return {
       totalAssets,

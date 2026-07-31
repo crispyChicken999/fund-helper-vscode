@@ -591,43 +591,20 @@ function addMinutes(time, minutes) {
 
 function renderFlowChart(klines) {
     var times = generateTimeArray();
-    var dataMap = {};
     
-    // 将数据映射到时间点
+    // 直接解析数据，不填充 null（参照 web 端：数据按索引对齐 xAxis，未发生的时间自然没有数据）
+    var main = [], superBig = [], big = [], mid = [], small = [];
     klines.forEach(function(line) {
         var p = line.split(',');
-        var time = p[0].slice(11); // 提取时间部分
-        dataMap[time] = {
-            main: parseFloat(p[1]) / 1e8,
-            superBig: parseFloat(p[2]) / 1e8,
-            big: parseFloat(p[3]) / 1e8,
-            mid: parseFloat(p[4]) / 1e8,
-            small: parseFloat(p[5]) / 1e8
-        };
-    });
-    
-    // 按照完整时间轴填充数据（没有数据的点为 null）
-    var main = [], superBig = [], big = [], mid = [], small = [];
-    times.forEach(function(time) {
-        var d = dataMap[time];
-        if (d) {
-            main.push(d.main.toFixed(4));
-            superBig.push(d.superBig.toFixed(4));
-            big.push(d.big.toFixed(4));
-            mid.push(d.mid.toFixed(4));
-            small.push(d.small.toFixed(4));
-        } else {
-            // 没有数据的点为 null，echarts 会自动断开连线
-            main.push(null);
-            superBig.push(null);
-            big.push(null);
-            mid.push(null);
-            small.push(null);
-        }
+        main.push(parseFloat((parseFloat(p[1]) / 1e8).toFixed(2)));
+        superBig.push(parseFloat((parseFloat(p[2]) / 1e8).toFixed(2)));
+        big.push(parseFloat((parseFloat(p[3]) / 1e8).toFixed(2)));
+        mid.push(parseFloat((parseFloat(p[4]) / 1e8).toFixed(2)));
+        small.push(parseFloat((parseFloat(p[5]) / 1e8).toFixed(2)));
     });
     
     var chart = getChart('flowChart');
-    function mkS(name, data, color) { return { name: name, type: 'line', data: data, smooth: false, showSymbol: false, lineStyle: { color: color, width: 1.5 }, itemStyle: { color: color }, connectNulls: false }; }
+    function mkS(name, data, color) { return { name: name, type: 'line', data: data, smooth: false, showSymbol: false, lineStyle: { color: color, width: 1.5 }, itemStyle: { color: color } }; }
     chart.setOption({
         backgroundColor: 'transparent',
         tooltip: { trigger: 'axis', formatter: function(params) {
