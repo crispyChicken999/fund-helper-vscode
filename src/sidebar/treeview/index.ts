@@ -16,6 +16,7 @@ import {
   calcDailyGain,
   calcHoldingGain,
   calcHoldingGainRate,
+  calcEstimatedGain,
 } from "../../fundModel";
 import { MarketIndex } from "../../fundService";
 import { isMarketOpen } from "../../holidayService";
@@ -359,9 +360,9 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     // 计算估算收益（基于 estimatedValue 或 changePercent）
     // 只要有估算涨幅数据就计算，不受净值是否更新的影响
     const getEstimatedGain = (f: FundInfo): number => {
-      // 当 estimatedValue === netValue 时，说明估算净值已更新为真实净值，应该使用涨跌幅计算
-      if (f.estimatedValue !== null && f.shares > 0 && f.estimatedValue !== f.netValue) {
-        return (f.estimatedValue - f.netValue) * f.shares;
+      // 优先使用反推公式，对齐 Web fundDisplay.ts
+      if (f.shares > 0 && f.estimatedValue !== null && f.estimatedValue !== f.netValue) {
+        return calcEstimatedGain(f);
       } else if (f.shares > 0 && f.netValue > 0 && f.changePercent !== 0) {
         const holdingAmount = f.netValue * f.shares;
         return (holdingAmount * f.changePercent) / 100;
@@ -556,9 +557,9 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
 
       // 计算估算收益：只要有估算涨幅数据就计算，不受休市状态影响
       let daily = 0;
-      // 当 estimatedValue === netValue 时，说明估算净值已更新为真实净值，应该使用涨跌幅计算
-      if (f.estimatedValue !== null && f.shares > 0 && f.estimatedValue !== f.netValue) {
-        daily = (f.estimatedValue - f.netValue) * f.shares;
+      // 优先使用反推公式
+      if (f.shares > 0 && f.estimatedValue !== null && f.estimatedValue !== f.netValue) {
+        daily = calcEstimatedGain(f);
       } else if (f.shares > 0 && f.netValue > 0 && f.changePercent !== 0) {
         const holdingAmount = f.netValue * f.shares;
         daily = (holdingAmount * f.changePercent) / 100;
@@ -673,9 +674,9 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
 
       // 计算估算收益：只要有估算涨幅数据就计算，不受休市状态影响
       let daily = 0;
-      // 当 estimatedValue === netValue 时，说明估算净值已更新为真实净值，应该使用涨跌幅计算
-      if (f.estimatedValue !== null && f.shares > 0 && f.estimatedValue !== f.netValue) {
-        daily = (f.estimatedValue - f.netValue) * f.shares;
+      // 优先使用反推公式
+      if (f.shares > 0 && f.estimatedValue !== null && f.estimatedValue !== f.netValue) {
+        daily = calcEstimatedGain(f);
       } else if (f.shares > 0 && f.netValue > 0 && f.changePercent !== 0) {
         const holdingAmount = f.netValue * f.shares;
         daily = (holdingAmount * f.changePercent) / 100;
@@ -775,9 +776,9 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     // 计算估算收益（基于 estimatedValue 或 changePercent）
     // 只要有估算涨幅数据，就应该显示估算收益，不受净值是否更新的影响
     let estimatedGain = 0;
-    // 当 estimatedValue === netValue 时，说明估算净值已更新为真实净值，应该使用涨跌幅计算
-    if (fund.estimatedValue !== null && fund.shares > 0 && fund.estimatedValue !== fund.netValue) {
-      estimatedGain = (fund.estimatedValue - fund.netValue) * fund.shares;
+    // 优先使用反推公式
+    if (fund.shares > 0 && fund.estimatedValue !== null && fund.estimatedValue !== fund.netValue) {
+      estimatedGain = calcEstimatedGain(fund);
     } else if (fund.shares > 0 && fund.netValue > 0 && fund.changePercent !== 0) {
       // 没有 estimatedValue 或 estimatedValue 等于 netValue 时，基于涨跌幅计算
       const holdingAmount = fund.netValue * fund.shares;
@@ -908,10 +909,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
       `**<span style="color:${color};background-color:${color}33;">&nbsp;${text}&nbsp;</span>**`;
 
     // 计算所需数据
-    const estimatedGain =
-      fund.estimatedValue !== null
-        ? (fund.estimatedValue - fund.netValue) * fund.shares
-        : 0;
+    const estimatedGain = calcEstimatedGain(fund);
 
     const changeStr = `${sign(fund.changePercent)}${fund.changePercent.toFixed(2)}%`;
     const estimatedGainStr = `${sign(estimatedGain)}${estimatedGain.toFixed(2)}`;
@@ -1013,10 +1011,7 @@ export class FundTreeDataProvider implements vscode.TreeDataProvider<FundTreeIte
     const holdingGain = calcHoldingGain(fund);
     const holdingGainRate = calcHoldingGainRate(fund);
     const dailyGain = calcDailyGain(fund);
-    const estimatedGain =
-      fund.estimatedValue !== null
-        ? (fund.estimatedValue - fund.netValue) * fund.shares
-        : 0;
+    const estimatedGain = calcEstimatedGain(fund);
 
     // 提取日期标签
     const estimatedDateLabel = fund.updateTime

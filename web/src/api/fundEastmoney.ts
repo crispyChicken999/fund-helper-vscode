@@ -3,11 +3,13 @@
  */
 
 import type { Fund, FundInfo } from '@/types'
-import { fetchSinaFundValuation } from '@/api/fundSina'
-import { fetchBatchFundValuationLast } from '@/api/fundValuationLast'
+import {
+  fetchMultipleSinaValuations,
+  fetchSinaFundValuation,
+} from '@/api/fundSina'
+import { fetchBatchFundValuationLast, type FundValuationLastRaw } from '@/api/fundValuationLast'
 import { loadPush2JSONP } from '@/utils/jsonp'
 import { setSinaData } from '@/utils/sinaDataCache'
-
 /**
  * 通用的持仓信息请求函数（带代理降级）
  * 策略：1. 直接请求 → 2. api.fund-helper.ccwu.cc 转发 → 3. allorigins.win → 4. codetabs.com 双层代理
@@ -210,7 +212,10 @@ function parseMNFInfoData(data: any): Map<string, any> {
 }
 
 /** 批量 MNFInfo - 支持缓存和后台刷新 */
-export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, any>> {
+export async function fetchBatchMNFInfo(
+  codes: string[],
+  useCacheFallback = true,
+): Promise<Map<string, any>> {
   const map = new Map<string, any>()
   if (!codes.length) return map
 
@@ -226,6 +231,12 @@ export async function fetchBatchMNFInfo(codes: string[]): Promise<Map<string, an
     console.log('[MNFInfo] 请求成功，已保存缓存')
     return resultMap
   } catch (error) {
+    // 后台刷新时不返回旧缓存，避免把失败误判为新数据并触发重复刷新。
+    if (!useCacheFallback) {
+      console.warn('[MNFInfo] 所有请求策略都失败，后台刷新不触发缓存更新', error)
+      return map
+    }
+
     // 所有请求策略都失败，尝试从缓存加载
     console.warn('[MNFInfo] 所有请求策略都失败，使用缓存数据', error)
     const cached = loadMNFInfoCache()
@@ -378,6 +389,7 @@ function toFundInfoFromMerge(
 
 /** 后台刷新 MNFInfo 的 Promise，避免重复请求 */
 let backgroundMNFRefreshPromise: Promise<Map<string, any>> | null = null
+let backgroundMNFRefreshNotify = true
 let lastMNFRefreshTime: number = localStorage.getItem(MNF_INFO_CACHE_TIME_KEY) ? parseInt(localStorage.getItem(MNF_INFO_CACHE_TIME_KEY)!, 10) : 0
 const MNF_REFRESH_INTERVAL = 15 * 60 * 1000  // 15分钟强制刷新一次
 
@@ -412,14 +424,20 @@ function triggerCacheUpdateCallbacks(): void {
 }
 
 /** 后台异步刷新 MNFInfo，不阻塞主流程 */
-function refreshMNFInfoInBackground(codes: string[]): void {
+function refreshMNFInfoInBackground(
+  codes: string[],
+  notifyCacheUpdate = true,
+): void {
   if (!codes.length) return
 
   const now = Date.now()
   const needsForceRefresh = now - lastMNFRefreshTime > MNF_REFRESH_INTERVAL
 
   if (backgroundMNFRefreshPromise) {
-    // 如果已有后台刷新任务在进行中，跳过
+    // 手动刷新会等待当前任务完成，因此不再由缓存回调触发第二次全量刷新。
+    if (!notifyCacheUpdate) {
+      backgroundMNFRefreshNotify = false
+    }
     console.log('[MNFInfo] 已有后台刷新任务在进行中，本次请求已跳过')
     return
   }
@@ -430,13 +448,16 @@ function refreshMNFInfoInBackground(codes: string[]): void {
     return
   }
 
-  backgroundMNFRefreshPromise = fetchBatchMNFInfo(codes)
+  backgroundMNFRefreshNotify = notifyCacheUpdate
+  backgroundMNFRefreshPromise = fetchBatchMNFInfo(codes, false)
     .then(map => {
-      lastMNFRefreshTime = Date.now()
       if (map.size > 0) {
+        lastMNFRefreshTime = Date.now()
         console.log(`[MNFInfo] 后台刷新完成，成功获取了 ${map.size} 个基金的最新数据`)
-        // 触发缓存更新回调
-        triggerCacheUpdateCallbacks()
+        // 手动刷新会自己使用最新缓存，不能再触发第二次全量刷新。
+        if (backgroundMNFRefreshNotify) {
+          triggerCacheUpdateCallbacks()
+        }
       } else {
         console.warn(`[MNFInfo] 后台刷新完成，但没有获取到任何新数据（可能是缓存或网络问题）`)
       }
@@ -448,10 +469,11 @@ function refreshMNFInfoInBackground(codes: string[]): void {
     })
     .finally(() => {
       backgroundMNFRefreshPromise = null
+      backgroundMNFRefreshNotify = true
     })
 }
 
-/** 等待后台 MNFInfo 刷新完成（如果有的话）（可选，if需要） */
+/** 等待后台 MNFInfo 刷新完成（如果有的话） */
 export async function waitForMNFInfoRefresh(): Promise<void> {
   if (backgroundMNFRefreshPromise) {
     await backgroundMNFRefreshPromise
@@ -460,46 +482,50 @@ export async function waitForMNFInfoRefresh(): Promise<void> {
 
 export async function getFundData(
   configs: Fund[],
-  previousData: FundInfo[] = []
+  previousData: FundInfo[] = [],
+  options: { waitForMNFInfo?: boolean } = {},
 ): Promise<FundInfo[]> {
   if (configs.length === 0) return []
 
   const codes = configs.map(c => c.code)
 
-  // 先从缓存加载 MNFInfo
+  // 先读取 MNFInfo 本地缓存，避免慢接口阻塞新浪实时估值。
   const cachedMNFInfo = loadMNFInfoCache()
-  const filteredMNFInfo = new Map<string, any>()
+  let filteredMNFInfo = new Map<string, any>()
   codes.forEach(code => {
     if (cachedMNFInfo.has(code)) {
       filteredMNFInfo.set(code, cachedMNFInfo.get(code))
     }
   })
-  // 启动后台刷新任务（不等待）
-  refreshMNFInfoInBackground(codes)
 
-  // Step 1: 获取 FundValuationLast（主力批量估值）
-  const valuationLastMap = await fetchBatchFundValuationLast(codes)
+  const waitForMNFInfo = options.waitForMNFInfo === true
+  // 手动刷新等待本次 MNFInfo 请求完成；自动刷新仍然走原有后台不阻塞策略。
+  refreshMNFInfoInBackground(codes, !waitForMNFInfo)
+  const mnfInfoRefreshPromise = waitForMNFInfo
+    ? waitForMNFInfoRefresh()
+    : null
 
-  // Step 2: 确定需要降级到新浪 API 的基金
-  // - 不在 valuationLastMap 中 → API 未返回该基金
-  // - GSZ 为 null → 天天基金不再为该基金提供实时估值，尝试新浪
-  const needSinaCodes: string[] = []
-  const sinaCodeIndex = new Map<string, number>()
-  for (const cfg of configs) {
-    const vl = valuationLastMap.get(cfg.code)
-    if (!vl || vl.GSZ === null || vl.GSZ === undefined) {
-      sinaCodeIndex.set(cfg.code, needSinaCodes.length)
-      needSinaCodes.push(cfg.code)
-    }
+  // 无论是否等待 MNFInfo，都立即启动新浪请求，保持两路并行。
+  const sinaMap = await fetchMultipleSinaValuations(codes)
+
+  if (mnfInfoRefreshPromise) {
+    await mnfInfoRefreshPromise
+    const latestMNFInfo = loadMNFInfoCache()
+    filteredMNFInfo = new Map<string, any>()
+    codes.forEach(code => {
+      if (latestMNFInfo.has(code)) {
+        filteredMNFInfo.set(code, latestMNFInfo.get(code))
+      }
+    })
   }
 
-  // Step 3: 对需要降级的基金逐只请求新浪 API
-  let sinaResults: PromiseSettledResult<any>[] = []
-  if (needSinaCodes.length > 0) {
-    sinaResults = await Promise.allSettled(
-      needSinaCodes.map(code => fetchSinaFundValuation(code))
-    )
-  }
+  // Step 1: 新浪作为实时估值主通道；基础字段优先使用本次刷新完成后的 MNFInfo。
+
+  // Step 2: 只有新浪没有覆盖的基金，才追加 FundValuationLast 兜底。
+  const needValuationFallback = configs.some(cfg => !sinaMap.has(cfg.code))
+  const valuationLastMap = needValuationFallback
+    ? await fetchBatchFundValuationLast(codes)
+    : new Map<string, FundValuationLastRaw>()
 
   const fundList: FundInfo[] = []
 
@@ -507,12 +533,11 @@ export async function getFundData(
     const cfg = configs[i]!
     const code = cfg.code
 
-    // 决定使用哪个数据源
-    let val: any = null
+    // 新浪优先：实时估值字段来自新浪；天天基金只作为无新浪数据时的兜底。
+    let val: any = sinaMap.get(code) ?? null
     const vl = valuationLastMap.get(code)
 
-    if (vl && vl.GSZ !== null && vl.GSZ !== undefined) {
-      // 主力：FundValuationLast 返回有效估值
+    if (!val && vl && vl.GSZ !== null && vl.GSZ !== undefined) {
       val = {
         fundcode: vl.FCODE,
         name: vl.SHORTNAME,
@@ -523,11 +548,6 @@ export async function getFundData(
         jzrq: vl.PDATE,
         _fromValuationLast: true,
       }
-    } else if (sinaCodeIndex.has(code)) {
-      // 降级：新浪 API
-      const idx = sinaCodeIndex.get(code)!
-      const result = sinaResults[idx]
-      val = result.status === 'fulfilled' ? result.value : null
     }
 
     const shares = cfg.num || 0

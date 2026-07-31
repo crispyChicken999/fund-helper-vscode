@@ -105,7 +105,7 @@ class FundService {
     return info
   }
 
-  async refreshAllFunds(): Promise<void> {
+  async refreshAllFunds(options: { waitForMNFInfo?: boolean } = {}): Promise<void> {
     const fundStore = useFundStore()
     const funds = [...fundStore.funds]
     if (funds.length === 0) return
@@ -115,7 +115,7 @@ class FundService {
       return normalizeFundInfo(raw, f.code)
     }).filter((x): x is FundInfo => !!x)
 
-    const list = await getFundData(funds, previous)
+    const list = await getFundData(funds, previous, options)
     await attachRelateThemes(list)
 
     list.forEach(info => {

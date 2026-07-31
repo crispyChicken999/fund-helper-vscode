@@ -1,6 +1,49 @@
-# 更新日志 (Changelog)
+﻿# 更新日志 (Changelog)
 
 本文档记录了"基金助手"(Fund Helper) VS Code 扩展的所有重要更改。
+
+## [0.4.7] - 2026-07-31
+
+### 问题修复 (Bug Fixes)
+
+- 🐛 **修复估算收益/日收益计算错误（VSCode 端 + Web 端）**：修正估算收益计算公式，从 `(gsz - dwjz) × shares` 改为 `gsz / (1 + gszzl/100)` 反推基准净值
+  - **根因**：API 返回的 `gszzl`（估算涨跌幅）是基于接口内部基准净值计算的，而非直接基于缓存的 `dwjz`（单位净值）；两者存在偏差时（如基金分红、拆分后），旧公式产生错误结果
+  - **案例**：某基金 `gsz=0.8722, gszzl=13.83%, dwjz=0.7718`
+    - 旧公式：`(0.8722-0.7718)×17817.13 = ¥1,788.84` ❌
+    - 新公式：`baseNav=0.8722/1.1383=0.7662 → (0.8722-0.7662)×17817.13 = ¥1,888.21` ✅
+  - **影响范围**（VSCode 端）：
+    - TreeView 列表项、Tooltip、详情项、排序、持仓统计
+    - StatusBar 状态栏估算收益汇总
+    - 详情页估算收益展示
+    - `calculateAccountSummary` 账户日收益汇总
+    - WebView 表格视图：基金列表行、Tooltip、分组统计、日收益汇总
+  - **影响范围**（Web 端）：
+    - `fundDisplay.ts` 公式已对齐（作为参考实现）
+  - **修复文件**（VSCode 端）：
+    - `src/fundModel.ts`：新增 `calcEstimatedGain()` 工具函数
+    - `src/sidebar/treeview/index.ts`：6 处调用点替换
+    - `src/statusBar.ts`：汇总计算替换
+    - `src/detail/index.ts` + `src/detail/html.ts`：详情页传参替换
+    - `src/fundDataManager.ts`：账户汇总替换
+    - `src/sidebar/webview/script.ts`：6 处修复（`calculateEstimatedGain`、`groupStats`、`generateFundRow`、`calculateSmartDailyGain`×2、`updateAccountSummary` 重算逻辑移除）
+
+- 🐛 **修复切换到表格视图时日收益初始值错误**：WebView `updateAccountSummary` 收到扩展端正确值后，立即用 `fundDataCache` 中的旧数据重新计算并覆盖，导致初始显示错误值，待数据刷新后才修正。现已移除该重算逻辑，直接信任扩展端计算结果。
+
+- 🐛 **修复手动刷新触发重复请求（Web 端）**：点击手动刷新时，MNFInfo 请求失败走代理降级后，代理恢复时会再次触发 `getFundData` 全量请求，导致同一轮刷新中基金数据被获取两次。现已通过 `waitForMNFInfo` 选项控制，确保手动刷新时等待本轮 MNFInfo 响应完成后再继续，避免重复请求。
+
+### 优化改进 (Improvements)
+
+- 💡 **新浪实时估值切换为主数据通道**（VSCode 端 + Web 端）：新浪接口从备用降级方案升级为**主数据通道**，原天天基金 `FundValuationLast` 降级为仅在新浪无数据时兜底
+  - VSCode 端：`fetchMultipleSinaValuations` 受控并发（批量 ≤5），`fetchSinaFundData` 新增 `fallbackToMNF` 参数控制降级行为
+  - Web 端：`fundEastmoney.ts` 同步切换主通道策略，`fundSina.ts` 修正涨跌幅字段为 `nav2_pct`、新增 `dwjz` 字段
+
+- 💡 **详情页键盘导航增强**：新增键盘快捷键支持（与 Web 端对齐）
+  - `W / ↑` 上一个基金、`S / ↓` 下一个基金（均支持触底循环）
+  - `A / ←` 上一个 Tab、`D / →` 下一个 Tab（触底循环，切换 Tab 时自动懒加载）
+  - 进入详情页自动聚焦，无需手动点击页面即可使用键盘；输入框内自动禁用快捷键
+  - 导航按钮去除 disabled 限制，始终可循环切换
+
+- 💡 **估算收益计算完全对齐**：Web 端与 VSCode 端所有视图（TreeView、WebView 表格、StatusBar、详情页）的估算收益公式现已完全一致
 
 ## [0.4.6] - 2026-07-22
 

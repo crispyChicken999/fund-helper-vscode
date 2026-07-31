@@ -1721,7 +1721,8 @@ async function handleRefresh() {
   );
   refreshing.value = true;
   try {
-    await fundService.refreshAllFunds();
+    // 手动刷新等待本轮 MNFInfo 直连/代理请求完成，避免缓存更新回调再次刷新全部基金。
+    await fundService.refreshAllFunds({ waitForMNFInfo: true });
     ElMessage.success("刷新成功");
   } catch (error: any) {
     ElMessage.error("刷新失败: " + error.message);

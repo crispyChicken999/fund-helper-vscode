@@ -92,6 +92,8 @@ export interface SinaFundgzCompat {
   gszzl: string
   /** 估值时间 YYYY-MM-DD HH:mm:ss */
   gztime: string
+  /** 新浪返回的上一交易日净值，仅在天天基金基础数据暂不可用时使用 */
+  dwjz: string
   /** 标记来源 */
   _fromSina: true
   /** 原始新浪数据（供图表等高级功能使用） */
@@ -162,8 +164,9 @@ export async function fetchSinaFundValuation(code: string): Promise<SinaFundgzCo
       fundcode: code,
       jzrq,
       gsz: latest.pre_nav || data.worth || '',
-      gszzl: latest.nav_pct || '0',
+      gszzl: latest.nav2_pct || '0',
       gztime,
+      dwjz: data.worth || '',
       _fromSina: true,
       _sinaData: data,
     }

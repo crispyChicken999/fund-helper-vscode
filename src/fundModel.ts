@@ -69,6 +69,31 @@ export function calcHoldingGain(fund: FundInfo): number {
   return 0;
 }
 
+/**
+ * 计算估算收益（对齐 Web fundDisplay.ts 的公式）
+ * 优先使用 gsz + gszzl 反推出昨日基准净值，避免依赖可能过时的 dwjz
+ */
+export function calcEstimatedGain(fund: FundInfo): number {
+  if (fund.shares <= 0) return 0;
+  const gsz = fund.estimatedValue ?? 0;
+  const gszzl = fund.changePercent || 0;
+  const dwjz = fund.netValue || 0;
+
+  if (gsz > 0 && gszzl !== 0) {
+    // 核心修复：使用估算净值(gsz)和估算涨幅(gszzl)反推出昨日基准净值
+    const baseNav = gsz / (1 + gszzl / 100);
+    return (gsz - baseNav) * fund.shares;
+  } else if (gszzl !== 0) {
+    // gsz 为 0 但有涨幅数据：基于持有金额和涨幅计算
+    const holdingAmount = dwjz * fund.shares;
+    return (holdingAmount * gszzl) / 100;
+  } else if (gsz > 0 && gsz !== dwjz) {
+    // 仅有 gsz 无涨幅数据，才用 dwjz 作参照
+    return (gsz - dwjz) * fund.shares;
+  }
+  return 0;
+}
+
 /** 计算持有收益率(%) */
 export function calcHoldingGainRate(fund: FundInfo): number {
   if (fund.cost > 0) {

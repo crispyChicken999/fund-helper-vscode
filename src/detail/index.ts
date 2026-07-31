@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { FundInfo } from '../fundModel';
+import { FundInfo, calcEstimatedGain, calcDailyGain } from '../fundModel';
 import { fetchFundInvestmentPosition, fetchSinaFundData } from '../fundService';
 import { getHTML } from './html';
 
@@ -181,15 +181,11 @@ export class FundDetailWebview {
     const holdingGain = holdingAmount - costAmount;
     const holdingGainRate = costAmount > 0 ? (holdingGain / costAmount) * 100 : 0;
 
-    // Calculate daily gain
-    let dailyGain = 0;
-    if (fund.shares > 0) {
-      if (fund.isRealValue) {
-        dailyGain = (fund.netValue - fund.netValue / (1 + fund.navChgRt * 0.01)) * fund.shares;
-      } else if (fund.estimatedValue !== null) {
-        dailyGain = (fund.estimatedValue - fund.netValue) * fund.shares;
-      }
-    }
+    // Calculate daily gain (使用统一公式，与 TreeView/WebView 一致)
+    const dailyGain = calcDailyGain(fund);
+
+    // Calculate estimated gain (对齐 Web fundDisplay.ts 反推公式)
+    const estimatedGain = calcEstimatedGain(fund);
 
     // Get all funds and current index
     const allFunds = this._getAllFunds ? this._getAllFunds() : [];
@@ -204,6 +200,7 @@ export class FundDetailWebview {
       holdingGain,
       holdingGainRate,
       dailyGain,
+      estimatedGain,
       activeTab,
       grayscaleMode,
       allFundCodes,

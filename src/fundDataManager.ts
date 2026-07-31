@@ -4,7 +4,7 @@
  */
 
 import * as vscode from "vscode";
-import { FundInfo, FundConfig } from "./fundModel";
+import { FundInfo, FundConfig, calcEstimatedGain } from "./fundModel";
 import { getFundData, fetchFundRelateTheme } from "./fundService";
 import { getFundGroups } from "./core";
 
@@ -175,8 +175,8 @@ export class FundDataManager {
           // 使用真实净值计算
           dailyGain = (fund.netValue - fund.netValue / (1 + fund.navChgRt * 0.01)) * fund.shares;
         } else if (fund.estimatedValue !== null) {
-          // 使用估值计算
-          dailyGain = (fund.estimatedValue - fund.netValue) * fund.shares;
+          // 使用反推公式，避免依赖可能过时的 dwjz
+          dailyGain = calcEstimatedGain(fund);
         }
       }
 

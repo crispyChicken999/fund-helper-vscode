@@ -240,7 +240,7 @@ async function fetchFundFromMNFInfo(code: string): Promise<any> {
  * 替代原 fundgz.1234567.com.cn JSONP 接口
  * 导出供 detail webview 独立获取分时图表数据
  */
-export async function fetchSinaFundData(code: string): Promise<any> {
+export async function fetchSinaFundData(code: string, fallbackToMNF: boolean = true): Promise<any> {
   const url = `https://stock.finance.sina.com.cn/fundInfo/api/openapi.php/FdFundService.getEstimateNetworthPic?symbol=${code}`;
   try {
     const controller = new AbortController();
@@ -254,12 +254,12 @@ export async function fetchSinaFundData(code: string): Promise<any> {
     });
     clearTimeout(timeoutId);
     if (!res.ok) {
-      return await fetchFundFromMNFInfo(code);
+      return fallbackToMNF ? await fetchFundFromMNFInfo(code) : null;
     }
 
     const json: any = await res.json().catch(() => null);
     if (!json?.result?.data || json.result.status?.code !== 0) {
-      return await fetchFundFromMNFInfo(code);
+      return fallbackToMNF ? await fetchFundFromMNFInfo(code) : null;
     }
 
     const data = json.result.data;
@@ -267,7 +267,7 @@ export async function fetchSinaFundData(code: string): Promise<any> {
 
     // 无分时数据（未开盘/非交易日/不支持）→ 降级
     if (!networthArr || !Array.isArray(networthArr) || networthArr.length === 0) {
-      return await fetchFundFromMNFInfo(code);
+      return fallbackToMNF ? await fetchFundFromMNFInfo(code) : null;
     }
 
     // 去掉收盘后的填充数据点（接口在15:00后持续返回相同估值的平直数据）
@@ -290,13 +290,13 @@ export async function fetchSinaFundData(code: string): Promise<any> {
       fundcode: code,
       jzrq,
       gsz: latest.pre_nav || data.worth || '',
-      gszzl: latest.nav_pct || '0',
+      gszzl: latest.nav2_pct || '0',
       gztime,
       _fromSina: true,
       _sinaData: data,
     };
   } catch (error) {
-    return await fetchFundFromMNFInfo(code);
+    return fallbackToMNF ? await fetchFundFromMNFInfo(code) : null;
   }
 }
 
@@ -304,7 +304,31 @@ export async function fetchSinaFundData(code: string): Promise<any> {
  * 获取单个基金实时估值（新浪财经 API）—— 内部使用，供 getFundData 降级调用
  */
 async function fetchSingleFund(code: string): Promise<any> {
-  return fetchSinaFundData(code);
+  // 实时主通道只请求新浪；MNFInfo 仅在批量兜底阶段请求，避免每只基金串行降级。
+  return fetchSinaFundData(code, false);
+}
+
+/** 受控并发获取新浪实时估值，避免一次刷新创建过多 JSON/HTTP 请求 */
+async function fetchMultipleSinaValuations(
+  codes: string[],
+): Promise<Map<string, any>> {
+  const results = new Map<string, any>();
+  const batchSize = 5;
+
+  for (let i = 0; i < codes.length; i += batchSize) {
+    const batch = codes.slice(i, i + batchSize);
+    const batchResults = await Promise.allSettled(
+      batch.map(code => fetchSingleFund(code)),
+    );
+
+    batchResults.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value) {
+        results.set(batch[index]!, result.value);
+      }
+    });
+  }
+
+  return results;
 }
 
 /** FundValuationLast 接口返回的原始条目 */
@@ -424,30 +448,17 @@ export async function getFundData(
 
   const codes = configs.map(cfg => cfg.code);
 
-  // Step 1: 并行获取 - FundValuationLast（主力批量估值） + MNFInfo（净值元数据）
-  const [valuationLastMap, mnfInfoMap] = await Promise.all([
-    fetchBatchFundValuationLast(codes),
+  // Step 1: 新浪实时估值与 MNFInfo 基础元数据并行获取。
+  // 新浪决定盘中估值字段；MNFInfo 提供名称、上一交易日净值和真实涨跌幅。
+  const [sinaMap, mnfInfoMap] = await Promise.all([
+    fetchMultipleSinaValuations(codes),
     fetchBatchFundFromMNFInfo(codes),
   ]);
 
-  // Step 2: 确定需要降级到新浪 API 的基金
-  // - FundValuationLast 未返回或 GSZ 为 null → 该基金无盘中估值，尝试新浪
-  const needSinaCodes: string[] = [];
-  const sinaCodeIndex = new Map<string, number>();
-  for (const cfg of configs) {
-    const vl = valuationLastMap.get(cfg.code);
-    if (!vl || vl.GSZ === null || vl.GSZ === undefined) {
-      sinaCodeIndex.set(cfg.code, needSinaCodes.length);
-      needSinaCodes.push(cfg.code);
-    }
-  }
-
-  // Step 3: 对需要降级的基金逐只请求新浪 API
-  let sinaResults: PromiseSettledResult<any>[] = [];
-  if (needSinaCodes.length > 0) {
-    sinaResults = await Promise.allSettled(
-      needSinaCodes.map(code => fetchSingleFund(code))
-    );
+  // Step 2: 只有新浪没有覆盖的基金，才追加 FundValuationLast 兜底。
+  let valuationLastMap = new Map<string, FundValuationLastRaw>();
+  if (sinaMap.size < codes.length) {
+    valuationLastMap = await fetchBatchFundValuationLast(codes);
   }
 
   const fundList: FundInfo[] = [];
@@ -456,12 +467,11 @@ export async function getFundData(
     const cfg = configs[i];
     const code = cfg.code;
 
-    // 决定使用哪个数据源
-    let val: any = null;
+    // 新浪优先：实时估值字段优先来自新浪，天天基金只负责无新浪数据时兜底。
+    let val: any = sinaMap.get(code) ?? null;
     const vl = valuationLastMap.get(code);
 
-    if (vl && vl.GSZ !== null && vl.GSZ !== undefined) {
-      // 主力：FundValuationLast 返回有效估值
+    if (!val && vl && vl.GSZ !== null && vl.GSZ !== undefined) {
       val = {
         fundcode: vl.FCODE,
         name: vl.SHORTNAME,
@@ -472,11 +482,24 @@ export async function getFundData(
         jzrq: vl.PDATE,
         _fromValuationLast: true,
       };
-    } else if (sinaCodeIndex.has(code)) {
-      // 降级：新浪 API
-      const idx = sinaCodeIndex.get(code)!;
-      const result = sinaResults[idx];
-      val = result.status === "fulfilled" ? result.value : null;
+    }
+
+    // 新浪和 FundValuationLast 都没有实时估值时，仍保留 MNFInfo 的基础净值兜底。
+    if (!val) {
+      const mnfInfo = mnfInfoMap.get(code);
+      if (mnfInfo) {
+        val = {
+          fundcode: code,
+          name: mnfInfo.name,
+          dwjz: mnfInfo.dwjz,
+          gszzl: mnfInfo.gszzl,
+          navchgrt: mnfInfo.navchgrt,
+          jzrq: mnfInfo.jzrq,
+          gztime: mnfInfo.gztime,
+          _fromMNFInfo: true,
+          _estimateChange: null,
+        };
+      }
     }
 
     const shares = parseFloat(cfg.num) || 0;
