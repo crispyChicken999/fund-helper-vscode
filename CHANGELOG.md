@@ -26,6 +26,8 @@
   - **修复方案**：参照 Web 端写法，去除 null 填充逻辑，直接按 API 返回数据映射到 series，ECharts 按索引对齐 xAxis 类别
   - **修复文件**：`src/marketWebview.ts` — 重写 `renderFlowChart` 函数，简化数据处理流程
 
+## [0.4.7] - 2026-07-31
+
 ### 问题修复 (Bug Fixes)
 
 - 🐛 **修复估算收益/日收益计算错误（VSCode 端 + Web 端）**：修正估算收益计算公式，从 `(gsz - dwjz) × shares` 改为 `gsz / (1 + gszzl/100)` 反推基准净值
