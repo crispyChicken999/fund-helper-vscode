@@ -2,8 +2,18 @@
  * 基金 API 服务层
  * 使用新浪财经接口获取基金实时估值
  */
+import * as vscode from "vscode";
 import { FundInfo, FundConfig, NetValueRecord } from "./fundModel";
 import { isMarketClosed } from "./holidayService";
+
+/**
+ * 读取新浪接口估算涨跌幅数据源配置
+ * @returns "nav2"（nav2_pct，默认） | "nav"（nav_pct）
+ */
+function getSinaPctSource(): "nav2" | "nav" {
+  const src = vscode.workspace.getConfiguration("fund-helper").get<string>("sinaPctSource", "nav2");
+  return src === "nav" ? "nav" : "nav2";
+}
 
 /**
  * 生成 UUID
@@ -290,7 +300,7 @@ export async function fetchSinaFundData(code: string, fallbackToMNF: boolean = t
       fundcode: code,
       jzrq,
       gsz: latest.pre_nav || data.worth || '',
-      gszzl: latest.nav2_pct || '0',
+      gszzl: getSinaPctSource() === "nav" ? (latest.nav_pct || '0') : (latest.nav2_pct || '0'),
       gztime,
       _fromSina: true,
       _sinaData: data,

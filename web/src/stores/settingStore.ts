@@ -48,6 +48,7 @@ const defaultSettings: Settings = {
     'cost'
   ],
   sortMethod: 'holdingGainRate_desc',
+  sinaPctSource: 'nav2',
   maxContentWidthMode: 'preset',
   maxContentWidth: 1024
 }
@@ -118,6 +119,11 @@ export const useSettingStore = defineStore('setting', {
       return this.settings.sortMethod
     },
 
+    // 新浪估算涨跌幅数据源
+    sinaPctSource(): 'nav2' | 'nav' {
+      return this.settings.sinaPctSource
+    },
+
     // 最大宽度模式
     maxContentWidthMode(): 'full' | 'preset' | 'custom' {
       return this.settings.maxContentWidthMode
@@ -172,6 +178,12 @@ export const useSettingStore = defineStore('setting', {
     // 设置排序方法
     async setSortMethod(method: string) {
       this.settings.sortMethod = method
+      storageService.saveSettings(this.getSettings())
+    },
+
+    // 设置新浪估算涨跌幅数据源
+    async setSinaPctSource(source: 'nav2' | 'nav') {
+      this.settings.sinaPctSource = source
       storageService.saveSettings(this.getSettings())
     },
 

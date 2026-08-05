@@ -348,6 +348,25 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
         await this._loadFundData();
         break;
 
+      case "getSinaPctSource": {
+        const config = vscode.workspace.getConfiguration("fund-helper");
+        const value = config.get<string>("sinaPctSource", "nav2");
+        this.postMessage({ command: "updateSinaPctSource", value });
+        break;
+      }
+
+      case "saveSinaPctSource":
+        if (message.value === "nav" || message.value === "nav2") {
+          const config = vscode.workspace.getConfiguration("fund-helper");
+          await config.update("sinaPctSource", message.value, vscode.ConfigurationTarget.Global);
+          this.postMessage({ command: "updateSinaPctSource", value: message.value });
+          vscode.window.showInformationMessage(
+            `已切换估算涨跌幅数据源为 ${message.value === "nav2" ? "数据源2" : "数据源1"}`
+          );
+          await this._loadFundData();
+        }
+        break;
+
       case "addFund":
         await vscode.commands.executeCommand("fund-helper.addFund");
         await this._loadFundData();
@@ -688,6 +707,9 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
             const data = records[records.length - 1];
             const messages = await applyImportPayload(data);
             await this._loadFundData();
+            // 同步数据源配置到 webview（弹窗选中状态保持一致）
+            const config = vscode.workspace.getConfiguration("fund-helper");
+            this.postMessage({ command: "updateSinaPctSource", value: config.get<string>("sinaPctSource", "nav2") });
             this.postMessage({ command: "syncResult", success: true, message: `同步到本地成功：${messages.join('、')}` });
           } catch (e: any) {
             this.postMessage({ command: "syncResult", success: false, message: `同步到本地失败: ${e.message}` });
@@ -1026,12 +1048,6 @@ export class FundWebviewViewProvider implements vscode.WebviewViewProvider {
       '            <span class="status-dot"></span>',
       '            <span class="status-text">--</span>',
       '          </div>',
-      '          <button class="btn-settings" id="btnSettings" title="列设置">',
-      '            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">',
-      '              <path d="M3.5 2h-1v5h1V2zm6.1 5H6.4L6 6.45v-1L6.4 5h3.2l.4.5v1l-.4.5zm-5 3H1.4L1 9.5v-1l.4-.5h3.2l.4.5v1l-.4.5zm3.9-8h-1v2h1V2zm-1 6h1v6h-1V8zm-4 3h-1v3h1v-3zm7.9 0h3.19l.4-.5v-.95l-.4-.5H11.4l-.4.5v.95l.4.5zm2.1-9h-1v6h1V2zm-1 10h1v2h-1v-2z"/>',
-      '            </svg>',
-      '            <span>设置</span>',
-      '          </button>',
       '          <button class="btn-market" id="btnOpenMarket" title="行情中心">',
       '            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">',
       '              <path d="M1 14h14v1H1v-1zm13-1V6h-2v7h2zm-3 0V3h-2v10h2zm-3 0V0H6v13h2zm-3 0V8H3v5h2z"/>',

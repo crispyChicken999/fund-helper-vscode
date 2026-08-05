@@ -92,6 +92,7 @@ export function buildExportPayload(): any {
     defaultViewMode: config.get<string>("defaultViewMode", "tree"),
     privacyMode: config.get<boolean>("privacyMode", false),
     grayscaleMode: config.get<boolean>("grayscaleMode", false),
+    sinaPctSource: config.get<string>("sinaPctSource", "nav2"),
     indexCardsConfig: config.get<any[]>("indexCardsConfig", []),
     jsonboxName: getJsonboxName(),
   };
@@ -145,6 +146,9 @@ export async function applyImportPayload(data: any): Promise<string[]> {
   }
   if (typeof data.grayscaleMode === 'boolean') {
     await config.update("grayscaleMode", data.grayscaleMode, vscode.ConfigurationTarget.Global);
+  }
+  if (data.sinaPctSource === 'nav' || data.sinaPctSource === 'nav2') {
+    await config.update("sinaPctSource", data.sinaPctSource, vscode.ConfigurationTarget.Global);
   }
   if (typeof data.jsonboxName === 'string' && data.jsonboxName) {
     await saveJsonboxName(data.jsonboxName);
@@ -596,6 +600,7 @@ export async function exportFund() {
   const defaultViewMode = config.get<string>("defaultViewMode", "tree");
   const privacyMode = config.get<boolean>("privacyMode", false);
   const grayscaleMode = config.get<boolean>("grayscaleMode", false);
+  const sinaPctSource = config.get<string>("sinaPctSource", "nav2");
   const indexCardsConfig = config.get<any[]>("indexCardsConfig", []);
   const jsonboxName = getJsonboxName();
 
@@ -613,6 +618,7 @@ export async function exportFund() {
     defaultViewMode,
     privacyMode,
     grayscaleMode,
+    sinaPctSource,
     indexCardsConfig,
     jsonboxName,
   };
@@ -666,6 +672,7 @@ export async function exportFund() {
   "defaultViewMode": ${JSON.stringify(defaultViewMode)},
   "privacyMode": ${privacyMode},
   "grayscaleMode": ${grayscaleMode},
+  "sinaPctSource": ${JSON.stringify(sinaPctSource)},
   "indexCardsConfig": ${indexCardsConfigJson},
   "jsonboxName": ${JSON.stringify(jsonboxName)}
 }`;
@@ -701,6 +708,7 @@ export async function importFund() {
     let defaultViewModeData: string | undefined;
     let privacyModeData: boolean | undefined;
     let grayscaleModeData: boolean | undefined;
+    let sinaPctSourceData: string | undefined;
     let jsonboxNameData: string | undefined;
     let indexCardsConfigData: any[] | undefined;
 
@@ -736,6 +744,9 @@ export async function importFund() {
       }
       if (typeof data.grayscaleMode === 'boolean') {
         grayscaleModeData = data.grayscaleMode;
+      }
+      if (data.sinaPctSource === 'nav' || data.sinaPctSource === 'nav2') {
+        sinaPctSourceData = data.sinaPctSource;
       }
       if (typeof data.jsonboxName === 'string' && data.jsonboxName) {
         jsonboxNameData = data.jsonboxName;
@@ -806,6 +817,9 @@ export async function importFund() {
     if (grayscaleModeData !== undefined) {
       await config.update("grayscaleMode", grayscaleModeData, vscode.ConfigurationTarget.Global);
     }
+    if (sinaPctSourceData !== undefined) {
+      await config.update("sinaPctSource", sinaPctSourceData, vscode.ConfigurationTarget.Global);
+    }
     if (jsonboxNameData !== undefined) {
       await saveJsonboxName(jsonboxNameData);
     }
@@ -833,6 +847,7 @@ export async function importFund() {
     if (defaultViewModeData !== undefined) otherSettings.push('默认视图');
     if (privacyModeData !== undefined) otherSettings.push('隐私模式');
     if (grayscaleModeData !== undefined) otherSettings.push('灰色模式');
+    if (sinaPctSourceData !== undefined) otherSettings.push('估算涨跌幅数据源');
     if (jsonboxNameData !== undefined) otherSettings.push('云同步配置');
     if (otherSettings.length > 0) {
       messages.push(otherSettings.join('、'));

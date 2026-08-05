@@ -128,6 +128,13 @@
               <div class="form-item-tip">移除所有色彩，仅保留黑白灰</div>
             </el-form-item>
 
+            <el-form-item label="估值数据源">
+              <el-radio-group v-model="sinaPctSource">
+                <el-radio value="nav">数据源1</el-radio>
+                <el-radio value="nav2">数据源2（默认）</el-radio>
+              </el-radio-group>
+            </el-form-item>
+
             <el-form-item label="主题">
               <el-radio-group v-model="themeMode">
                 <el-radio value="light">浅色</el-radio>
@@ -764,7 +771,7 @@ import {
   useGroupStore,
   useSyncStore,
 } from "@/stores";
-import { syncService } from "@/services";
+import { syncService, fundService } from "@/services";
 import { storageService } from "@/services/storageService";
 import { generateJsonboxName } from "@/utils/validate";
 import {
@@ -804,6 +811,18 @@ const grayscaleMode = computed({
     await settingStore.setGrayscaleMode(value);
     document.documentElement.dataset.grayscale = String(value);
     ElMessage.success(`已${value ? "开启" : "关闭"}灰色模式`);
+  },
+});
+
+const sinaPctSource = computed({
+  get: () => settingStore.sinaPctSource,
+  set: async (value: "nav2" | "nav") => {
+    await settingStore.setSinaPctSource(value);
+    // 立即刷新，让新数据源生效
+    fundService.refreshAllFunds().catch(() => {});
+    ElMessage.success(
+      `已切换估算涨跌幅数据源为 ${value === "nav2" ? "数据源2" : "数据源1"}，正在刷新数据`
+    );
   },
 });
 
@@ -1305,6 +1324,10 @@ async function onFileSelected(e: Event) {
       );
       // grayscaleMode computed 会自动读取新值
     }
+    if (payload.sinaPctSource === "nav" || payload.sinaPctSource === "nav2") {
+      await settingStore.setSinaPctSource(payload.sinaPctSource);
+      // sinaPctSource computed 会自动读取新值
+    }
     if (payload.refreshInterval !== undefined) {
       await settingStore.setRefreshInterval(payload.refreshInterval);
       // refreshInterval computed 会自动读取新值
@@ -1381,6 +1404,7 @@ function handleExportJson() {
     defaultViewMode: "webview",
     privacyMode: settingStore.privacyMode,
     grayscaleMode: settingStore.grayscaleMode,
+    sinaPctSource: settingStore.sinaPctSource,
   };
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], {

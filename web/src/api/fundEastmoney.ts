@@ -6,10 +6,12 @@ import type { Fund, FundInfo } from '@/types'
 import {
   fetchMultipleSinaValuations,
   fetchSinaFundValuation,
+  type SinaPctSource,
 } from '@/api/fundSina'
 import { fetchBatchFundValuationLast, type FundValuationLastRaw } from '@/api/fundValuationLast'
 import { loadPush2JSONP } from '@/utils/jsonp'
 import { setSinaData } from '@/utils/sinaDataCache'
+import { useSettingStore } from '@/stores'
 /**
  * 通用的持仓信息请求函数（带代理降级）
  * 策略：1. 直接请求 → 2. api.fund-helper.ccwu.cc 转发 → 3. allorigins.win → 4. codetabs.com 双层代理
@@ -110,6 +112,11 @@ async function fetchFundEstimateChange(code: string): Promise<number | null> {
   } catch {
     return null
   }
+}
+
+/** 读取用户选择的估算涨跌幅数据源（新浪 nav_pct / nav2_pct） */
+function getSinaPctSource(): SinaPctSource {
+  return useSettingStore().sinaPctSource
 }
 
 /** localStorage 缓存键 */
@@ -295,7 +302,7 @@ async function fetchFundFromMNFInfo(code: string): Promise<any | null> {
 export async function fetchSingleFundValuation(code: string): Promise<any | null> {
   try {
     // 优先使用新浪 API 获取实时估值
-    const sinaData = await fetchSinaFundValuation(code)
+    const sinaData = await fetchSinaFundValuation(code, getSinaPctSource())
     if (sinaData) return sinaData
 
     // 新浪API无数据（未开盘/非交易日/不支持）→ 降级到 MNFInfo 进行估值推算
@@ -506,7 +513,7 @@ export async function getFundData(
     : null
 
   // 无论是否等待 MNFInfo，都立即启动新浪请求，保持两路并行。
-  const sinaMap = await fetchMultipleSinaValuations(codes)
+  const sinaMap = await fetchMultipleSinaValuations(codes, getSinaPctSource())
 
   if (mnfInfoRefreshPromise) {
     await mnfInfoRefreshPromise

@@ -111,6 +111,9 @@ function formatDate(yyyymmdd: string): string {
 /** 新浪API 基础 URL */
 const SINA_API_BASE = 'https://stock.finance.sina.com.cn/fundInfo/api/openapi.php/FdFundService.getEstimateNetworthPic'
 
+/** 估算涨跌幅数据源字段 */
+export type SinaPctSource = 'nav2' | 'nav'
+
 // ==================== 主接口 ====================
 
 /**
@@ -121,9 +124,10 @@ const SINA_API_BASE = 'https://stock.finance.sina.com.cn/fundInfo/api/openapi.ph
  * 2. 成功 → 提取 networth 最后一条作为 gsz/gszzl
  * 3. networth 为空（未开盘/非交易日/不支持）→ 返回 null，由上层降级
  *
+ * @param pctField 估算涨跌幅数据源：'nav2'（nav2_pct，默认） | 'nav'（nav_pct）
  * @returns 对齐 fundgz 格式的对象，失败返回 null
  */
-export async function fetchSinaFundValuation(code: string): Promise<SinaFundgzCompat | null> {
+export async function fetchSinaFundValuation(code: string, pctField: SinaPctSource = 'nav2'): Promise<SinaFundgzCompat | null> {
   const url = `${SINA_API_BASE}?symbol=${code}`
 
   try {
@@ -164,7 +168,7 @@ export async function fetchSinaFundValuation(code: string): Promise<SinaFundgzCo
       fundcode: code,
       jzrq,
       gsz: latest.pre_nav || data.worth || '',
-      gszzl: latest.nav2_pct || '0',
+      gszzl: pctField === 'nav' ? (latest.nav_pct || '0') : (latest.nav2_pct || '0'),
       gztime,
       dwjz: data.worth || '',
       _fromSina: true,
@@ -182,6 +186,7 @@ export async function fetchSinaFundValuation(code: string): Promise<SinaFundgzCo
  */
 export async function fetchMultipleSinaValuations(
   codes: string[],
+  pctField: SinaPctSource = 'nav2',
 ): Promise<Map<string, SinaFundgzCompat>> {
   const results = new Map<string, SinaFundgzCompat>()
 
@@ -190,7 +195,7 @@ export async function fetchMultipleSinaValuations(
   for (let i = 0; i < codes.length; i += batchSize) {
     const batch = codes.slice(i, i + batchSize)
     const batchResults = await Promise.allSettled(
-      batch.map(code => fetchSinaFundValuation(code)),
+      batch.map(code => fetchSinaFundValuation(code, pctField)),
     )
 
     batchResults.forEach((result, j) => {

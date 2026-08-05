@@ -12,10 +12,7 @@
                 :content="settingStore.privacyMode ? '显示金额' : '隐藏金额'"
                 placement="bottom"
               >
-                <button
-                  class="btn-icon"
-                  @click="togglePrivacy"
-                >
+                <button class="btn-icon" @click="togglePrivacy">
                   <svg
                     v-if="settingStore.privacyMode"
                     xmlns="http://www.w3.org/2000/svg"
@@ -293,6 +290,28 @@
                     </g>
                   </svg>
                 </el-button>
+                <el-button
+                  link
+                  title="切换估算涨跌幅数据源"
+                  @click.stop="openSinaSourceDialog"
+                  style="margin: 0; padding: 0;"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                  >
+                    <g fill="none" stroke="currentColor" stroke-width="1.5">
+                      <circle cx="12" cy="12" r="10" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M10 7v10l-3-3.437M14 17V7l3 3.438"
+                      />
+                    </g>
+                  </svg>
+                </el-button>
               </div>
             </template>
             <template #default="{ row }">
@@ -325,7 +344,8 @@
                     @pointerup="onFundNamePointerUp"
                     @pointerleave="onFundNamePointerUp"
                     @contextmenu.prevent
-                  >{{ row.name }}</span>
+                    >{{ row.name }}</span
+                  >
                 </div>
                 <div class="fund-code-row">
                   <div>
@@ -374,7 +394,11 @@
                     {{ fmtPctRow(row.gszzl, row.shouldShowEstimated) }}
                   </div>
                   <div class="td-sub">
-                    {{ row.shouldShowEstimated ? (row.fullUpdateTime || row.updateTime || "—") : "—" }}
+                    {{
+                      row.shouldShowEstimated
+                        ? row.fullUpdateTime || row.updateTime || "—"
+                        : "—"
+                    }}
                   </div>
                 </div>
               </template>
@@ -792,6 +816,34 @@
     <!-- 列设置对话框 -->
     <ColumnSettingsDialog v-model:visible="showColumnSettings" />
 
+    <!-- 估算涨跌幅数据源切换 -->
+    <el-dialog
+      v-model="showSinaSourceDialog"
+      title="估算涨跌幅数据源"
+      width="360px"
+      append-to-body
+    >
+      <el-radio-group v-model="sinaSourceDraft">
+        <el-radio value="nav">数据源1</el-radio>
+        <el-radio value="nav2">数据源2（默认）</el-radio>
+      </el-radio-group>
+      <div
+        class="form-item-tip"
+        style="
+          margin-top: 8px;
+          font-size: 12px;
+          color: var(--el-text-color-secondary);
+          line-height: 1.5;
+        "
+      >
+        切换后自动刷新数据
+      </div>
+      <template #footer>
+        <el-button @click="showSinaSourceDialog = false">取消</el-button>
+        <el-button type="primary" @click="confirmSinaSource">确定</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 批量加减仓弹窗 -->
     <BatchAdjustModal
       :visible="showBatchAdjust"
@@ -1068,7 +1120,12 @@ import GroupHoverTooltip from "@/components/GroupHoverTooltip.vue";
 import BatchAdjustModal from "@/components/BatchAdjustModal.vue";
 import PendingConfirmDialog from "@/components/PendingConfirmDialog.vue";
 import type { GroupStats } from "@/components/GroupTooltip.vue";
-import { useFundStore, useGroupStore, useSettingStore, useSyncStore } from "@/stores";
+import {
+  useFundStore,
+  useGroupStore,
+  useSettingStore,
+  useSyncStore,
+} from "@/stores";
 import { fundService, groupService, syncService } from "@/services";
 import { storageService } from "@/services/storageService";
 import { searchFund } from "@/api/fundEastmoney";
@@ -1164,6 +1221,25 @@ const showEditGroupDialog = ref(false);
 const showGroupManageDialog = ref(false);
 const highlightFundCodeForGroup = ref<string>(""); // 需要在分组管理器中高亮的基金代码
 const showColumnSettings = ref(false);
+const showSinaSourceDialog = ref(false);
+const sinaSourceDraft = ref<"nav2" | "nav">("nav2");
+
+function openSinaSourceDialog() {
+  sinaSourceDraft.value = settingStore.sinaPctSource;
+  showSinaSourceDialog.value = true;
+}
+
+async function confirmSinaSource() {
+  showSinaSourceDialog.value = false;
+  await settingStore.setSinaPctSource(sinaSourceDraft.value);
+  // 立即刷新，让新数据源生效
+  fundService.refreshAllFunds().catch(() => {});
+  ElMessage.success(
+    `已切换估算涨跌幅数据源为 ${
+      sinaSourceDraft.value === "nav2" ? "数据源2" : "数据源1"
+    }，正在刷新数据`,
+  );
+}
 const groupTooltipVisible = ref(false);
 const groupTooltipStats = ref<GroupStats>({
   groupName: "",
@@ -2012,12 +2088,17 @@ function onGroupMouseEnter(group: Group, e: MouseEvent) {
       fundCount: rows.length,
       estimatedGain,
       estimatedChangePercent:
-        totalAsset > estimatedGain ? (estimatedGain / (totalAsset - estimatedGain)) * 100 : 0,
+        totalAsset > estimatedGain
+          ? (estimatedGain / (totalAsset - estimatedGain)) * 100
+          : 0,
       estimatedUpCount: estUp,
       estimatedDownCount: estDown,
       estimatedDate,
       dailyGain,
-      dailyChangePercent: totalAsset > dailyGain ? (dailyGain / (totalAsset - dailyGain)) * 100 : 0,
+      dailyChangePercent:
+        totalAsset > dailyGain
+          ? (dailyGain / (totalAsset - dailyGain)) * 100
+          : 0,
       dailyUpCount: dailyUp,
       dailyDownCount: dailyDown,
       dailyDate,
@@ -2136,12 +2217,17 @@ function onAllGroupMouseEnter(e: MouseEvent) {
       fundCount: enrichedRows.value.length,
       estimatedGain,
       estimatedChangePercent:
-        totalAsset > estimatedGain ? (estimatedGain / (totalAsset - estimatedGain)) * 100 : 0,
+        totalAsset > estimatedGain
+          ? (estimatedGain / (totalAsset - estimatedGain)) * 100
+          : 0,
       estimatedUpCount: estUp,
       estimatedDownCount: estDown,
       estimatedDate,
       dailyGain,
-      dailyChangePercent: totalAsset > dailyGain ? (dailyGain / (totalAsset - dailyGain)) * 100 : 0,
+      dailyChangePercent:
+        totalAsset > dailyGain
+          ? (dailyGain / (totalAsset - dailyGain)) * 100
+          : 0,
       dailyUpCount: dailyUp,
       dailyDownCount: dailyDown,
       dailyDate,
@@ -2201,12 +2287,15 @@ function showAllGroupStats() {
     fundCount: enrichedRows.value.length,
     estimatedGain,
     estimatedChangePercent:
-      totalAsset > estimatedGain ? (estimatedGain / (totalAsset - estimatedGain)) * 100 : 0,
+      totalAsset > estimatedGain
+        ? (estimatedGain / (totalAsset - estimatedGain)) * 100
+        : 0,
     estimatedUpCount: estUp,
     estimatedDownCount: estDown,
     estimatedDate,
     dailyGain,
-    dailyChangePercent:      totalAsset > dailyGain ? (dailyGain / (totalAsset - dailyGain)) * 100 : 0,
+    dailyChangePercent:
+      totalAsset > dailyGain ? (dailyGain / (totalAsset - dailyGain)) * 100 : 0,
     dailyUpCount: dailyUp,
     dailyDownCount: dailyDown,
     dailyDate,
@@ -2700,12 +2789,15 @@ function showGroupStats(group: Group) {
     fundCount: rows.length,
     estimatedGain,
     estimatedChangePercent:
-      totalAsset > estimatedGain ? (estimatedGain / (totalAsset - estimatedGain)) * 100 : 0,
+      totalAsset > estimatedGain
+        ? (estimatedGain / (totalAsset - estimatedGain)) * 100
+        : 0,
     estimatedUpCount: estUp,
     estimatedDownCount: estDown,
     estimatedDate,
     dailyGain,
-    dailyChangePercent:      totalAsset > dailyGain ? (dailyGain / (totalAsset - dailyGain)) * 100 : 0,
+    dailyChangePercent:
+      totalAsset > dailyGain ? (dailyGain / (totalAsset - dailyGain)) * 100 : 0,
     dailyUpCount: dailyUp,
     dailyDownCount: dailyDown,
     dailyDate,
@@ -3176,6 +3268,10 @@ html.dark .group-tag-item.active {
 .name-col-head .el-button {
   padding: 0 4px;
   -webkit-tap-highlight-color: transparent;
+}
+
+.name-col-head .el-button + .el-button {
+  margin-left: 4px;
 }
 
 .fund-el-table :deep(th.is-right .col-head) {

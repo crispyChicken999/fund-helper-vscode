@@ -2,7 +2,7 @@
   "name": "fund-helper",
   "displayName": "基金助手",
   "description": "VSCode 查看基金估算收益、涨跌幅、行情等数据，支持分组、排序、AI分析等功能，助你轻松管理投资组合",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "author": "CrispyChicken",
   "publisher": "CrispyChicken",
   "license": "MIT",
@@ -631,6 +631,19 @@
             "持有收益 ↑（从低到高）",
             "持有收益率 ↓（从高到低）",
             "持有收益率 ↑（从低到高）"
+          ]
+        },
+        "fund-helper.sinaPctSource": {
+          "type": "string",
+          "default": "nav2",
+          "description": "新浪接口估算涨跌幅数据源（数据源2=nav2_pct / 数据源1=nav_pct），切换后下次刷新生效",
+          "enum": [
+            "nav2",
+            "nav"
+          ],
+          "enumDescriptions": [
+            "数据源2（默认，对应 nav2_pct）",
+            "数据源1（对应 nav_pct）"
           ]
         },
         "fund-helper.hideStatusBar": {

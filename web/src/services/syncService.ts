@@ -101,6 +101,7 @@ class SyncService {
         refreshInterval: settings.refreshInterval,
         privacyMode: settings.privacyMode,
         grayscaleMode: settings.grayscaleMode,
+        sinaPctSource: settings.sinaPctSource,
         indexCardsConfig: parsedIndexCardsConfig,
         // 保留 VSCode 专属字段
         ...vscodeFields,
@@ -367,6 +368,7 @@ class SyncService {
       refreshInterval: settings.refreshInterval,
       privacyMode: settings.privacyMode,
       grayscaleMode: settings.grayscaleMode,
+      sinaPctSource: settings.sinaPctSource,
       indexCardsConfig: parsedIndexCardsConfig,
       version: syncStore.localVersion,
       lastModified: Date.now()
@@ -401,6 +403,11 @@ class SyncService {
     // 应用灰色模式（从云端读取）
     if (data.grayscaleMode !== undefined) {
       await settingStore.setGrayscaleMode(data.grayscaleMode)
+    }
+
+    // 应用新浪估算涨跌幅数据源（从云端读取）
+    if (data.sinaPctSource === 'nav' || data.sinaPctSource === 'nav2') {
+      await settingStore.setSinaPctSource(data.sinaPctSource)
     }
 
     // 应用指数卡片配置（从云端读取）

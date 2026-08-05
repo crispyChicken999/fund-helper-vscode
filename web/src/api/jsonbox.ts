@@ -19,6 +19,8 @@ export interface JsonboxData {
   // Web 端设置（从云端同步到本地）
   privacyMode?: boolean
   grayscaleMode?: boolean
+  // 新浪估算涨跌幅数据源（数据源2=nav2_pct 默认 / 数据源1=nav_pct）
+  sinaPctSource?: 'nav2' | 'nav'
   // 指数卡片配置
   indexCardsConfig?: Array<{ code: string; name: string }>
   // VSCode 专属字段（保留）
@@ -94,6 +96,8 @@ class JsonboxClient {
           refreshInterval: item.refreshInterval,
           privacyMode: item.privacyMode,
           grayscaleMode: item.grayscaleMode,
+          // 新浪估算涨跌幅数据源
+          sinaPctSource: item.sinaPctSource,
           indexCardsConfig: item.indexCardsConfig,
           // VSCode 专属字段
           hideStatusBar: item.hideStatusBar,
