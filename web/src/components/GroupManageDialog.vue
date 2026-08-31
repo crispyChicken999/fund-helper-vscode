@@ -401,6 +401,14 @@ async function addNewGroup() {
     const key = `group_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     draftGroupOrder.value.push({ key, name });
     draftFundGroups.value.set(key, []);
+    // 自动展开新建的分组，方便用户拖拽基金进去
+    expandedFolders.value.add(key);
+    // 滚动到新建的分组
+    await nextTick();
+    const newEl = groupListRef.value?.querySelector(`[data-key="${key}"]`) as HTMLElement;
+    if (newEl) {
+      newEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   } catch {
     /* cancel */
   }
