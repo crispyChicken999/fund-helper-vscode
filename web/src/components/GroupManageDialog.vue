@@ -507,6 +507,7 @@ function initGroupSortable() {
   groupSortableInstance = Sortable.create(ulElement, {
     handle: ".gm-folder-header .drag-handle:not(.disabled)",
     animation: 200,
+    forceFallback: true,
     ghostClass: "sortable-ghost",
     filter: ".gm-folder-fixed", // 过滤掉"未分类"
     draggable: ".gm-folder:not(.gm-folder-fixed)", // 只有非固定的文件夹可拖拽
@@ -548,6 +549,7 @@ function initFundSortable(groupKey: string) {
     group: "fund-items", // 设置共享组名，允许跨分组拖拽
     handle: ".drag-handle",
     animation: 200,
+    forceFallback: true,
     ghostClass: "sortable-ghost",
     onEnd(evt) {
       const { oldIndex, newIndex, from, to } = evt;
