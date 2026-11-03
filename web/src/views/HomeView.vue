@@ -1008,6 +1008,23 @@
             </div>
           </div>
 
+          <!-- 完整加仓预览入口 -->
+          <div v-if="positionIsAdd" class="preview-more">
+            <el-button
+              type="primary"
+              plain
+              round
+              size="small"
+              class="preview-more-btn"
+              @click="openAddPositionPreview"
+            >
+              查看完整加仓预览 ›
+            </el-button>
+            <div class="preview-more-tip">
+              预览加仓后全部变化字段 · 快捷金额 · 多基金切换
+            </div>
+          </div>
+
           <!-- 减仓计算结果预览 -->
           <div
             v-if="
@@ -2416,6 +2433,22 @@ async function onTooltipAdjust(isAdd: boolean) {
   loadNavHistory(row.code);
 }
 
+/** 打开「完整加仓预览」页（带上金额与当前所选净值，供预览页首屏使用） */
+function openAddPositionPreview() {
+  const row = positionRow.value;
+  if (!row) return;
+  const query: Record<string, string> = {};
+  if (positionAmount.value > 0) query.amount = String(positionAmount.value);
+  if (selectedNavValue.value > 0) query.nav = String(selectedNavValue.value);
+  if (selectedNavDate.value) query.date = selectedNavDate.value;
+  showPositionDialog.value = false;
+  router.push({
+    name: "addPositionPreview",
+    params: { code: row.code },
+    query,
+  });
+}
+
 async function loadNavHistory(code: string) {
   navHistoryLoading.value = true;
   navHistoryList.value = [];
@@ -3623,6 +3656,25 @@ html.dark .group-label {
 
 .preview-row .negative {
   font-weight: 600;
+}
+
+/* 完整加仓预览入口 */
+.preview-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.preview-more-btn {
+  width: 100%;
+}
+
+.preview-more-tip {
+  font-size: 11px;
+  color: var(--el-text-color-placeholder);
+  text-align: center;
 }
 
 /* Selected nav hint */

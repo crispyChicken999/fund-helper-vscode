@@ -77,6 +77,54 @@ export interface FundView extends Fund {
   manager?: string
 }
 
+// ==================== 加仓预览相关 ====================
+
+/** 加仓前 / 加仓后的单只基金持仓指标（口径与 fundDisplay.buildFundRowDisplay 一致） */
+export interface AddPositionMetrics {
+  /** 持有份额 */
+  num: number
+  /** 成本价 */
+  cost: number
+  /** 持有成本 */
+  costAmount: number
+  /** 持有市值 */
+  marketValue: number
+  /** 持有收益 */
+  gain: number
+  /** 总收益率 % */
+  gainRate: number
+  /** 估算收益 */
+  estimatedGain: number
+  /** 当日收益 */
+  dailyGain: number
+  /** 持有仓位 %（占组合总资产） */
+  positionPct: number
+  /** 回本所需涨幅 %（成本价相对最新净值） */
+  breakEvenRisePct: number
+}
+
+/** 加仓预览计算结果 */
+export interface AddPositionPreview {
+  /** 买入净值 */
+  buyNav: number
+  /** 加仓金额 */
+  amount: number
+  /** 新增份额 */
+  addShares: number
+  /** 加仓前 */
+  before: AddPositionMetrics
+  /** 加仓后 */
+  after: AddPositionMetrics
+  /** 加仓金额占加仓前持有市值的比例 % */
+  amountToHoldingPct: number
+  /** 收益率变化（百分点） */
+  gainRateDelta: number
+  /** 持有收益变化 */
+  gainDelta: number
+  /** 持仓份额变化 */
+  numDelta: number
+}
+
 // ==================== 分组相关 ====================
 
 // 分组

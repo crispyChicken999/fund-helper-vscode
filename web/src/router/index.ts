@@ -34,6 +34,13 @@ const router = createRouter({
       props: true
     },
     {
+      path: '/add-preview/:code',
+      name: 'addPositionPreview',
+      component: () => import('@/views/AddPositionPreviewView.vue'),
+      meta: { title: '加仓预览' },
+      props: true
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/'
     }

@@ -8,6 +8,9 @@
         <slot />
       </el-scrollbar>
     </div>
+    <div v-if="$slots.footer" class="layout-footer">
+      <slot name="footer" />
+    </div>
   </div>
 </template>
 
@@ -66,5 +69,13 @@ const contentStyle = computed(() => {
   min-height: 0;
   background: var(--el-bg-color);
   -webkit-overflow-scrolling: touch;
+}
+
+/* 吸底操作栏（详情类页面可选，如加仓预览的确认栏） */
+.layout-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--el-border-color);
+  background: var(--el-bg-color);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 </style>
