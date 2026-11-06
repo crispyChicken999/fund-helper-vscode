@@ -14,6 +14,9 @@ interface SettingStoreState {
   columns: Map<string, ColumnDefinition>
 }
 
+// 估值数据源默认值由「数据源2」改为「数据源1」后的一次性迁移标记
+const SINA_SOURCE_MIGRATED_KEY = 'fund_helper_sina_source_migrated_v1'
+
 // 默认设置（jsonboxName 由 ensureBoxName / loadFromStorage 填入）
 const defaultSettings: Settings = {
   jsonboxName: '',
@@ -48,7 +51,8 @@ const defaultSettings: Settings = {
     'cost'
   ],
   sortMethod: 'holdingGainRate_desc',
-  sinaPctSource: 'nav2',
+  // 默认使用数据源1（nav_pct）：估算更贴近最终净值
+  sinaPctSource: 'nav',
   maxContentWidthMode: 'preset',
   maxContentWidth: 1024
 }
@@ -187,6 +191,23 @@ export const useSettingStore = defineStore('setting', {
       storageService.saveSettings(this.getSettings())
     },
 
+    /**
+     * 一次性迁移：旧版本默认值是「数据源2」(nav2)，现在默认「数据源1」(nav)。
+     * 只对还停留在旧默认值、且没做过迁移的本地数据生效一次，之后用户可随时自己改回去。
+     */
+    migrateSinaPctSourceDefault() {
+      try {
+        if (localStorage.getItem(SINA_SOURCE_MIGRATED_KEY)) return
+        if (this.settings.sinaPctSource === 'nav2') {
+          this.settings.sinaPctSource = 'nav'
+          storageService.saveSettings(this.getSettings())
+        }
+        localStorage.setItem(SINA_SOURCE_MIGRATED_KEY, '1')
+      } catch {
+        /* localStorage 不可用时跳过 */
+      }
+    },
+
     // 设置隐私模式
     async setPrivacyMode(enabled: boolean) {
       this.settings.privacyMode = enabled
@@ -266,6 +287,9 @@ export const useSettingStore = defineStore('setting', {
       }
       const box = ensureBoxName()
       this.settings.jsonboxName = box
+
+      // 估值数据源默认值迁移（数据源2 → 数据源1）
+      this.migrateSinaPctSourceDefault()
 
       // 如果用户选择了跟随系统模式，计算并设置实际主题
       if ((this.settings as any).themeMode === 'auto') {

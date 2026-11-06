@@ -19,7 +19,7 @@ export interface JsonboxData {
   // Web 端设置（从云端同步到本地）
   privacyMode?: boolean
   grayscaleMode?: boolean
-  // 新浪估算涨跌幅数据源（数据源2=nav2_pct 默认 / 数据源1=nav_pct）
+  // 新浪估算涨跌幅数据源（数据源1=nav_pct 默认 / 数据源2=nav2_pct）
   sinaPctSource?: 'nav2' | 'nav'
   // 指数卡片配置
   indexCardsConfig?: Array<{ code: string; name: string }>

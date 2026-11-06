@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <MainLayout>
     <template #header>
       <!-- 顶部资产展示区 -->
@@ -848,8 +848,8 @@
       append-to-body
     >
       <el-radio-group v-model="sinaSourceDraft">
-        <el-radio value="nav">数据源1</el-radio>
-        <el-radio value="nav2">数据源2（默认）</el-radio>
+        <el-radio value="nav">数据源1（推荐）</el-radio>
+        <el-radio value="nav2">数据源2</el-radio>
       </el-radio-group>
       <div
         class="form-item-tip"
@@ -857,9 +857,11 @@
           margin-top: 8px;
           font-size: 12px;
           color: var(--el-text-color-secondary);
-          line-height: 1.5;
+          line-height: 1.6;
         "
       >
+        数据源1 估算更准，收盘后与实际净值基本一致；数据源2 估算普遍偏大。
+        <br />
         切换后自动刷新数据
       </div>
       <template #footer>

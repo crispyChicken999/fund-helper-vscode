@@ -130,9 +130,17 @@
 
             <el-form-item label="估值数据源">
               <el-radio-group v-model="sinaPctSource">
-                <el-radio value="nav">数据源1</el-radio>
-                <el-radio value="nav2">数据源2（默认）</el-radio>
+                <el-radio value="nav">数据源1（推荐）</el-radio>
+                <el-radio value="nav2">数据源2</el-radio>
               </el-radio-group>
+              <div class="sina-source-tip">
+                <div>
+                  <strong>数据源1</strong>：估算更贴近最终净值，收盘后与官方更新的实际净值基本一致
+                </div>
+                <div>
+                  <strong>数据源2</strong>：估算结果通常偏大，可作为涨幅上限参考
+                </div>
+              </div>
             </el-form-item>
 
             <el-form-item label="主题">
@@ -513,159 +521,54 @@
             <!-- 访问站点 -->
             <el-form-item label="访问站点" label-width="120px">
               <div class="site-list">
-                <!-- 🚀 主站 Cloudflare Pages -->
-                <div class="site-card site-card--main" :class="{ active: isMainSite }">
-                  <div v-if="isMainSite" class="site-card-ribbon site-card-ribbon--main">
-                    <span class="ribbon-text">当前访问站点</span>
+                <div
+                  v-for="site in siteList"
+                  :key="site.key"
+                  class="site-item"
+                  :class="{ 'is-current': site.current }"
+                  :title="`在新标签页打开 ${site.host}`"
+                  @click="openSite(site.url)"
+                >
+                  <span class="site-item-icon">
+                    <svg
+                      v-if="site.key === 'main'"
+                      viewBox="0 0 24 24"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                    >
+                      <path d="M14 4H4v10H2V4a2 2 0 0 1 2-2h10zm4 2H8a2 2 0 0 0-2 2v10h2V8h10zm4 6v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2m-2 3h-8v2h8z"/>
+                    </svg>
+                    <svg
+                      v-else
+                      viewBox="0 0 24 24"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                    >
+                      <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.06 11.06 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.06.78 2.13v3.16c0 .31.21.67.8.55C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
+                    </svg>
+                  </span>
+                  <div class="site-item-info">
+                    <div class="site-item-title">
+                      <span class="site-item-name">{{ site.name }}</span>
+                      <span class="site-item-host">{{ site.host }}</span>
+                      <span v-if="site.current" class="site-item-tag">当前</span>
+                    </div>
+                    <div class="site-item-desc">{{ site.desc }}</div>
                   </div>
-                  <div class="site-card-glow"></div>
-                  <div class="site-card-grid"></div>
-                  <div class="site-card-inner">
-                    <div class="site-card-header">
-                      <div class="site-icon site-icon--main">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                          <path d="M14 4H4v10H2V4a2 2 0 0 1 2-2h10zm4 2H8a2 2 0 0 0-2 2v10h2V8h10zm4 6v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2m-2 3h-8v2h8z"/>
-                        </svg>
-                      </div>
-                      <div class="site-card-titles">
-                        <span class="site-badge site-badge--main">🚀 主站推荐</span>
-                        <span class="site-host">fund-helper.ccwu.cc</span>
-                      </div>
-                      <div v-if="!isMainSite" class="site-pulse-dot site-pulse-dot--main"></div>
-                    </div>
-                    <div class="site-card-desc">
-                      <span class="site-meta-item">⚡ 全球 CDN</span>
-                      <span class="site-meta-item">🛡️ Cloudflare 防护</span>
-                      <span class="site-meta-item">🚀 极速访问</span>
-                    </div>
-                    <div class="site-card-desc-text">
-                      Cloudflare Pages 托管，全球 CDN 加速，速度最快，推荐首选。
-                    </div>
-                    <div class="site-card-actions" v-if="!isMainSite">
-                      <el-button
-                        size="small"
-                        type="primary"
-                        round
-                        class="site-btn site-btn--primary"
-                        @click="openSite('https://fund-helper.ccwu.cc/')"
-                      >
-                        <span class="site-btn-glow"></span>
-                        立即访问
-                      </el-button>
-                      <el-button
-                        size="small"
-                        plain
-                        round
-                        class="site-btn"
-                        @click="openSite('https://fund-helper.ccwu.cc/settings')"
-                      >
-                        前往设置页
-                      </el-button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 🔗 备用站 GitHub Pages -->
-                <div class="site-card site-card--backup" :class="{ active: isBackupSite }">
-                  <div v-if="isBackupSite" class="site-card-ribbon site-card-ribbon--backup">
-                    <span class="ribbon-text">当前访问站点</span>
-                  </div>
-                  <div class="site-card-glow"></div>
-                  <div class="site-card-grid"></div>
-                  <div class="site-card-inner">
-                    <div class="site-card-header">
-                      <div class="site-icon site-icon--backup">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                          <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.06 11.06 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.06.78 2.13v3.16c0 .31.21.67.8.55C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
-                        </svg>
-                      </div>
-                      <div class="site-card-titles">
-                        <span class="site-badge site-badge--backup">🔗 备用站</span>
-                        <span class="site-host">github.io/fund-helper-vscode</span>
-                      </div>
-                      <div v-if="!isBackupSite" class="site-pulse-dot site-pulse-dot--backup"></div>
-                    </div>
-                    <div class="site-card-desc">
-                      <span class="site-meta-item">🔄 实时同步</span>
-                      <span class="site-meta-item">📦 仓库直连</span>
-                      <span class="site-meta-item">⚠️ 国内可能慢</span>
-                    </div>
-                    <div class="site-card-desc-text">
-                      GitHub Pages 托管，实时更新，但国内访问可能较慢（DNS 易被污染）。
-                    </div>
-                    <div class="site-card-actions" v-if="!isBackupSite">
-                      <el-button
-                        size="small"
-                        round
-                        type="warning"
-                        class="site-btn site-btn--backup"
-                        @click="openSite('https://crispychicken999.github.io/fund-helper-vscode/')"
-                      >
-                        <span class="site-btn-glow"></span>
-                        立即访问
-                      </el-button>
-                      <el-button
-                        size="small"
-                        round
-                        plain
-                        class="site-btn"
-                        @click="openSite('https://crispychicken999.github.io/fund-helper-vscode/settings')"
-                      >
-                        前往设置页
-                      </el-button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- ⚠️ 已废弃 Netlify -->
-                <div class="site-card site-card--deprecated" :class="{ active: isDeprecatedSite }">
-                  <div v-if="isDeprecatedSite" class="site-card-ribbon site-card-ribbon--deprecated">
-                    <span class="ribbon-text">⛔ 当前为废弃站</span>
-                  </div>
-                  <div class="site-card-glow"></div>
-                  <div class="site-card-grid"></div>
-                  <div class="site-card-inner">
-                    <div class="site-card-header">
-                      <div class="site-icon site-icon--deprecated">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                          <path d="M1 21h22L12 2zm12-3h-2v-2h2zm0-4h-2v-4h2z"/>
-                        </svg>
-                      </div>
-                      <div class="site-card-titles">
-                        <span class="site-badge site-badge--deprecated">⚠️ 已废弃</span>
-                        <span class="site-host">fund-helper.netlify.app</span>
-                      </div>
-                      <div v-if="!isDeprecatedSite" class="site-pulse-dot site-pulse-dot--deprecated"></div>
-                    </div>
-                    <div class="site-card-desc">
-                      <span class="site-meta-item">⛔ 已停止更新</span>
-                      <span class="site-meta-item">🚫 额度耗尽</span>
-                    </div>
-                    <div class="site-card-desc-text">
-                      Netlify 免费额度有限（每月 300 积分，每次部署消耗约 15 积分），已停止更新，请迁移至主站。
-                    </div>
-                    <div class="site-card-actions" v-if="!isDeprecatedSite">
-                      <el-button
-                        size="small"
-                        type="danger"
-                        plain
-                        round
-                        class="site-btn site-btn--danger"
-                        @click="openSite('https://fund-helper.netlify.app/')"
-                      >
-                        仍然访问
-                      </el-button>
-                      <el-button
-                        size="small"
-                        plain
-                        round
-                        class="site-btn"
-                        @click="openSite('https://fund-helper.ccwu.cc/')"
-                      >
-                        迁移至主站
-                      </el-button>
-                    </div>
-                  </div>
+                  <el-button
+                    link
+                    type="primary"
+                    size="small"
+                    class="site-item-action"
+                    @click.stop="openSite(site.url)"
+                  >
+                    <span class="site-item-action-text">{{
+                      site.current ? "打开" : "访问"
+                    }}</span>
+                    <el-icon><ArrowRight /></el-icon>
+                  </el-button>
                 </div>
               </div>
             </el-form-item>
@@ -763,7 +666,13 @@ import { ref, computed, nextTick, onMounted, onUnmounted, h } from "vue";
 import MainLayout from "@/layouts/MainLayout.vue";
 import SyncDialog from "@/components/SyncDialog.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Upload, Download, Delete, Cellphone } from "@element-plus/icons-vue";
+import {
+  Upload,
+  Download,
+  Delete,
+  Cellphone,
+  ArrowRight,
+} from "@element-plus/icons-vue";
 import Sortable from "sortablejs";
 import {
   useSettingStore,
@@ -980,9 +889,35 @@ const isMainSite = computed(() =>
 const isBackupSite = computed(() =>
   window.location.hostname.includes("github.io")
 );
-const isDeprecatedSite = computed(() =>
-  window.location.hostname === "fund-helper.netlify.app"
-);
+
+// 访问站点列表
+interface SiteEntry {
+  key: "main" | "backup";
+  name: string;
+  host: string;
+  url: string;
+  desc: string;
+  current: boolean;
+}
+
+const siteList = computed<SiteEntry[]>(() => [
+  {
+    key: "main",
+    name: "主站",
+    host: "fund-helper.ccwu.cc",
+    url: "https://fund-helper.ccwu.cc/",
+    desc: "Cloudflare Pages 托管，全球 CDN 加速，推荐首选",
+    current: isMainSite.value,
+  },
+  {
+    key: "backup",
+    name: "备用站",
+    host: "github.io/fund-helper-vscode",
+    url: "https://crispychicken999.github.io/fund-helper-vscode/",
+    desc: "GitHub Pages 托管，随仓库更新，国内访问可能较慢",
+    current: isBackupSite.value,
+  },
+]);
 
 // ==================== 初始化 ====================
 
@@ -1704,6 +1639,22 @@ function openSite(url: string) {
   text-align: left;
 }
 
+/* 估值数据源说明 */
+.sina-source-tip {
+  width: 100%;
+  margin-top: 6px;
+  padding-left: 4px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--el-text-color-secondary);
+  text-align: left;
+}
+
+.sina-source-tip strong {
+  font-weight: 500;
+  color: var(--el-text-color-regular);
+}
+
 .column-settings-list {
   list-style: none;
   padding: 0;
@@ -1939,603 +1890,161 @@ function openSite(url: string) {
   text-align: center;
 }
 
-/* ============== 访问站点 - 科技感卡片 ============== */
+/* ============== 访问站点 ============== */
 .site-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   width: 100%;
-  position: relative;
 }
 
-@keyframes siteGlowPulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-@keyframes siteSweep {
-  0% { transform: translateX(-100%) skewX(-20deg); }
-  100% { transform: translateX(300%) skewX(-20deg); }
-}
-
-@keyframes siteFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
-}
-
-@keyframes siteDotPulse {
-  0% {
-    box-shadow: 0 0 0 0 currentColor;
-    opacity: 1;
-  }
-  70% {
-    box-shadow: 0 0 0 8px transparent;
-    opacity: 0.6;
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-    opacity: 1;
-  }
-}
-
-@keyframes siteSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes siteScan {
-  0% { transform: translateY(-100%); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(100%); opacity: 0; }
-}
-
-.site-card {
-  position: relative;
-  border-radius: 12px;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color);
-  overflow: hidden;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  isolation: isolate;
-  --site-color: #1890ff;
-  --site-color-rgb: 24, 144, 255;
-  --site-glow: rgba(24, 144, 255, 0.4);
-}
-
-.site-card--main {
-  --site-color: #00d4ff;
-  --site-color-rgb: 0, 212, 255;
-  --site-glow: rgba(0, 212, 255, 0.5);
-}
-
-.site-card--backup {
-  --site-color: #ffa940;
-  --site-color-rgb: 255, 169, 64;
-  --site-glow: rgba(255, 169, 64, 0.45);
-}
-
-.site-card--deprecated {
-  --site-color: #ff4d4f;
-  --site-color-rgb: 255, 77, 79;
-  --site-glow: rgba(255, 77, 79, 0.4);
-  opacity: 0.92;
-}
-
-/* 卡片光晕背景 */
-.site-card-glow {
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(var(--site-color-rgb), 0.6) 0%,
-    rgba(var(--site-color-rgb), 0.1) 30%,
-    transparent 50%,
-    rgba(var(--site-color-rgb), 0.1) 70%,
-    rgba(var(--site-color-rgb), 0.6) 100%
-  );
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.4s;
-  pointer-events: none;
-}
-
-/* 卡片内部辉光 */
-.site-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 80% 60% at 0% 0%,
-    rgba(var(--site-color-rgb), 0.12) 0%,
-    transparent 60%
-  );
-  opacity: 0;
-  transition: opacity 0.4s;
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* 科技网格背景 */
-.site-card-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(var(--site-color-rgb), 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--site-color-rgb), 0.08) 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-position: 0 0;
-  mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, #000 30%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, #000 30%, transparent 80%);
-  mask: radial-gradient(ellipse 90% 80% at 50% 50%, #000 30%, transparent 80%);
-  -webkit-mask: radial-gradient(ellipse 90% 80% at 50% 50%, #000 30%, transparent 80%);
-  opacity: 0;
-  transition: opacity 0.4s;
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* 卡片内容层 */
-.site-card-inner {
-  position: relative;
-  z-index: 1;
-  padding: 16px 18px;
-}
-
-.site-card:hover {
-  box-shadow:
-    0 8px 32px rgba(var(--site-color-rgb), 0.18),
-    0 0 0 1px rgba(var(--site-color-rgb), 0.25);
-  border-color: rgba(var(--site-color-rgb), 0.4);
-}
-
-.site-card:hover .site-card-glow {
-  opacity: 1;
-  animation: siteGlowPulse 2.5s ease-in-out infinite;
-}
-
-.site-card:hover .site-card::before,
-.site-card:hover .site-card-grid {
-  opacity: 1;
-}
-
-.site-card:hover .site-card-grid {
-  opacity: 1;
-  animation: siteFloat 4s ease-in-out infinite;
-}
-
-.site-card.active {
-  border-color: rgba(var(--site-color-rgb), 0.5);
-  background: linear-gradient(
-    135deg,
-    rgba(var(--site-color-rgb), 0.08) 0%,
-    rgba(var(--site-color-rgb), 0.03) 100%
-  );
-  box-shadow:
-    0 0 0 1px rgba(var(--site-color-rgb), 0.3),
-    0 4px 20px rgba(var(--site-color-rgb), 0.15),
-    inset 0 0 30px rgba(var(--site-color-rgb), 0.05);
-}
-
-.site-card.active .site-card-glow {
-  opacity: 1;
-  animation: siteGlowPulse 3s ease-in-out infinite;
-}
-
-.site-card.active .site-card-grid {
-  opacity: 1;
-}
-
-.site-card.active::before {
-  opacity: 1;
-}
-
-/* ===== 右上角飘带标签 - 当前访问站点 ===== */
-.site-card-ribbon {
-  position: absolute;
-  top: 20px;
-  right: -30px;
-  z-index: 2;
-  width: 130px;
-  height: 30px;
+.site-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transform: rotate(45deg);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  pointer-events: none;
-}
-
-.ribbon-text {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  white-space: nowrap;
-}
-
-@keyframes ribbonShine {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
-}
-
-.site-card-ribbon::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.2) 100%
-  );
-  animation: ribbonShine 2s ease-in-out infinite;
-}
-
-.site-card-ribbon--main {
-  background: linear-gradient(135deg, #00d4ff, #0099ff);
-  box-shadow:
-    0 2px 12px rgba(0, 212, 255, 0.5),
-    0 0 0 2px rgba(0, 212, 255, 0.3);
-}
-
-.site-card-ribbon--backup {
-  background: linear-gradient(135deg, #ffa940, #ff7a00);
-  box-shadow:
-    0 2px 12px rgba(255, 169, 64, 0.5),
-    0 0 0 2px rgba(255, 169, 64, 0.3);
-}
-
-.site-card-ribbon--deprecated {
-  background: linear-gradient(135deg, #ff4d4f, #d9363e);
-  box-shadow:
-    0 2px 12px rgba(255, 77, 79, 0.5),
-    0 0 0 2px rgba(255, 77, 79, 0.3);
-}
-
-/* 扫光效果 */
-.site-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(var(--site-color-rgb), 0.15),
-    transparent
-  );
-  transform: translateX(-100%) skewX(-20deg);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.site-card:hover::after {
-  animation: siteSweep 1.5s ease-in-out;
-}
-
-.site-card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  position: relative;
-}
-
-/* 站点图标 */
-.site-icon {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
-  background: linear-gradient(
-    135deg,
-    rgba(var(--site-color-rgb), 0.15) 0%,
-    rgba(var(--site-color-rgb), 0.05) 100%
-  );
-  border: 1px solid rgba(var(--site-color-rgb), 0.3);
-  color: var(--site-color);
-  position: relative;
-  overflow: hidden;
-  box-shadow:
-    inset 0 0 12px rgba(var(--site-color-rgb), 0.15),
-    0 0 12px rgba(var(--site-color-rgb), 0.2);
+  background: var(--el-bg-color);
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
-.site-icon::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    45deg,
-    transparent 40%,
-    rgba(var(--site-color-rgb), 0.3) 50%,
-    transparent 60%
-  );
-  animation: siteSpin 4s linear infinite;
-  opacity: 0.5;
+.site-item:hover {
+  background: var(--el-fill-color-light);
+  border-color: var(--el-color-primary-light-5);
 }
 
-.site-icon svg {
-  position: relative;
-  z-index: 1;
-  filter: drop-shadow(0 0 4px rgba(var(--site-color-rgb), 0.6));
+.site-item.is-current {
+  border-color: var(--el-color-primary-light-5);
+  background: var(--el-color-primary-light-9);
 }
 
-.site-card-titles {
+.site-item-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.site-item:hover .site-item-icon {
+  color: var(--el-text-color-primary);
+}
+
+.site-item.is-current .site-item-icon {
+  background: var(--el-color-primary-light-8);
+  color: var(--el-color-primary);
+}
+
+.site-item-info {
   flex: 1;
   min-width: 0;
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 18px;
+}
+
+.site-item-title {
+  display: flex;
   align-items: center;
+  gap: 8px;
+  min-width: 0;
+  line-height: 20px;
 }
 
-.site-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  width: fit-content;
-  position: relative;
-  overflow: hidden;
-}
-
-.site-badge--main {
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(0, 212, 255, 0.05));
-  color: #00b8e6;
-  border: 1px solid rgba(0, 212, 255, 0.4);
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
-}
-
-.site-badge--backup {
-  background: linear-gradient(135deg, rgba(255, 169, 64, 0.15), rgba(255, 169, 64, 0.05));
-  color: #d96b00;
-  border: 1px solid rgba(255, 169, 64, 0.4);
-  box-shadow: 0 0 8px rgba(255, 169, 64, 0.2);
-}
-
-.site-badge--deprecated {
-  background: linear-gradient(135deg, rgba(255, 77, 79, 0.15), rgba(255, 77, 79, 0.05));
-  color: #d9363e;
-  border: 1px solid rgba(255, 77, 79, 0.4);
-  box-shadow: 0 0 8px rgba(255, 77, 79, 0.2);
-}
-
-html.dark .site-badge--main {
-  color: #00e5ff;
-  box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
-}
-
-html.dark .site-badge--backup {
-  color: #ffb84d;
-  box-shadow: 0 0 10px rgba(255, 169, 64, 0.4);
-}
-
-html.dark .site-badge--deprecated {
-  color: #ff7875;
-  box-shadow: 0 0 10px rgba(255, 77, 79, 0.4);
-}
-
-.site-host {
+.site-item-name {
+  flex-shrink: 0;
   font-size: 13px;
-  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-  color: var(--el-text-color-primary);
   font-weight: 600;
+  line-height: 20px;
+  color: var(--text-primary);
+}
+
+.site-item-host {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 18px;
+  font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+  color: var(--el-text-color-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-shadow: 0 0 8px rgba(var(--site-color-rgb), 0.3);
 }
 
-/* 脉冲点 */
-.site-pulse-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--site-color);
-  color: var(--site-color);
+.site-item-tag {
   flex-shrink: 0;
-  position: relative;
-  animation: siteDotPulse 2s ease-in-out infinite;
-  box-shadow: 0 0 8px var(--site-color);
-}
-
-.site-pulse-dot--main {
-  background: #00d4ff;
-  color: #00d4ff;
-  box-shadow: 0 0 10px #00d4ff;
-}
-
-.site-pulse-dot--backup {
-  background: #ffa940;
-  color: #ffa940;
-  box-shadow: 0 0 10px #ffa940;
-}
-
-.site-pulse-dot--deprecated {
-  background: #ff4d4f;
-  color: #ff4d4f;
-  box-shadow: 0 0 10px #ff4d4f;
-}
-
-/* 描述行 - meta 信息 */
-.site-card-desc {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.site-meta-item {
+  padding: 0 6px;
+  border-radius: 9px;
+  border: 1px solid var(--el-color-primary-light-5);
+  background: var(--el-color-primary-light-8);
+  color: var(--el-color-primary);
   font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: rgba(var(--site-color-rgb), 0.08);
-  color: var(--el-text-color-regular);
-  border: 1px solid rgba(var(--site-color-rgb), 0.15);
+  line-height: 16px;
+}
+
+.site-item-desc {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--el-text-color-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-html.dark .site-meta-item {
-  background: rgba(var(--site-color-rgb), 0.12);
-  color: var(--el-text-color-regular);
+.site-item-action {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
-/* 详细描述 */
-.site-card-desc-text {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  line-height: 1.6;
-  margin-bottom: 12px;
-  padding: 8px 10px;
-  background: rgba(var(--site-color-rgb), 0.04);
-  border-left: 2px solid rgba(var(--site-color-rgb), 0.4);
-  border-radius: 0 6px 6px 0;
-  text-align: justify;
-}
-
-/* 按钮区 */
-.site-card-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  position: relative;
-  z-index: 2;
-}
-
-.site-btn {
-  position: relative;
-  overflow: hidden;
-  font-weight: 600 !important;
-  letter-spacing: 0.5px;
-  margin: 0;
-  transition: all 0.3s !important;
-}
-
-.site-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--site-color-rgb), 0.3);
-}
-
-.site-btn--primary {
-  background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%) !important;
-  border-color: #00d4ff !important;
-  color: #fff !important;
-  box-shadow:
-    0 0 12px rgba(0, 212, 255, 0.4),
-    inset 0 0 12px rgba(255, 255, 255, 0.1) !important;
-}
-
-.site-btn--primary:hover {
-  box-shadow:
-    0 0 20px rgba(0, 212, 255, 0.6),
-    inset 0 0 12px rgba(255, 255, 255, 0.2) !important;
-}
-
-.site-btn--backup {
-  background: linear-gradient(135deg, #ffa940 0%, #ff7a00 100%) !important;
-  border-color: #ffa940 !important;
-  color: #fff !important;
-  box-shadow:
-    0 0 12px rgba(255, 169, 64, 0.4),
-    inset 0 0 12px rgba(255, 255, 255, 0.1) !important;
-}
-
-.site-btn--backup:hover {
-  box-shadow:
-    0 0 20px rgba(255, 169, 64, 0.6),
-    inset 0 0 12px rgba(255, 255, 255, 0.2) !important;
-}
-
-.site-btn--danger {
-  border-color: #ff4d4f !important;
-  color: #ff4d4f !important;
-  background: rgba(255, 77, 79, 0.05) !important;
-}
-
-.site-btn--danger:hover {
-  background: rgba(255, 77, 79, 0.15) !important;
-  box-shadow: 0 0 12px rgba(255, 77, 79, 0.3) !important;
-}
-
-/* 按钮光斑 */
-.site-btn-glow {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  transition: left 0.5s;
-  pointer-events: none;
-}
-
-.site-btn:hover .site-btn-glow {
-  left: 100%;
-}
-
-/* 移动端适配 */
 @media (max-width: 600px) {
-  .site-card-inner {
-    padding: 14px;
-  }
-
-  .site-icon {
-    width: 32px;
-    height: 32px;
-  }
-
-  .site-card-header {
-    flex-wrap: wrap;
+  .site-item {
+    padding: 9px 10px;
     gap: 8px;
   }
 
-  .site-pulse-dot,
-  .site-card-ribbon {
-    order: 2;
+  .site-item-icon {
+    width: 24px;
+    height: 24px;
   }
 
-  .site-card-titles {
-    flex-basis: calc(100% - 50px);
+  .site-item-title {
+    flex-wrap: wrap;
+    gap: 0 6px;
+    line-height: 18px;
   }
 
-  .site-card-actions {
-    width: 100%;
+  .site-item-name {
+    font-size: 12px;
+    line-height: 18px;
   }
 
-  .site-card-actions .el-button {
-    flex: 1;
+  .site-item-desc {
+    font-size: 11px;
+    line-height: 1.45;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 
-  .site-card-desc {
-    font-size: 10px;
+  /* 窄屏只留箭头，把宽度让给站点信息 */
+  .site-item-action-text {
+    display: none;
   }
 }
+
 </style>

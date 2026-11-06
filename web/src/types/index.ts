@@ -189,8 +189,8 @@ export interface Settings {
   visibleColumns: string[]  // 可见列
   sortMethod: string        // 默认排序方法 (如: "holdingGainRate_desc")
   
-  // 新浪估算涨跌幅数据源
-  sinaPctSource: 'nav2' | 'nav' // 新浪接口估算涨跌幅字段（nav2_pct / nav_pct）
+  // 新浪估算涨跌幅数据源（默认 nav=数据源1，更贴近最终净值；nav2=数据源2，偏大）
+  sinaPctSource: 'nav' | 'nav2'
   
   // 宽度设置
   maxContentWidthMode: 'full' | 'preset' | 'custom' // 最大宽度模式

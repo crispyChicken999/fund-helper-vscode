@@ -124,10 +124,10 @@ export type SinaPctSource = 'nav2' | 'nav'
  * 2. 成功 → 提取 networth 最后一条作为 gsz/gszzl
  * 3. networth 为空（未开盘/非交易日/不支持）→ 返回 null，由上层降级
  *
- * @param pctField 估算涨跌幅数据源：'nav2'（nav2_pct，默认） | 'nav'（nav_pct）
+ * @param pctField 估算涨跌幅数据源：'nav'（nav_pct，默认，更贴近最终净值） | 'nav2'（nav2_pct，偏大）
  * @returns 对齐 fundgz 格式的对象，失败返回 null
  */
-export async function fetchSinaFundValuation(code: string, pctField: SinaPctSource = 'nav2'): Promise<SinaFundgzCompat | null> {
+export async function fetchSinaFundValuation(code: string, pctField: SinaPctSource = 'nav'): Promise<SinaFundgzCompat | null> {
   const url = `${SINA_API_BASE}?symbol=${code}`
 
   try {
@@ -186,7 +186,7 @@ export async function fetchSinaFundValuation(code: string, pctField: SinaPctSour
  */
 export async function fetchMultipleSinaValuations(
   codes: string[],
-  pctField: SinaPctSource = 'nav2',
+  pctField: SinaPctSource = 'nav',
 ): Promise<Map<string, SinaFundgzCompat>> {
   const results = new Map<string, SinaFundgzCompat>()
 
