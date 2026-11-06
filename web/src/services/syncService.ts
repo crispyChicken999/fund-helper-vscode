@@ -3,7 +3,33 @@
 import { useFundStore, useGroupStore, useSettingStore, useSyncStore } from '@/stores'
 import { jsonboxApi, type JsonboxData } from '@/api/jsonbox'
 import { storageService } from './storageService'
-import type { DataConflict } from '@/types'
+import type { DataConflict, Fund } from '@/types'
+
+/**
+ * 归一化云端基金条目
+ *
+ * 云端（VSCode 导出格式）里 num / cost 都是字符串，直接塞进 store 会让
+ * 「加仓 / 减仓」弹窗等直接调用 `.toFixed()` 的地方抛异常（表现为只有遮罩没有弹窗），
+ * 所以写回本地前统一转成数字。
+ */
+function normalizeCloudFund(raw: unknown): Fund | null {
+  if (!raw || typeof raw !== 'object') return null
+  const item = raw as { code?: unknown; num?: unknown; cost?: unknown; groupKey?: unknown }
+  const code = String(item.code ?? '').trim()
+  if (!code) return null
+
+  const num = Number(item.num)
+  const cost = Number(item.cost)
+  const fund: Fund = {
+    code,
+    num: Number.isFinite(num) ? num : 0,
+    cost: Number.isFinite(cost) ? cost : 0
+  }
+  if (typeof item.groupKey === 'string' && item.groupKey) {
+    fund.groupKey = item.groupKey
+  }
+  return fund
+}
 
 /**
  * 数据同步服务
@@ -387,13 +413,19 @@ class SyncService {
     fundStore.clearFunds()
     groupStore.clearGroups()
 
-    // 应用基金数据
-    data.funds.forEach(fund => {
-      fundStore.funds.push(fund)
-    })
+    // 应用基金数据（num / cost 归一化为数字，避免下游 .toFixed 报错）
+    for (const raw of data.funds ?? []) {
+      const fund = normalizeCloudFund(raw)
+      if (fund) fundStore.funds.push(fund)
+    }
 
     // 应用分组数据
-    groupStore.initGroupsFromObject(data.groups, data.groupOrder)
+    const groupsObj = data.groups ?? {}
+    groupStore.initGroupsFromObject(groupsObj, data.groupOrder ?? [])
+
+    // 依据分组归属回填 fund.groupKey（云端基金条目本身不带 groupKey）
+    const { groupService } = await import('./groupService')
+    groupService.syncFundGroupKeys()
 
     // 应用隐私模式（从云端读取）
     if (data.privacyMode !== undefined) {
@@ -432,8 +464,9 @@ class SyncService {
     }
 
     // 保存到本地存储
+    const exported = groupStore.exportGroupsToObject()
     storageService.saveFunds(fundStore.funds)
-    storageService.saveGroups(data.groups, data.groupOrder)
+    storageService.saveGroups(exported.groups, exported.groupOrder)
     storageService.saveSettings(settingStore.getSettings())
 
     console.log('云端数据已应用')

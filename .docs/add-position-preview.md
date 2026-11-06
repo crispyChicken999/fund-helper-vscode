@@ -40,7 +40,23 @@ Web 端「加仓」弹窗原有的操作预览只有 5 个字段（买入净值�
 
 ### 2.1 入口
 
-`HomeView.vue` 加仓弹窗内，`calc-preview` 下方新增：
+**入口一：首页顶部「操作」下拉**（`HomeView.vue` header 右上角）
+
+```html
+<el-dropdown @command="handleHeaderOperationCommand">
+  <el-button class="operation-btn" title="操作">⌗</el-button>
+  <el-dropdown-menu>
+    <el-dropdown-item command="batchAdjust">批量加减仓</el-dropdown-item>
+    <el-dropdown-item command="addPreview">加仓预览</el-dropdown-item>
+  </el-dropdown-menu>
+</el-dropdown>
+```
+
+- 触发按钮只有图标（`Operation` 图标），文案「操作」放在 `title` 里，悬停可见
+- 「批量加减仓」打开原有批量加减仓弹窗；原独立按钮收进下拉，进行中笔数角标继续显示在触发按钮上
+- 「加仓预览」以当前列表首只基金为起点（优先沿用上次加仓弹窗里的基金）进入预览页，页内可切换基金
+
+**入口二：加仓弹窗内**，`calc-preview` 下方新增：
 
 ```html
 <div v-if="positionIsAdd" class="preview-more">

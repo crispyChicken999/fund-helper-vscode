@@ -106,16 +106,40 @@
                 type="danger"
                 class="batch-adjust-badge"
               >
-                <el-button
-                  type="primary"
-                  size="small"
-                  round
-                  plain
-                  @click="showBatchAdjust = true"
-                  title="批量加减仓"
+                <el-dropdown
+                  trigger="click"
+                  placement="bottom-end"
+                  popper-class="home-operation-menu"
+                  @command="handleHeaderOperationCommand"
                 >
-                  <el-icon><Edit /></el-icon>
-                </el-button>
+                  <el-button
+                    type="primary"
+                    size="small"
+                    round
+                    plain
+                    class="operation-btn"
+                    title="操作"
+                  >
+                    <el-icon><Operation /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="batchAdjust">
+                        <el-icon><Edit /></el-icon>
+                        <span class="operation-item-text">批量加减仓</span>
+                        <span
+                          v-if="batchPendingCount > 0"
+                          class="operation-item-badge"
+                          >{{ batchPendingCount }}</span
+                        >
+                      </el-dropdown-item>
+                      <el-dropdown-item command="addPreview">
+                        <el-icon><DataAnalysis /></el-icon>
+                        <span class="operation-item-text">加仓预览</span>
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
               </el-badge>
               <el-button
                 type="primary"
@@ -1124,6 +1148,8 @@ import {
   Monitor,
   Upload,
   Download,
+  Operation,
+  DataAnalysis,
 } from "@element-plus/icons-vue";
 import { useDebounceFn, useMediaQuery } from "@vueuse/core";
 import Sortable from "sortablejs";
@@ -2866,6 +2892,33 @@ function refreshBatchPendingCount() {
   batchPendingCount.value = getPendingCount();
 }
 
+// ---- 顶部「操作」下拉（批量加减仓 / 加仓预览） ----
+function handleHeaderOperationCommand(command: string) {
+  if (command === "batchAdjust") {
+    showBatchAdjust.value = true;
+    return;
+  }
+  if (command === "addPreview") {
+    openAddPositionPreviewFromHeader();
+  }
+}
+
+/** 「操作 → 加仓预览」：以当前列表首只基金为起点进入预览页，页内可左右切换基金 */
+function openAddPositionPreviewFromHeader() {
+  const rows = sortedRows.value;
+  if (!rows.length) {
+    ElMessage.warning("请先添加基金，再使用加仓预览");
+    return;
+  }
+  // 优先沿用上次加仓弹窗里的基金，否则用当前列表第一只
+  const currentCode = positionRow.value?.code;
+  const targetCode =
+    currentCode && rows.some((row) => row.code === currentCode)
+      ? currentCode
+      : rows[0]!.code;
+  router.push({ name: "addPositionPreview", params: { code: targetCode } });
+}
+
 // --- Sortable: fund table row drag-and-drop ---
 // Enabled when: default sort + no search + (all group OR specific group selected)
 const canDragFundRows = computed(
@@ -3033,6 +3086,14 @@ onUnmounted(() => {
 }
 
 .batch-adjust-btn {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 顶部「操作」下拉触发按钮（与相邻图标按钮同尺寸） */
+.operation-btn {
   height: 24px;
   display: inline-flex;
   align-items: center;
@@ -3712,5 +3773,37 @@ html.dark .group-label {
   border-radius: 50%;
   font-size: 11px;
   font-weight: bold;
+}
+</style>
+
+<style>
+/* 顶部「操作」下拉菜单（dropdown 挂到 body 上，不能用 scoped 样式） */
+.home-operation-menu .el-dropdown-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 150px;
+  font-size: 13px;
+}
+
+.home-operation-menu .el-dropdown-menu__item .el-icon {
+  font-size: 14px;
+  margin: 0;
+}
+
+.home-operation-menu .operation-item-text {
+  flex: 1;
+}
+
+.home-operation-menu .operation-item-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--el-color-danger);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
 }
 </style>

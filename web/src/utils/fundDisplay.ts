@@ -145,8 +145,12 @@ export function buildFundRowDisplay(
   market: ChinaMarketStatus,
   groupName?: string
 ): FundRowDisplay {
-  const num = fund.num || 0
-  const cost = fund.cost || 0
+  const num = Number(fund.num) || 0
+  const cost = Number(fund.cost) || 0
+  // 云端 / VSCode 导入的 num、cost 可能是字符串，统一成数字再向下游传递，
+  // 避免「加仓 / 减仓」弹窗等直接调用 .toFixed() 的地方渲染报错。
+  const safeFund: Fund =
+    fund.num === num && fund.cost === cost ? fund : { ...fund, num, cost }
   const dwjz = info.netValue || 0
   let gsz = info.estimatedValue ?? 0
   const gszzl = info.changePercent || 0
@@ -221,7 +225,7 @@ export function buildFundRowDisplay(
   const showRealValueIcon = shouldShowRealValueIcon(info, market)
 
   return {
-    fund,
+    fund: safeFund,
     info,
     groupName,
     code: fund.code,
